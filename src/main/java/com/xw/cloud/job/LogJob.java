@@ -67,7 +67,7 @@ public class LogJob {
         Date now = new Date();
         String deleteDate= getDeleteDate(now,30);
         try{
-            operationLogService.remove(new QueryWrapper<OperationLog>().lt("add_time",deleteDate));
+            operationLogService.remove(new QueryWrapper<OperationLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
@@ -77,7 +77,7 @@ public class LogJob {
         Date now = new Date();
         String deleteDate= getDeleteDate(now,30);
         try{
-            podLogService.remove(new QueryWrapper<PodLog>().lt("add_time",deleteDate));
+            podLogService.remove(new QueryWrapper<PodLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
@@ -87,7 +87,7 @@ public class LogJob {
         Date now = new Date();
         String deleteDate= getDeleteDate(now,30);
         try{
-            vmLogService.remove(new QueryWrapper<VMLog>().lt("add_time",deleteDate));
+            vmLogService.remove(new QueryWrapper<VMLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
@@ -136,6 +136,7 @@ public class LogJob {
                                 l.setSpaces(namesapceName);
                                 l.setAddTime(da);
                                 l.setPodContent(s);
+                                l.setDisplayContent(s.substring(0,100)+"......");
                                 podLogService.save(l);
                             }
                         }
@@ -152,6 +153,8 @@ public class LogJob {
         Session session = null;
         StringBuilder result = new StringBuilder();
         JSch jsch = new JSch();
+        System.out.println(username);
+        System.out.println(virtualMachineIp);
         session = jsch.getSession(username, virtualMachineIp, 22);
         session.setConfig("StrictHostKeyChecking", "no");
         session.setPassword(password);
@@ -220,21 +223,18 @@ public class LogJob {
                         //VM Container
                         String deleteDate = getDeleteDate(new Date(), 30);
                         Date before30 = dateFormat_.parse(deleteDate);  //30天之前
+                        System.out.println(before30);
+                        System.out.println(da);
                         if(da.compareTo(before30) > 0) {
                             List list = vmLogService.list(qw);
                             if (list.size() <= 0) {
-                                int cnt = 10;
-                                if(ins.length() < 5000){
-                                    cnt = 0;
-                                }
-                                for (int i = 0; i <= cnt; i++) {
-                                    VMLog vmLog = new VMLog();
-                                    vmLog.setVmName(vname);
-                                    vmLog.setAddTime(da);
-                                    vmLog.setNoo(i);
-                                    vmLog.setVmContent(ins.substring(i * ins.length() / (cnt+1), (i + 1) * ins.length() / (cnt+1)));
-                                    vmLogService.save(vmLog);
-                                }
+                                VMLog vmLog = new VMLog();
+                                vmLog.setVmName(vname);
+                                vmLog.setAddTime(da);
+                                vmLog.setVmContent(ins);
+                                vmLog.setDisplayContent(ins.substring(0,100)+"......");
+                                vmLogService.save(vmLog);
+
                             }
                         }
                         ins = s;
@@ -245,7 +245,7 @@ public class LogJob {
                     ins += s;
                 }
             }
-       //插入最后一天数据
+            //插入最后一天数据
             String date = ins.substring(0, 10);
             String time = ins.substring(11, 19);
             String t = date + " " + time;
@@ -259,18 +259,12 @@ public class LogJob {
                 qw.eq("AddTime", t);
                 List list = vmLogService.list(qw);
                 if (list.size() <= 0) {
-                        int cnt = 10;
-                        if(ins.length() < 5000){
-                            cnt = 0;
-                        }
-                    for (int i = 0; i <= cnt; i++) {
-                        VMLog vmLog = new VMLog();
-                        vmLog.setVmName(vname);
-                        vmLog.setAddTime(da);
-                        vmLog.setNoo(i);
-                        vmLog.setVmContent(ins.substring(i * ins.length() / (cnt+1), (i + 1) * ins.length() / (cnt+1)));
-                        vmLogService.save(vmLog);
-                    }
+                    VMLog vmLog = new VMLog();
+                    vmLog.setVmName(vname);
+                    vmLog.setAddTime(da);
+                    vmLog.setVmContent(ins);
+                    vmLog.setDisplayContent(ins.substring(0,100)+"....");
+                    vmLogService.save(vmLog);
                 }
             }
 //            return com;
