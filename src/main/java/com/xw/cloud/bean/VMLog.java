@@ -23,9 +23,6 @@ public class VMLog {
 
     @TableId(type = IdType.AUTO,value = "ID")
      Integer ID;
-    @ApiModelProperty("排序")
-    @TableField(value = "Noo")
-    Integer Noo;
     @ApiModelProperty("vm名")
     @TableField(value = "VmName")
      String VmName;
@@ -38,6 +35,16 @@ public class VMLog {
     @ApiModelProperty("操作时间")
     @TableField(value = "AddTime")
      Date AddTime;
+    @TableField(value = "DisplayContent")
+    private String DisplayContent;
+
+    public String getDisplayContent() {
+        return DisplayContent;
+    }
+
+    public void setDisplayContent(String displayContent) {
+        DisplayContent = displayContent;
+    }
 
     public Integer getID() {
         return ID;
@@ -47,13 +54,6 @@ public class VMLog {
         this.ID = ID;
     }
 
-    public Integer getNoo() {
-        return Noo;
-    }
-
-    public void setNoo(Integer noo) {
-        Noo = noo;
-    }
 
     public String getVmName() {
         return VmName;
@@ -83,10 +83,10 @@ public class VMLog {
     public String toString() {
         return "VMLog{" +
                 "ID=" + ID +
-                ", Noo=" + Noo +
-                ", VMName='" + VmName + '\'' +
+                ", VmName='" + VmName + '\'' +
                 ", VmContent='" + VmContent + '\'' +
                 ", AddTime=" + AddTime +
+                ", DisplayContent='" + DisplayContent + '\'' +
                 '}';
     }
 }

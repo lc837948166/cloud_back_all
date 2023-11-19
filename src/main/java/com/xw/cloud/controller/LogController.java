@@ -53,6 +53,7 @@ public class LogController {
 
     private String password = "111";
 
+
     @Autowired
     private OperationLogServiceImpl operationLogService;
 
@@ -138,7 +139,7 @@ public class LogController {
     @RequestMapping(value = "/getPodLog", method = RequestMethod.GET)
     @ResponseBody
     public CommentResp getPodlog(@RequestParam("podNamespace") String podNamespace,
-                                  @RequestParam("starttime") String starttime,
+                                 @RequestParam("starttime") String starttime,
                                  @RequestParam("endtime") String endtime
     )
             throws IOException, InterruptedException {
