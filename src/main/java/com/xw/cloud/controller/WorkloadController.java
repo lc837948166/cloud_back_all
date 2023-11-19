@@ -50,6 +50,110 @@ public class WorkloadController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
+
+
+    @RequestMapping(value = "/namespace", method = RequestMethod.GET)
+    public String namespace(){
+        return "workload/namespace";
+    }
+
+    @RequestMapping(value = "/namespace/list", method = RequestMethod.GET)
+    public ModelAndView getNamespaceList() throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
+        ApiClient client =
+                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        Configuration.setDefaultApiClient(client);
+
+        CoreV1Api api = new CoreV1Api();
+
+        Call call = api.listNamespaceCall(null,null, null, null, null, null, null, null, 5, null,null);
+
+        Response response = call.execute();
+
+        if (!response.isSuccessful()) {
+            modelAndView.addObject("result", "error!");
+            return modelAndView;
+        }
+
+        modelAndView.addObject("result",response.body().string());
+
+        return modelAndView;
+    }
+
+
+
+    @RequestMapping(value = "/node", method = RequestMethod.GET)
+    public String node(){
+        return "workload/node";
+    }
+
+    @RequestMapping(value = "/node/list", method = RequestMethod.GET)
+    public ModelAndView getNodeList() throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+        Configuration.setDefaultApiClient(client);
+        CoreV1Api api = new CoreV1Api();
+
+        Call call = api.listNodeCall(null,null, null, null, null, null, null, null, 5, null,null);
+
+
+        Response response = call.execute();
+
+        if (!response.isSuccessful()) {
+            modelAndView.addObject("result", "error!");
+            return modelAndView;
+        }
+
+        modelAndView.addObject("result",response.body().string());
+
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/getVmList", method = RequestMethod.GET)
+    public String Vm() {
+        return "workload/getVmList";
+    }
+
+    @RequestMapping(value = "/getVmList/list", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView getVm() throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+
+        try (InputStream inputStream = getClass().getResourceAsStream("/k8s/vm.json")) {
+            // 使用 try-with-resources 来确保文件流在使用完毕后被正确关闭
+
+            if (inputStream == null) {
+                throw new FileNotFoundException("JSON 文件未找到");
+            }
+
+            // 使用 BufferedReader 包装输入流以便逐行读取
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line);
+            }
+
+            String jsonContent = jsonBuilder.toString();
+
+            // 在这里处理读取到的 JSON 内容
+            System.out.println(jsonContent);
+
+            modelAndView.addObject("vmList", jsonContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return modelAndView;
+
+    }
+
     @RequestMapping(value = "cronjob", method = RequestMethod.GET)
     public String cronjob() {
         return "workload/cronjob";
