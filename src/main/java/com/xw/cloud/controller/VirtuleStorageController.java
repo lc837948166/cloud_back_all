@@ -5,6 +5,7 @@ import com.xw.cloud.bean.PvInfo;
 import com.xw.cloud.bean.PvcInfo;
 import com.xw.cloud.bean.RequestInfo;
 import com.xw.cloud.bean.VmInfo;
+import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -40,6 +41,7 @@ public class VirtuleStorageController {
     }
 
     @RequestMapping(value = "/vs/list", method = RequestMethod.GET)
+    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
     public ModelAndView getPvList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -80,6 +82,7 @@ public class VirtuleStorageController {
      */
     @RequestMapping(value = "/createVs", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "虚拟存储管理", events = "创建持久卷")
     public String createVs(@RequestBody RequestInfo requestInfo) throws ApiException {
 //    public String createVs() throws ApiException {
 
@@ -264,6 +267,7 @@ public class VirtuleStorageController {
      */
     @RequestMapping(value = "/deleteVs", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "虚拟存储管理", events = "删除持久卷")
     public String deleteVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
 //    public String deleteVs() throws IOException, ApiException {
 
@@ -328,6 +332,7 @@ public class VirtuleStorageController {
      */
     @RequestMapping(value = "/updateVs", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "虚拟存储管理", events = "修改持久卷")
     public String updateVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
 //    public String updateVs() throws IOException, ApiException {
 

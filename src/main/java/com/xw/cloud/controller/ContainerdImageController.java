@@ -4,6 +4,7 @@ import com.jcraft.jsch.*;
 import com.xw.cloud.bean.ImageInfo;
 import com.xw.cloud.bean.RequestInfo;
 import com.xw.cloud.bean.VmInfo;
+import com.xw.cloud.inter.OperationLogDesc;
 import groovy.util.logging.Slf4j;
 import io.kubernetes.client.openapi.ApiException;
 import org.springframework.stereotype.Controller;
@@ -34,6 +35,7 @@ public class ContainerdImageController {
      */
     @RequestMapping(value = "/images/list", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "镜像管理", events = "获取镜像列表")
     public ModelAndView getContainerdImages(@RequestBody VmInfo vmInfo) throws IOException {
 //    public ModelAndView getContainerdImages() throws IOException {
 
@@ -239,6 +241,7 @@ public class ContainerdImageController {
      */
     @RequestMapping(value = "/uploadImage", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "镜像管理", events = "上传并导入镜像")
     public String uploadImage(@RequestParam("tarFile") MultipartFile tarFile,
                               @RequestParam("virtualMachineIp") String virtualMachineIp,
                               @RequestParam("userName") String userName,
@@ -354,6 +357,7 @@ public class ContainerdImageController {
      */
     @RequestMapping(value = "/deleteImage", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "镜像管理", events = "删除镜像")
     public String deletePod(@RequestBody RequestInfo requestInfo) throws IOException, ApiException {
 
         VmInfo vmInfo = requestInfo.getVmInfo();
