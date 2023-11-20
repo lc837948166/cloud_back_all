@@ -9,7 +9,6 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="DM" uuid="6cb2e90a-7daf-4b50-9f04-26eb565f92b9">
-      <driver-ref>8a54cb44-c03d-4b01-9d20-5c6814c28ec3</driver-ref>
       <synchronize>true</synchronize>
       <configured-by-url>true</configured-by-url>
       <jdbc-driver>dm.jdbc.driver.DmDriver</jdbc-driver>
@@ -17,7 +16,6 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="DM [2]" uuid="d6b8a22e-b0f5-4796-b76d-ff85d347336f">
-      <driver-ref>8a54cb44-c03d-4b01-9d20-5c6814c28ec3</driver-ref>
       <synchronize>true</synchronize>
       <configured-by-url>true</configured-by-url>
       <jdbc-driver>dm.jdbc.driver.DmDriver</jdbc-driver>
