@@ -136,7 +136,11 @@ public class LogJob {
                                 l.setSpaces(namesapceName);
                                 l.setAddTime(da);
                                 l.setPodContent(s);
-                                l.setDisplayContent(s.substring(0,100)+"......");
+                                if(s.length() < 100){
+                                    l.setDisplayContent(s+"......");
+                                }else {
+                                    l.setDisplayContent(s.substring(0, 100) + "......");
+                                }
                                 podLogService.save(l);
                             }
                         }
@@ -232,7 +236,11 @@ public class LogJob {
                                 vmLog.setVmName(vname);
                                 vmLog.setAddTime(da);
                                 vmLog.setVmContent(ins);
-                                vmLog.setDisplayContent(ins.substring(0,100)+"......");
+                                if(ins.length() < 100){
+                                    vmLog.setDisplayContent(ins+"......");
+                                }else {
+                                    vmLog.setDisplayContent(ins.substring(0, 100) + "......");
+                                }
                                 vmLogService.save(vmLog);
 
                             }
@@ -263,7 +271,11 @@ public class LogJob {
                     vmLog.setVmName(vname);
                     vmLog.setAddTime(da);
                     vmLog.setVmContent(ins);
-                    vmLog.setDisplayContent(ins.substring(0,100)+"....");
+                    if(ins.length() < 100){
+                        vmLog.setDisplayContent(ins+"......");
+                    }else {
+                        vmLog.setDisplayContent(ins.substring(0, 100) + "......");
+                    }
                     vmLogService.save(vmLog);
                 }
             }
