@@ -229,8 +229,6 @@ public class LogJob {
                         //VM Container
                         String deleteDate = getDeleteDate(new Date(), 30);
                         Date before30 = dateFormat_.parse(deleteDate);  //30天之前
-                        System.out.println(before30);
-                        System.out.println(da);
                         if(da.compareTo(before30) > 0) {
                             List list = vmLogService.list(qw);
                             if (list.size() <= 0) {
