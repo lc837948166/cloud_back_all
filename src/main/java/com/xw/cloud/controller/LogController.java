@@ -172,9 +172,10 @@ public class LogController {
     @ResponseBody
     public CommentResp getPodlogs() throws IOException, ApiException {
 
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+// 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
         CoreV1Api api = new CoreV1Api();
         List<PodLog> ans = new LinkedList<>();
