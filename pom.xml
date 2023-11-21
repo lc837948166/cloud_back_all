@@ -60,10 +60,8 @@
 <!--        </dependency>-->
         <dependency>
             <groupId>com.dm</groupId>
-            <artifactId>DmJdbcDriver18</artifactId>
-            <version>1.8</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/DmJdbcDriver18.jar</systemPath>
+            <artifactId>DmJdbcDriver</artifactId>
+            <version>1.8.0</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -107,17 +105,6 @@
             <artifactId>lombok</artifactId>
             <version>1.18.24</version>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                    <groupId>org.springframework.boot</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
