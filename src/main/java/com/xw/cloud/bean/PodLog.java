@@ -44,6 +44,20 @@ public class PodLog {
     @TableField(value = "AddTime")
      Date AddTime;
 
+    @TableField(value = "DisplayContent")
+    private String DisplayContent;
+
+    public void setPodName(String podName) {
+        PodName = podName;
+    }
+
+    public String getDisplayContent() {
+        return DisplayContent;
+    }
+
+    public void setDisplayContent(String displayContent) {
+        DisplayContent = displayContent;
+    }
 
     public Integer getID() {
         return ID;
@@ -93,6 +107,7 @@ public class PodLog {
                 ", Spaces='" + Spaces + '\'' +
                 ", PodContent='" + PodContent + '\'' +
                 ", AddTime=" + AddTime +
+                ", DisplayContent='" + DisplayContent + '\'' +
                 '}';
     }
 }
