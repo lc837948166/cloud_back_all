@@ -1,5 +1,6 @@
 package com.xw.cloud.controller;
 
+import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.MachineInfo;
 import com.xw.cloud.service.MachineService;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,11 +18,9 @@ public class MachineController {
     private MachineService machineService;
 
     @GetMapping("/getMachineInfo")
-    public MachineInfo getMachineInfo(){
-        return machineService.getMachineInfo();
+    public CommentResp getMachineInfo() {
+        return new CommentResp(true, machineService.getMachineInfo(), "");
     }
-
-
 }
 
 
