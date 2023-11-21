@@ -2,6 +2,7 @@ package com.xw.cloud.Utils;
 
 
 import com.xw.cloud.bean.*;
+import lombok.SneakyThrows;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;
@@ -58,10 +59,10 @@ public class HardWareUtil {
         CpuInfo cpuInfo = new CpuInfo();
         cpuInfo.setCpuNum(processor.getLogicalProcessorCount());
         cpuInfo.setTotal(totalCpu);
-        cpuInfo.setSys(Double.parseDouble(new DecimalFormat("#.##").format(cSys * 1.0 / totalCpu))*100);
-        cpuInfo.setUsed(Double.parseDouble(new DecimalFormat("#.##").format(user * 1.0 / totalCpu))*100);
-        cpuInfo.setWait(Double.parseDouble(new DecimalFormat("#.##").format(ioWait * 1.0 / totalCpu))*100);
-        cpuInfo.setFree(Double.parseDouble(new DecimalFormat("#.##").format(idle * 1.0 / totalCpu))*100);
+        cpuInfo.setSys(Double.parseDouble(new DecimalFormat("#.####").format(cSys * 1.0 / totalCpu))*100);
+        cpuInfo.setUsed(Double.parseDouble(new DecimalFormat("#.####").format(user * 1.0 / totalCpu))*100);
+        cpuInfo.setWait(Double.parseDouble(new DecimalFormat("#.####").format(ioWait * 1.0 / totalCpu))*100);
+        cpuInfo.setFree(Double.parseDouble(new DecimalFormat("#.####").format(idle * 1.0 / totalCpu))*100);
         return cpuInfo;
     }
 
@@ -76,9 +77,9 @@ public class HardWareUtil {
         GlobalMemory memory = si.getHardware().getMemory();
         // 内存信息
         MemoryInfo mem = new MemoryInfo();
-        mem.setTotal(Math.round(Objects.isNull(size) ? memory.getTotal() : (float) memory.getTotal() / size.getSize()*100)/100);
-        mem.setUsed(Math.round(Objects.isNull(size) ? (memory.getTotal() - memory.getAvailable()) : (float) (memory.getTotal() - memory.getAvailable()) / size.getSize()*100)/100);
-        mem.setFree(Math.round(Objects.isNull(size) ? memory.getAvailable() : (float) memory.getAvailable() / size.getSize()*100)/100);
+        mem.setTotal((double) Math.round(Objects.isNull(size) ? memory.getTotal() : (float) memory.getTotal() / size.getSize() * 100) /100);
+        mem.setUsed((double) Math.round(Objects.isNull(size) ? (memory.getTotal() - memory.getAvailable()) : (float) (memory.getTotal() - memory.getAvailable()) / size.getSize() * 100) /100);
+        mem.setFree((double) Math.round(Objects.isNull(size) ? memory.getAvailable() : (float) memory.getAvailable() / size.getSize() * 100) /100);
         return mem;
     }
 
@@ -108,9 +109,9 @@ public class HardWareUtil {
     public static JvmInfo getJvmInfo() {
         JvmInfo jvmInfo = new JvmInfo();
         Properties props = System.getProperties();
-        jvmInfo.setTotal( Math.round(Runtime.getRuntime().totalMemory() / (1024.0 * 1024.0)*100)/100);
-        jvmInfo.setMax(Math.round(Runtime.getRuntime().maxMemory() / (1024.0 * 1024.0)*100)/100);
-        jvmInfo.setFree(Math.round(Runtime.getRuntime().freeMemory() / (1024.0 * 1024.0)*100)/100);
+        jvmInfo.setTotal( (double) Math.round(Runtime.getRuntime().totalMemory() / (1024.0 * 1024.0) * 100) /100);
+        jvmInfo.setMax((double) Math.round(Runtime.getRuntime().maxMemory() / (1024.0 * 1024.0) * 100) /100);
+        jvmInfo.setFree((double) Math.round(Runtime.getRuntime().freeMemory() / (1024.0 * 1024.0) * 100) /100);
         jvmInfo.setVersion(props.getProperty("java.version"));
         jvmInfo.setHome(props.getProperty("java.home"));
         return jvmInfo;
@@ -182,35 +183,17 @@ public class HardWareUtil {
         return b1.divide(b2, scale, RoundingMode.HALF_UP).doubleValue();
     }
 
-    public static void main(String[] args) throws UnknownHostException {
-        SystemInfo systemInfo = new SystemInfo();
-        System.out.println("操作系统: " + systemInfo.getOperatingSystem().getVersionInfo());
-        System.out.println("架构: " + systemInfo.getHardware().getProcessor().getProcessorIdentifier().getName());
-
-//        CpuInfo cpuInfo = HardWareUtil.getCpuInfo();
-//        JvmInfo jvmInfo = HardWareUtil.getJvmInfo();
-//        SystemDetails systemInfo = HardWareUtil.getSystemInfo();
-//        MemoryInfo memoryInfo = HardWareUtil.getMemoryInfo(SizeEnum.GB);
-//        List<SysFile> sysFiles = HardWareUtil.getSysFiles();
-//        System.out.println(cpuInfo);
-//        System.out.println(jvmInfo);
-//        System.out.println(systemInfo);
-//        System.out.println(memoryInfo);
-//        System.out.println(sysFiles);
-    }
-
     /**
-     *
-     * @return
-     * @throws UnknownHostException
+     * 获取物理机信息
+     * @return MachineInfo
      */
-    public static MachineInfo getMachineInfo() throws UnknownHostException {
-        MachineInfo machineInfo = MachineInfo.builder()
-                    .cpuInfo(getCpuInfo())
-                    .jvmInfo(getJvmInfo())
+    @SneakyThrows
+    public static MachineInfo getMachineInfo(){
+        return MachineInfo.builder()
+                .cpuInfo(getCpuInfo())
+                .jvmInfo(getJvmInfo())
                 .systeminfo(getSystemInfo())
                 .memoryInfo(getMemoryInfo(SizeEnum.GB))
                 .sysFiles(getSysFiles()).build();
-        return machineInfo;
     }
 }
