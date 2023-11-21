@@ -1,5 +1,6 @@
 package com.xw.cloud.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 
@@ -119,6 +120,12 @@ public class WorkloadController {
         return "workload/getVmList";
     }
 
+    /**
+     * 获取json的vmList
+     * @return
+     * @throws IOException
+     * @throws ApiException
+     */
     @RequestMapping(value = "/getVmList/list", method = RequestMethod.GET)
     @ResponseBody
     public ModelAndView getVm() throws IOException, ApiException {
@@ -151,6 +158,113 @@ public class WorkloadController {
         }
 
         return modelAndView;
+
+    }
+
+    /**
+     * 获取json中所有name
+     * @return
+     * @throws IOException
+     * @throws ApiException
+     */
+    @RequestMapping(value = "/getVmList/getVmNameList", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView getVmNameList() throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+
+        try (InputStream inputStream = getClass().getResourceAsStream("/k8s/vm.json")) {
+            // 使用 try-with-resources 来确保文件流在使用完毕后被正确关闭
+
+            if (inputStream == null) {
+                throw new FileNotFoundException("JSON 文件未找到");
+            }
+
+            // 使用 BufferedReader 包装输入流以便逐行读取
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line);
+            }
+
+            String jsonContent = jsonBuilder.toString();
+
+            // 创建 ObjectMapper 实例
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // 将 JSON 字符串解析为对象数组
+            Map<String, String>[] vmArray = objectMapper.readValue(jsonContent, Map[].class);
+
+            // 创建只包含 "name" 属性的新数组
+            String[] namesArray = new String[vmArray.length];
+            for (int i = 0; i < vmArray.length; i++) {
+                namesArray[i] = vmArray[i].get("name");
+            }
+
+            // 输出包含所有 "name" 属性值的数组
+            System.out.println(Arrays.toString(namesArray));
+
+            modelAndView.addObject("vmNameList", namesArray);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return modelAndView;
+
+    }
+
+    /**
+     * 通过json中vm的name获取当前vm对象
+     * @param vmName
+     * @return
+     * @throws IOException
+     * @throws ApiException
+     */
+    @RequestMapping(value = "/getVmList/getVmByName", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView getVmByName(@RequestParam("name") String vmName) throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+
+        try (InputStream inputStream = getClass().getResourceAsStream("/k8s/vm.json")) {
+            // 使用 try-with-resources 来确保文件流在使用完毕后被正确关闭
+
+            if (inputStream == null) {
+                throw new FileNotFoundException("JSON 文件未找到");
+            }
+
+            // 使用 BufferedReader 包装输入流以便逐行读取
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line);
+            }
+
+            String jsonContent = jsonBuilder.toString();
+
+            // 创建 ObjectMapper 实例
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // 将 JSON 字符串解析为对象数组
+            Map<String, Object>[] vmArray = objectMapper.readValue(jsonContent, Map[].class);
+
+            // 遍历数组并根据 name 获取对应的对象
+            for (Map<String, Object> vm : vmArray) {
+                if (vm.get("name").equals(vmName)) {
+                    System.out.println(vm); // 输出包含 name 为 "vm1" 的对象信息
+                    modelAndView.addObject("vm", vm);
+                    return modelAndView;
+                }
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return modelAndView.addObject("error", "not find");
 
     }
 
