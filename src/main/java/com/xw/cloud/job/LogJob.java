@@ -30,6 +30,7 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -95,9 +96,10 @@ public class LogJob {
     @Scheduled(fixedRate = 300000)   //每五分钟执行一次
     public void addPodLog() throws IOException, ApiException, ParseException {
         System.out.println("容器定时添加");
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+// 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
         CoreV1Api api = new CoreV1Api();
         List<PodLog> ans = new LinkedList<>();
@@ -136,7 +138,11 @@ public class LogJob {
                                 l.setSpaces(namesapceName);
                                 l.setAddTime(da);
                                 l.setPodContent(s);
-                                l.setDisplayContent(s.substring(0,100)+"......");
+                                if(s.length() < 100){
+                                    l.setDisplayContent(s+"......");
+                                }else {
+                                    l.setDisplayContent(s.substring(0, 100) + "......");
+                                }
                                 podLogService.save(l);
                             }
                         }
@@ -232,7 +238,11 @@ public class LogJob {
                                 vmLog.setVmName(vname);
                                 vmLog.setAddTime(da);
                                 vmLog.setVmContent(ins);
-                                vmLog.setDisplayContent(ins.substring(0,100)+"......");
+                                if(ins.length() < 100){
+                                    vmLog.setDisplayContent(ins+"......");
+                                }else {
+                                    vmLog.setDisplayContent(ins.substring(0, 100) + "......");
+                                }
                                 vmLogService.save(vmLog);
 
                             }
@@ -263,7 +273,11 @@ public class LogJob {
                     vmLog.setVmName(vname);
                     vmLog.setAddTime(da);
                     vmLog.setVmContent(ins);
-                    vmLog.setDisplayContent(ins.substring(0,100)+"....");
+                    if(ins.length() < 100){
+                        vmLog.setDisplayContent(ins+"......");
+                    }else {
+                        vmLog.setDisplayContent(ins.substring(0, 100) + "......");
+                    }
                     vmLogService.save(vmLog);
                 }
             }
