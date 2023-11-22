@@ -7,11 +7,11 @@ import com.xw.cloud.bean.RequestInfo;
 import com.xw.cloud.bean.VmInfo;
 import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.custom.Quantity;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.swagger.annotations.Api;
@@ -53,7 +53,7 @@ public class VirtuleStorageController {
 
         CoreV1Api api = new CoreV1Api();
 
-        Call call = api.listPersistentVolumeCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listPersistentVolumeCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -274,7 +274,7 @@ public class VirtuleStorageController {
             CoreV1Api api = new CoreV1Api();
 
             V1DeleteOptions deleteOptions = new V1DeleteOptions();
-            api.deletePersistentVolume(persistentVolumeName, null, null, null, null, null, deleteOptions);
+            api.deletePersistentVolume(persistentVolumeName, null, deleteOptions, null, null, null, null);
 
 
             // 获取与要删除的PV相关联的PVC名称（假设关联的PVC名称与PV名称匹配，根据实际情况修改获取PVC名称的方式）
@@ -288,7 +288,7 @@ public class VirtuleStorageController {
 //            );
 
             // 获取所有的持久卷声明（PVC）
-            V1PersistentVolumeClaimList pvcList = api.listPersistentVolumeClaimForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+            V1PersistentVolumeClaimList pvcList = api.listPersistentVolumeClaimForAllNamespaces(null, null, null, null, null, null, null, null);
             for (V1PersistentVolumeClaim pvc : pvcList.getItems()) {
                 String claimVolumeName = pvc.getSpec().getVolumeName();
                 if (claimVolumeName != null && persistentVolumeName.equals(claimVolumeName)) {
@@ -297,7 +297,7 @@ public class VirtuleStorageController {
                     api.deleteNamespacedPersistentVolumeClaim(
                             persistentVolumeClaimName,  // PVC名称
                             pvc.getMetadata().getNamespace(),  // PVC所在的命名空间
-                            null, null, null, null, null, deleteOptions  // 其他参数为null
+                            null, deleteOptions, null, null, null, null  // 其他参数为null
                     );
                     System.out.println("Persistent volume and its related claim deleted successfully");
                     return "Persistent volume and its related claim deleted successfully";
@@ -338,7 +338,7 @@ public class VirtuleStorageController {
 
 
             // 获取当前持久卷的信息
-            V1PersistentVolume persistentVolume = api.readPersistentVolume(persistentVolumeName, null);
+            V1PersistentVolume persistentVolume = api.readPersistentVolume(persistentVolumeName, null,null,null);
             V1PersistentVolumeSpec spec = persistentVolume.getSpec();
 
 //            // 设置新的容量

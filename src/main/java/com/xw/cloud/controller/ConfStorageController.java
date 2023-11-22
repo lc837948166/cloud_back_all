@@ -7,10 +7,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +53,7 @@ public class ConfStorageController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listConfigMapForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listConfigMapForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 
@@ -92,7 +92,7 @@ public class ConfStorageController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listPersistentVolumeClaimForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listPersistentVolumeClaimForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 
@@ -130,7 +130,7 @@ public class ConfStorageController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listSecretForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listSecretForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 

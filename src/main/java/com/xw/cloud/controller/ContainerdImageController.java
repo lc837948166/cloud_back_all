@@ -6,7 +6,7 @@ import com.xw.cloud.bean.RequestInfo;
 import com.xw.cloud.bean.VmInfo;
 import com.xw.cloud.inter.OperationLogDesc;
 import groovy.util.logging.Slf4j;
-import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.ApiException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;

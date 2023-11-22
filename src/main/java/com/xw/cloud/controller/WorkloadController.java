@@ -2,23 +2,23 @@ package com.xw.cloud.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.inter.OperationLogDesc;
-import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.models.V1DeleteOptions;
 
 import io.kubernetes.client.custom.IntOrString;
-import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.Yaml;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1ObjectMeta;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import okhttp3.*;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.BatchV1Api;
-import io.kubernetes.client.openapi.apis.BatchV1beta1Api;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.BatchV1Api;
+import io.kubernetes.client.apis.BatchV1beta1Api;
+import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.util.ClientBuilder;
 
 import io.kubernetes.client.util.KubeConfig;
@@ -71,7 +71,7 @@ public class WorkloadController {
 
         CoreV1Api api = new CoreV1Api();
 
-        Call call = api.listNamespaceCall(null,null, null, null, null, null, null, null, 5, null,null);
+        Call call = (Call) api.listNamespaceCall(null,null, null, null, null, null, 5, null, null, null);
 
         Response response = call.execute();
 
@@ -104,7 +104,7 @@ public class WorkloadController {
         Configuration.setDefaultApiClient(client);
         CoreV1Api api = new CoreV1Api();
 
-        Call call = api.listNodeCall(null,null, null, null, null, null, null, null, 5, null,null);
+        Call call = (Call) api.listNodeCall(null,null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -274,7 +274,7 @@ public class WorkloadController {
 
         BatchV1beta1Api api = new BatchV1beta1Api();
 
-        Call call = api.listCronJobForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listCronJobForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -307,7 +307,7 @@ public class WorkloadController {
 
         AppsV1Api api = new AppsV1Api();
 
-        Call call = api.listDaemonSetForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listDaemonSetForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -341,7 +341,7 @@ public class WorkloadController {
 
         AppsV1Api api = new AppsV1Api();
 
-        Call call = api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -445,7 +445,7 @@ public class WorkloadController {
 
         BatchV1Api api = new BatchV1Api();
 
-        Call call = api.listJobForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listJobForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -468,7 +468,7 @@ public class WorkloadController {
             for (V1Container container : containers) {
                 V1Probe probe = container.getReadinessProbe();
                 if (probe != null) {
-                    io.kubernetes.client.openapi.models.V1HTTPGetAction httpGet = probe.getHttpGet();
+                    io.kubernetes.client.models.V1HTTPGetAction httpGet = probe.getHttpGet();
                     if (httpGet != null) {
                         IntOrString port = httpGet.getPort();
                         if (port != null) {
@@ -506,7 +506,7 @@ public class WorkloadController {
 
         try {
             // 获取集群节点信息
-            V1NodeList nodeList = api.listNode(null, null, null, null, null, null, null, null, null, null);
+            V1NodeList nodeList = api.listNode(null, null, null, null, null, null, null, null);
 
             // 处理节点信息
             for (V1Node node : nodeList.getItems()) {
@@ -515,7 +515,7 @@ public class WorkloadController {
             }
 
             // 获取集群节点信息
-            Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+            Call call = (Call) api.listPodForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
             Response response = call.execute();
 
             // 处理第二次请求的响应
@@ -553,7 +553,7 @@ public class WorkloadController {
         CoreV1Api api = new CoreV1Api();
 
 
-        V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+        V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null);
 
         for (V1Pod pod : podList.getItems()) {
             if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
@@ -565,7 +565,7 @@ public class WorkloadController {
         }
 
         // 发起第二次请求并等待请求完成
-        Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listPodForAllNamespacesCall(null, null, null, null, null, null, 5, null,null , null);
         Response response = call.execute();
 
         // 处理第二次请求的响应
@@ -645,7 +645,7 @@ public class WorkloadController {
         CoreV1Api api = new CoreV1Api();
         try {
             // 获取Pod对象并确定其当前节点名称
-            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null);
+            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null,null,null);
 
 
             // 复制 Pod 对象
@@ -670,7 +670,7 @@ public class WorkloadController {
             // 删除当前 Pod
             V1DeleteOptions deleteOptions = new V1DeleteOptions();
             deleteOptions.setPropagationPolicy("Foreground");
-            api.deleteNamespacedPod(podName, podNamespace, null, null, null, null, null, deleteOptions);
+            api.deleteNamespacedPod(podName, podNamespace, null,deleteOptions, null, null, null, null);
 
             System.out.println("delete successfully");
 
@@ -724,7 +724,7 @@ public class WorkloadController {
         CoreV1Api api = new CoreV1Api();
         try {
             // 获取Pod对象并确定其当前节点名称
-            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null);
+            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null,null,null);
 
 
             // 新建 Pod 对象
@@ -767,7 +767,7 @@ public class WorkloadController {
             // 删除当前 Pod
             V1DeleteOptions deleteOptions = new V1DeleteOptions();
             deleteOptions.setPropagationPolicy("Foreground");
-            api.deleteNamespacedPod(podName, podNamespace, null, null, null, null, null, deleteOptions);
+            api.deleteNamespacedPod(podName, podNamespace, null, deleteOptions, null, null, null, null);
 
             // 在新节点上创建 Pod
 
@@ -980,7 +980,7 @@ public class WorkloadController {
         Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
-        V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
+        V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null);
 
         System.out.println("1234345");
 //    model.addAttribute("podList", podList.getItems());
@@ -1024,7 +1024,7 @@ public class WorkloadController {
         V1DeleteOptions deleteOptions = new V1DeleteOptions();
         deleteOptions.setPropagationPolicy("Foreground");
         try {
-            api.deleteNamespacedPod(podName, podNamespace, null, null, null, null, null, deleteOptions);
+            api.deleteNamespacedPod(podName, podNamespace, null, deleteOptions, null, null, null, null);
 
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
@@ -1069,7 +1069,7 @@ public class WorkloadController {
 
 
             // 获取Pod的当前状态
-            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null);
+            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null,null,null);
 
 
 //      System.out.println("------------------------------------------");
@@ -1132,7 +1132,7 @@ public class WorkloadController {
             newStatus.setMessage("Pod is running successfully");
 
             // 获取Pod的当前状态
-            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null);
+            V1Pod pod = api.readNamespacedPod(podName, podNamespace, null,null,null);
             pod.setStatus(newStatus);
 
             if (pod.getMetadata().getAnnotations() == null) {
@@ -1191,11 +1191,11 @@ public class WorkloadController {
                                 deploymentName,
                     deploymentNamespace,
                     null,
+                    deleteOptions,
                     null,
                     null,
                     null,
-                    null,
-                    deleteOptions
+                   null
                         );
 
             return "Deployment deleted successfully";
@@ -1215,7 +1215,7 @@ public class WorkloadController {
 
         CoreV1Api api = new CoreV1Api();
 
-        Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listPodForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 //    V1PodList podList = api.listPodForAllNamespaces(null,null, null, null, null, null, null, null, null,null );
 //    modelAndView.addObject("result",podList.getItems());
@@ -1249,7 +1249,7 @@ public class WorkloadController {
 
         AppsV1Api api = new AppsV1Api();
 
-        Call call = api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listReplicaSetForAllNamespacesCall(null, null, null, null, null, null, 5, null,null, null);
 
 
         Response response = call.execute();
@@ -1281,7 +1281,7 @@ public class WorkloadController {
 
         CoreV1Api api = new CoreV1Api();
 
-        Call call = api.listReplicationControllerForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) (Call) api.listReplicationControllerForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
@@ -1313,7 +1313,7 @@ public class WorkloadController {
 
         AppsV1Api api = new AppsV1Api();
 
-        Call call = api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listStatefulSetForAllNamespacesCall(null, null, null, null, null, null, 5, null,  null, null);
 
 
         Response response = call.execute();

@@ -6,12 +6,12 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.util.ClientBuilder;
-import io.kubernetes.client.openapi.apis.*;
+import io.kubernetes.client.apis.*;
 import io.kubernetes.client.util.KubeConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -53,9 +53,9 @@ public class DisLoadController {
             ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
     Configuration.setDefaultApiClient(client);
 
-    NetworkingV1Api exV1Api = new NetworkingV1Api();
+    NetworkingV1beta1Api exV1Api = new NetworkingV1beta1Api();
 
-    Call call = exV1Api.listIngressForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) exV1Api.listIngressForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 
@@ -93,7 +93,7 @@ public class DisLoadController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listServiceForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listServiceForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 

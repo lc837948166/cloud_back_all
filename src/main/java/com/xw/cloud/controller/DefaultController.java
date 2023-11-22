@@ -7,11 +7,11 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
 
-import io.kubernetes.client.openapi.apis.*;
+import io.kubernetes.client.apis.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,23 +62,23 @@ public class DefaultController {
     CoreV1Api coreV1Api = new CoreV1Api();
     NetworkingV1Api exV1Api = new NetworkingV1Api();
 
-
+    NetworkingV1beta1Api exbetaV1Api =new NetworkingV1beta1Api();
     Map<String, Call> calls = new HashMap<>();
 
 
-    calls.put("cronjob", beta1Api.listCronJobForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("daemonset", api.listDaemonSetForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("deployment", api.listDeploymentForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("job", dV1Api.listJobForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("replicaset", api.listReplicaSetForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("replication", coreV1Api.listReplicationControllerForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("statefulset", api.listStatefulSetForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("pod", coreV1Api.listPodForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("service", coreV1Api.listServiceForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("ingress", exV1Api.listIngressForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("configmap", coreV1Api.listConfigMapForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("pvc",coreV1Api.listPersistentVolumeClaimForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
-    calls.put("secret",coreV1Api.listSecretForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null));
+    calls.put("cronjob", (Call) beta1Api.listCronJobForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("daemonset", (Call) api.listDaemonSetForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("deployment", (Call) api.listDeploymentForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("job", (Call) dV1Api.listJobForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("replicaset", (Call) api.listReplicaSetForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("replication", (Call) coreV1Api.listReplicationControllerForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("statefulset", (Call) api.listStatefulSetForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("pod", (Call) coreV1Api.listPodForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("service", (Call) coreV1Api.listServiceForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("ingress", (Call) exbetaV1Api.listIngressForAllNamespacesCall(null,null, null, null, null, null, 5,  null,null,null));
+    calls.put("configmap", (Call) coreV1Api.listConfigMapForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("pvc", (Call) coreV1Api.listPersistentVolumeClaimForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
+    calls.put("secret", (Call) coreV1Api.listSecretForAllNamespacesCall(null,null, null, null, null, null, 5, null, null, null));
     System.out.print("123123");
     for(Map.Entry<String, Call> entry : calls.entrySet()){
       Response response = entry.getValue().execute();

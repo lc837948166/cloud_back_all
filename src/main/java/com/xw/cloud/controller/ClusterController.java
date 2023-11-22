@@ -1,17 +1,17 @@
 package com.xw.cloud.controller;
-import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.models.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
-import io.kubernetes.client.openapi.apis.StorageV1Api;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.apis.RbacAuthorizationV1Api;
+import io.kubernetes.client.apis.StorageV1Api;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +42,7 @@ public class ClusterController {
     Configuration.setDefaultApiClient(client);
 
     CoreV1Api api = new CoreV1Api();
-    V1NamespaceList namespaceList = api.listNamespace(null,null, null, null, null, null, null, null, null, null);
+    V1NamespaceList namespaceList = api.listNamespace(null,null, null, null, null, null, null, null);
 
 //    System.out.println("1234345");
 //    model.addAttribute("podList", podList.getItems());
@@ -73,7 +73,7 @@ public class ClusterController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listNamespaceCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listNamespaceCall(null,null, null, null, null, null, 5, null, null, null);
 
     Response response = call.execute();
 
@@ -111,7 +111,7 @@ public class ClusterController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listNodeCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listNodeCall(null,null, null, null, null, null, 5, null, null, null);
 
 
     Response response = call.execute();
@@ -149,7 +149,7 @@ public class ClusterController {
 
     CoreV1Api api = new CoreV1Api();
 
-    Call call = api.listPersistentVolumeCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listPersistentVolumeCall(null,null, null, null, null, null, 5, null, null, null);
 
 
 
@@ -189,8 +189,9 @@ public class ClusterController {
 
     RbacAuthorizationV1Api api = new RbacAuthorizationV1Api();
 
-    Call call = api.listRoleForAllNamespacesCall(null,null, null, null, null, null, null, null, 5, null,null);
-    Call callForCluster = api.listClusterRoleCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call;
+    call = (Call) api.listRoleForAllNamespacesCall(null,null, null, null, null, null, 5, null,null , null);
+    Call callForCluster = (Call) api.listClusterRoleCall(null,null, null, null, null, null, 5, null, null, null);
 
     Response response = call.execute();
     Response responseForCluster = callForCluster.execute();
@@ -230,7 +231,7 @@ public class ClusterController {
 
     StorageV1Api api = new StorageV1Api();
 
-    Call call = api.listStorageClassCall(null,null, null, null, null, null, null, null, 5, null,null);
+    Call call = (Call) api.listStorageClassCall(null,null, null, null, null, null, 5, null, null, null);
 
     Response response = call.execute();
 

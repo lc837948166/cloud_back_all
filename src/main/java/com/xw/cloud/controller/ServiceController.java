@@ -3,12 +3,12 @@ package com.xw.cloud.controller;
 import com.xw.cloud.bean.DeploymentInfo;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Yaml;
@@ -64,7 +64,7 @@ public class ServiceController {
         //创建时间
         System.out.println("service的信息"+service.getMetadata().getCreationTimestamp());*/
 
-        Call call2 = api2.listNamespacedServiceCall("default", null,null, null, null, null, null, null, null, null, null, null);
+        Call call2 = (Call) api2.listNamespacedServiceCall("default", null,null, null, null, null, null, null, null, null, null);
         Response response = call2.execute();
         System.out.print(response);
         if (!response.isSuccessful()) {

@@ -14,14 +14,14 @@ import com.xw.cloud.resp.SelectResp;
 import com.xw.cloud.service.impl.OperationLogServiceImpl;
 import com.xw.cloud.service.impl.PodLogServiceImpl;
 import com.xw.cloud.service.impl.VMLogServiceImpl;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1NamespaceList;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.V1Namespace;
+import io.kubernetes.client.models.V1NamespaceList;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1PodList;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.swagger.annotations.Api;
@@ -190,17 +190,17 @@ public class LogController {
         CoreV1Api api = new CoreV1Api();
         List<PodLog> ans = new LinkedList<>();
         // 获取Pod的日志
-        V1NamespaceList v1NamespaceList = api.listNamespace(null,null,null,null,null,null,null,null,null,null);
+        V1NamespaceList v1NamespaceList = api.listNamespace(null,null,null,null,null,null,null,null);
         List<V1Namespace> items = v1NamespaceList.getItems();
         for(V1Namespace v1: items){
             String namesapceName = v1.getMetadata().getName();
 
-            V1PodList v1PodList = api.listNamespacedPod(namesapceName, null, null, null, null, null, null, null, null, null, null);
+            V1PodList v1PodList = api.listNamespacedPod(namesapceName, null, null, null, null, null, null, null, null);
             for (V1Pod pod : v1PodList.getItems()) {
                 String name = pod.getMetadata().getName();
                 String podLogs = null;
                 try {
-                    podLogs = api.readNamespacedPodLog(name, namesapceName, null,null, null, null, null, null, null, null, true);
+                    podLogs = api.readNamespacedPodLog(name, namesapceName, null,null, null, null, null, null, null, null);
                 }catch (ApiException ae){
 
                 }
@@ -231,7 +231,7 @@ public class LogController {
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
         CoreV1Api api = new CoreV1Api();
-        V1NamespaceList v1NamespaceList = api.listNamespace(null,null,null,null,null,null,null,null,null,null);
+        V1NamespaceList v1NamespaceList = api.listNamespace(null,null,null,null,null,null,null,null);
         List<V1Namespace> items = v1NamespaceList.getItems();
        /* HashMap<String, List<String>> cas = new HashMap<>();
         for(V1Namespace v1: items){
@@ -251,7 +251,7 @@ public class LogController {
             cass.setLabel(namesapceName);
             cass.setValue(namesapceName);
             List<CasResp> pods = new LinkedList<>();
-            V1PodList v1PodList = api.listNamespacedPod(namesapceName, null, null, null, null, null, null, null, null, null, null);
+            V1PodList v1PodList = api.listNamespacedPod(namesapceName, null, null, null, null, null, null, null, null);
             for (V1Pod pod : v1PodList.getItems()) {
                 CasResp po = new CasResp();
                 po.setLabel(pod.getMetadata().getName());

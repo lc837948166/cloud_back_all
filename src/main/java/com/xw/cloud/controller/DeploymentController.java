@@ -2,12 +2,12 @@ package com.xw.cloud.controller;
 
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
-import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Yaml;
@@ -65,7 +65,7 @@ public class DeploymentController {
             appsApi.deleteNamespacedDeployment(deploymentName, "default", null, null, null, null, null, null);
 
             // 删除 Service
-            V1ServiceList serviceList = api.listNamespacedService("default", null, null, null, null, null, null, null, null, null, null);
+            V1ServiceList serviceList = api.listNamespacedService("default", null, null, null, null, null, null, null, null);
             for (V1Service service : serviceList.getItems()) {
                 if (deploymentName.equals(getServiceLabelValue(service, "app"))) {
                     api.deleteNamespacedService(service.getMetadata().getName(), "default", null, null, null, null, null, null);
@@ -191,7 +191,7 @@ public class DeploymentController {
 
         AppsV1Api api = new AppsV1Api();
 
-        Call call = api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
+        Call call = (Call) api.listDeploymentForAllNamespacesCall(null, null, null, null, null, null, 5, null, null, null);
 
 
         Response response = call.execute();
