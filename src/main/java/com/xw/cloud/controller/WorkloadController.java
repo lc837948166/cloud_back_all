@@ -9,6 +9,8 @@ import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.Yaml;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import okhttp3.*;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -43,7 +45,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-
+@Api(tags= "工作负载管理", description = "控制器用于管理 Kubernetes 工作负载，包括 Pods、Deployments、StatefulSets 等")
 @Controller
 @CrossOrigin
 @RequestMapping("workload")
@@ -52,12 +54,13 @@ public class WorkloadController {
     private String k8sConfig;
 
 
-
+    @ApiOperation(value = "获取命名空间页面", notes = "返回用于展示 Kubernetes 命名空间信息的页面。")
     @RequestMapping(value = "/namespace", method = RequestMethod.GET)
     public String namespace(){
         return "workload/namespace";
     }
 
+    @ApiOperation(value = "获取命名空间列表", notes = "获取 Kubernetes 集群中所有命名空间的列表。")
     @RequestMapping(value = "/namespace/list", method = RequestMethod.GET)
     public ModelAndView getNamespaceList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -83,12 +86,13 @@ public class WorkloadController {
     }
 
 
-
+    @ApiOperation(value = "获取节点页面", notes = "返回用于展示 Kubernetes 节点信息的页面。")
     @RequestMapping(value = "/node", method = RequestMethod.GET)
     public String node(){
         return "workload/node";
     }
 
+    @ApiOperation(value = "获取节点列表", notes = "获取 Kubernetes 集群中所有节点的列表。")
     @RequestMapping(value = "/node/list", method = RequestMethod.GET)
     public ModelAndView getNodeList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -120,12 +124,8 @@ public class WorkloadController {
         return "workload/getVmList";
     }
 
-    /**
-     * 获取json的vmList
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+
+    @ApiOperation(value = "获取虚拟机列表", notes = "获取 Kubernetes 集群中的所有虚拟机列表。")
     @RequestMapping(value = "/getVmList/list", method = RequestMethod.GET)
     @ResponseBody
     public ModelAndView getVm() throws IOException, ApiException {
@@ -161,12 +161,7 @@ public class WorkloadController {
 
     }
 
-    /**
-     * 获取json中所有name
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "获取虚拟机名称列表", notes = "从 JSON 文件中获取所有虚拟机的名称列表。")
     @RequestMapping(value = "/getVmList/getVmNameList", method = RequestMethod.GET)
     @ResponseBody
     public ModelAndView getVmNameList() throws IOException, ApiException {
@@ -214,13 +209,7 @@ public class WorkloadController {
 
     }
 
-    /**
-     * 通过json中vm的name获取当前vm对象
-     * @param vmName
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "根据名称获取虚拟机", notes = "根据提供的虚拟机名称从 JSON 文件中获取对应的虚拟机信息。")
     @RequestMapping(value = "/getVmList/getVmByName", method = RequestMethod.GET)
     @ResponseBody
     public ModelAndView getVmByName(@RequestParam("name") String vmName) throws IOException, ApiException {
@@ -268,11 +257,13 @@ public class WorkloadController {
 
     }
 
+    @ApiOperation(value = "获取定时任务页面", notes = "返回用于展示 Kubernetes 定时任务信息的页面。")
     @RequestMapping(value = "cronjob", method = RequestMethod.GET)
     public String cronjob() {
         return "workload/cronjob";
     }
 
+    @ApiOperation(value = "获取定时任务列表", notes = "获取 Kubernetes 集群中所有定时任务的列表。")
     @RequestMapping(value = "cronjob/list", method = RequestMethod.GET)
     public ModelAndView getCronjobList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -298,11 +289,14 @@ public class WorkloadController {
         return modelAndView;
     }
 
+
+    @ApiOperation(value = "获取守护进程集页面", notes = "返回用于展示 Kubernetes 守护进程集信息的页面。")
     @RequestMapping(value = "/daemonset", method = RequestMethod.GET)
     public String daemonset() {
         return "workload/daemonset";
     }
 
+    @ApiOperation(value = "获取守护进程集列表", notes = "获取 Kubernetes 集群中所有守护进程集的列表。")
     @RequestMapping(value = "/daemonset/list", method = RequestMethod.GET)
     public ModelAndView getDaemonsetList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -328,11 +322,13 @@ public class WorkloadController {
         return modelAndView;
     }
 
+    @ApiOperation(value = "获取部署页面", notes = "返回用于展示 Kubernetes 部署信息的页面。")
     @RequestMapping(value = "/deployment", method = RequestMethod.GET)
     public String deployment() {
         return "workload/deployment";
     }
 
+    @ApiOperation(value = "获取部署列表", notes = "获取 Kubernetes 集群中所有部署的列表。")
     @RequestMapping(value = "/deployment/list", method = RequestMethod.GET)
     public ModelAndView getDeploymentList() throws IOException, ApiException {
 
@@ -360,11 +356,13 @@ public class WorkloadController {
         return modelAndView;
     }
 
+
     @RequestMapping(value = "/createDeployment", method = RequestMethod.GET)
     public String createDeployment() {
         return "workload/createDeployment";
     }
 
+    @ApiOperation(value = "创建部署", notes = "通过上传的 YAML 文件创建 Kubernetes 部署。")
     @RequestMapping(value = "/createDeployment", method = RequestMethod.POST)
     @ResponseBody
     public String createDeployment(@RequestParam("yamlFile") MultipartFile yamlFile) throws IOException, ApiException {
@@ -430,12 +428,13 @@ public class WorkloadController {
         return "Deployment created successfully.";
     }
 
-
+    @ApiOperation(value = "获取作业页面", notes = "返回用于展示 Kubernetes 作业信息的页面。")
     @RequestMapping(value = "/job", method = RequestMethod.GET)
     public String job() {
         return "workload/job";
     }
 
+    @ApiOperation(value = "获取作业列表", notes = "获取 Kubernetes 集群中所有作业的列表。")
     @RequestMapping(value = "/job/list", method = RequestMethod.GET)
     public ModelAndView getJobList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -461,6 +460,7 @@ public class WorkloadController {
         return modelAndView;
     }
 
+    @ApiOperation(value = "获取集群信息", notes = "获取 Kubernetes 集群的节点信息。")
     private void convertIntOrStringToString(V1PodList podList) {
         List<V1Pod> items = podList.getItems();
         for (V1Pod pod : items) {
@@ -490,13 +490,7 @@ public class WorkloadController {
 //    return "workload/pod";
 //  }
 
-    /**
-     * 获取集群信息
-     *
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+
     @RequestMapping(value = "/getNodeList", method = RequestMethod.GET)
     @OperationLogDesc(module = "容器管理", events = "获取节点")
     public ModelAndView getNode() throws IOException, ApiException {
@@ -544,13 +538,7 @@ public class WorkloadController {
 
     }
 
-    /**
-     * 获取pod列表
-     *
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "获取 Pod列表", notes = "从json中获取所有的pod。")
     @RequestMapping(value = "/getPodList", method = RequestMethod.GET)
     @OperationLogDesc(module = "容器管理", events = "获取容器列表")
     public ModelAndView getPod() throws IOException, ApiException {
@@ -623,14 +611,7 @@ public class WorkloadController {
 //  }
 
 
-    /**
-     * 迁移pod
-     *
-     * @param podName
-     * @param podNamespace
-     * @param model
-     * @return
-     */
+
     @RequestMapping(value = "/editPod", method = RequestMethod.GET)
     public String editPod(@RequestParam("podName") String podName,
                           @RequestParam("podNamespace") String podNamespace,
@@ -642,14 +623,7 @@ public class WorkloadController {
         return "workload/editPod";
     }
 
-    /**
-     * 通过pod名、命名空间，新的节点名迁移镜像（前端给新的节点名）
-     *
-     * @param podinfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "编辑 Pod", notes = "通过 Pod 名称和命名空间编辑 Pod。")
     @RequestMapping(value = "/editPod", method = RequestMethod.POST)
     @ResponseBody
 //    public String editPod(@RequestParam("podName") String podName,
@@ -725,14 +699,7 @@ public class WorkloadController {
         }
     }
 
-    /**
-     * 通过pod名、命名空间以及新的容器信息配置镜像
-     *
-     * @param podinfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "配置容器镜像", notes = "通过 Pod 名称、命名空间和新的容器信息来配置镜像。")
     @RequestMapping(value = "/configureImage", method = RequestMethod.POST)
     @ResponseBody
 //    public String configureImage(@RequestParam("podName") String podName,
@@ -827,10 +794,7 @@ public class WorkloadController {
     }
 
 
-    /**
-     * 通过pod名、命名空间、节点名和容器信息创建pod
-     * @return
-     */
+    @ApiOperation(value = "创建 Pod", notes = "通过 Pod 名称、命名空间、节点名和容器信息创建新的 Pod。")
     @RequestMapping(value = "/createPod", method = RequestMethod.GET)
 
     public String createPod() {
@@ -1032,14 +996,7 @@ public class WorkloadController {
         return "workload/pod";
     }
 
-    /**
-     * 通过pod名和命名空间删除pod
-     *
-     * @param podinfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "删除 Pod", notes = "通过 Pod 名称和命名空间删除指定的 Pod。")
     @RequestMapping(value = "/deletePod", method = RequestMethod.POST)
     @ResponseBody
 //    public String deletePod(@RequestParam("podName") String podName, @RequestParam("podNamespace") String podNamespace) throws IOException, ApiException {
@@ -1081,14 +1038,7 @@ public class WorkloadController {
 //    return "success";
     }
 
-    /**
-     * 通过pod名和命名空间停止pod
-     *
-     * @param podinfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "停止 Pod", notes = "通过 Pod 名称和命名空间来停止指定的 Pod。")
     @RequestMapping(value = "/stopPod", method = RequestMethod.POST)
     @ResponseBody
 //    public String stopPod(@RequestParam("podName") String podName, @RequestParam("podNamespace") String podNamespace) throws IOException, ApiException {
@@ -1150,14 +1100,7 @@ public class WorkloadController {
         }
     }
 
-    /**
-     * 通过pod名和命名空间启动pod
-     *
-     * @param podinfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "启动 Pod", notes = "通过 Pod 名称和命名空间来启动指定的 Pod。")
     @RequestMapping(value = "/startPod", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "容器管理", events = "启动容器")
@@ -1212,7 +1155,7 @@ public class WorkloadController {
         }
     }
 
-
+    @ApiOperation(value = "删除部署", notes = "通过部署名称和命名空间来删除指定的 Kubernetes 部署。")
     @RequestMapping(value = "/deleteDeployment", method = RequestMethod.POST)
     @ResponseBody
     public String deleteDeployment(@RequestParam String deploymentName, @RequestParam String deploymentNamespace) throws IOException, ApiException {
@@ -1261,7 +1204,7 @@ public class WorkloadController {
         }
     }
 
-
+    @ApiOperation(value = "获取 Pod 列表", notes = "获取当前 Kubernetes 集群中所有 Pod 的列表。")
     @RequestMapping(value = "/pod/list", method = RequestMethod.GET)
     public ModelAndView getPodList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -1289,12 +1232,13 @@ public class WorkloadController {
 
         return modelAndView;
     }
-
+    @ApiOperation(value = "获取副本集页面", notes = "返回用于展示 Kubernetes 副本集信息的页面。")
     @RequestMapping(value = "/replicaset", method = RequestMethod.GET)
     public String replicaset() {
         return "workload/replicaset";
     }
 
+    @ApiOperation(value = "获取副本集列表", notes = "获取 Kubernetes 集群中所有副本集的列表。")
     @RequestMapping(value = "/replicaset/list", method = RequestMethod.GET)
     public ModelAndView getReplicasetList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -1320,11 +1264,13 @@ public class WorkloadController {
         return modelAndView;
     }
 
+    @ApiOperation(value = "获取复制控制器页面", notes = "返回用于展示 Kubernetes 复制控制器信息的页面。")
     @RequestMapping(value = "/replication", method = RequestMethod.GET)
     public String replication() {
         return "/workload/replication";
     }
 
+    @ApiOperation(value = "获取复制控制器列表", notes = "获取 Kubernetes 集群中所有复制控制器的列表。")
     @RequestMapping(value = "/replication/list", method = RequestMethod.GET)
     public ModelAndView getReplicationList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -1350,11 +1296,13 @@ public class WorkloadController {
         return modelAndView;
     }
 
+    @ApiOperation(value = "获取有状态集页面", notes = "返回用于展示 Kubernetes 有状态集信息的页面。")
     @RequestMapping(value = "/statefulset", method = RequestMethod.GET)
     public String statefulset() {
         return "workload/statefulset";
     }
 
+    @ApiOperation(value = "获取有状态集列表", notes = "获取 Kubernetes 集群中所有有状态集的列表。")
     @RequestMapping(value = "/statefulset/list", method = RequestMethod.GET)
     public ModelAndView getStatefulsetList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");

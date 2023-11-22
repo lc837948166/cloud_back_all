@@ -1,5 +1,7 @@
 package com.xw.cloud.controller;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -7,21 +9,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-
+@Api(tags = "用户管理",value = "用户管理", description = "用户控制器，用于处理用户登录、注销等操作")
 @Controller
 public class UserController {
 
-    /**
-     * 跳转登录页面
-     */
+
+    @ApiOperation(value = "跳转登录页面", notes = "导航到登录页面")
     @RequestMapping(value = {"/"})
     public String toLogin() {
         return "login";
     }
 
-    /**
-     * 登录
-     */
+    @ApiOperation(value = "用户登录", notes = "处理用户登录请求")
     @RequestMapping(value = {"/login"})
     public String login(@RequestParam(value = "username", required = true) String userName,
                         @RequestParam(value = "password", required = true) String password,
@@ -35,9 +34,7 @@ public class UserController {
         return "login";
     }
 
-    /**
-     * 注销
-     */
+    @ApiOperation(value = "用户注销", notes = "处理用户注销请求")
     @RequestMapping(value = "/loginOut", method = RequestMethod.GET)
     public String loginOut(HttpSession session) {
         if (session.getAttribute("loginUser") != null) {
