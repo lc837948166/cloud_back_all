@@ -7,6 +7,10 @@ import com.xw.cloud.bean.VmInfo;
 import com.xw.cloud.inter.OperationLogDesc;
 import groovy.util.logging.Slf4j;
 import io.kubernetes.client.openapi.ApiException;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,20 +23,21 @@ import java.io.InputStream;
 @Controller
 @CrossOrigin
 @RequestMapping("/containerd")
+@Api(tags = "Containerd 镜像管理", description = "管理 Kubernetes 容器中的镜像")
 public class ContainerdImageController {
 
-
+    @ApiOperation(value = "查看镜像页面", notes = "返回容器化镜像页面的路径")
     @RequestMapping(value = "/images", method = RequestMethod.GET)
     public String container() {
         return "containerd/images";
     }
 
-    /**
-     * 通过节点ip、用户名和密码查询镜像
-     * @param vmInfo
-     * @return
-     * @throws IOException
-     */
+
+    @ApiOperation(value = "获取镜像列表", notes = "通过节点 IP、用户名和密码查询镜像列表")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "成功返回镜像列表"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @RequestMapping(value = "/images/list", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "获取镜像列表")
@@ -225,20 +230,19 @@ public class ContainerdImageController {
     }
 
 
+    @ApiOperation(value = "上传镜像页面", notes = "返回上传镜像的页面路径")
     @RequestMapping(value = "/uploadImage", method = RequestMethod.GET)
     public String createPod() {
         return "containerd/uploadImage";
     }
 
-    /**
-     * 通过节点ip、用户名和密码，镜像文件实现上传并创建镜像
-     * @param tarFile
-     * @param virtualMachineIp
-     * @param userName
-     * @param userPassword
-     * @return
-     * @throws IOException
-     */
+
+
+    @ApiOperation(value = "上传并创建镜像", notes = "通过节点 IP、用户名和密码上传并创建镜像")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "镜像上传成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @RequestMapping(value = "/uploadImage", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "上传并导入镜像")
@@ -347,14 +351,13 @@ public class ContainerdImageController {
         }*/
     }
 
-    /**
-     * 通过节点ip、用户名和密码，镜像ID删除镜像
-     *
-     * @param requestInfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+
+
+    @ApiOperation(value = "删除镜像", notes = "通过节点 IP、用户名和密码，以及镜像 ID 删除镜像")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "镜像删除成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @RequestMapping(value = "/deleteImage", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "删除镜像")

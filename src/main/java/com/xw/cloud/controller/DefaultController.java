@@ -1,6 +1,10 @@
 package com.xw.cloud.controller;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
 import io.kubernetes.client.openapi.ApiClient;
@@ -24,15 +28,25 @@ import java.util.Map;
 import java.io.FileReader;
 @CrossOrigin
 @Controller
+@Api(tags = "Kubernetes 集群概览", description = "提供 Kubernetes 集群的不同资源的概览信息")
 public class DefaultController {
   @Value("${k8s.config}")
   private String k8sConfig;
 
+
+  @ApiOperation(value = "查看概览页面", notes = "返回集群概览页面的路径")
   @RequestMapping(value = "/overview", method = RequestMethod.GET)
   public String overview(){
     return "overview";
   }
 
+
+
+  @ApiOperation(value = "加载集群概览数据", notes = "获取集群中各种资源的概览信息")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功加载概览数据"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/overview/load", method = RequestMethod.GET)
   public ModelAndView overviewLoad() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");

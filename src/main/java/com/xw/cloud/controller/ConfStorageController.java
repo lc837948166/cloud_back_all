@@ -1,6 +1,10 @@
 package com.xw.cloud.controller;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
 import io.kubernetes.client.openapi.ApiClient;
@@ -22,16 +26,23 @@ import java.io.IOException;
 @CrossOrigin
 @Controller
 @RequestMapping("confstorage")
+@Api(tags = "配置存储管理", description = "处理与Kubernetes配置存储相关的操作")
 public class ConfStorageController {
 
   @Value("${k8s.config}")
   private String k8sConfig;
-
+  @ApiOperation(value = "获取配置映射视图", notes = "返回配置映射视图的路径")
   @RequestMapping(value = "/configmap", method = RequestMethod.GET)
   public String configmap(){
     return "confstorage/configmap";
   }
 
+
+  @ApiOperation(value = "获取配置映射列表", notes = "返回所有配置映射的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回配置映射列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/configmap/list", method = RequestMethod.GET)
   public ModelAndView getConfigmapList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -58,11 +69,19 @@ public class ConfStorageController {
     return modelAndView;
   }
 
+
+  @ApiOperation(value = "获取持久化卷申请视图", notes = "返回持久化卷申请视图的路径")
   @RequestMapping(value = "/pvc", method = RequestMethod.GET)
   public String pvc(){
     return "confstorage/pvc";
   }
 
+
+  @ApiOperation(value = "获取持久化卷申请列表", notes = "返回所有持久化卷申请的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回持久化卷申请列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/pvc/list", method = RequestMethod.GET)
   public ModelAndView getPvcList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -89,11 +108,18 @@ public class ConfStorageController {
     return modelAndView;
   }
 
+  @ApiOperation(value = "获取密钥视图", notes = "返回密钥视图的路径")
   @RequestMapping(value = "/secret", method = RequestMethod.GET)
   public String secret(){
     return "confstorage/secret";
   }
 
+
+  @ApiOperation(value = "获取密钥列表", notes = "返回所有密钥的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回密钥信息列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/secret/list", method = RequestMethod.GET)
   public ModelAndView getSecretList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");

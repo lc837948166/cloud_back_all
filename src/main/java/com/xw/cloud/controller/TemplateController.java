@@ -4,6 +4,7 @@ import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.mapper.TemplateMapper;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.service.LibvirtService;
+import io.swagger.annotations.Api;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +20,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
 import javax.annotation.Resource;
-
+@Api(tags = "模版管理", description = "提供模版管理")
 @CrossOrigin
 @Controller
 @RequestMapping("/Template")

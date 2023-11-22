@@ -1,5 +1,9 @@
 package com.xw.cloud.controller;
 import io.kubernetes.client.openapi.models.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
 import io.kubernetes.client.openapi.ApiClient;
@@ -24,6 +28,7 @@ import java.io.IOException;
 @CrossOrigin
 @Controller
 @RequestMapping(value = "/cluster")
+@Api(tags = "集群管理", description = "处理与Kubernetes集群相关的操作")
 public class ClusterController {
 
   @Value("${k8s.config}")
@@ -46,12 +51,18 @@ public class ClusterController {
 //    return "workload/getPodList";
     return model;
   }
-
+  @ApiOperation(value = "获取命名空间视图", notes = "返回命名空间视图的路径")
   @RequestMapping(value = "/namespace", method = RequestMethod.GET)
   public String namespace(){
     return "cluster/namespace";
   }
 
+
+  @ApiOperation(value = "获取命名空间列表", notes = "返回Kubernetes集群中所有命名空间的列表")
+  @ApiResponses(value = {
+          @ApiResponse(code = 200, message = "成功获取命名空间列表"),
+          @ApiResponse(code = 500, message = "服务器内部错误")
+  })
   @RequestMapping(value = "/namespace/list", method = RequestMethod.GET)
   public ModelAndView getNamespaceList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -77,12 +88,19 @@ public class ClusterController {
   }
 
 
-
+  @ApiOperation(value = "获取节点视图", notes = "返回节点视图的路径")
   @RequestMapping(value = "/node", method = RequestMethod.GET)
   public String node(){
     return "cluster/node";
   }
 
+
+
+  @ApiOperation(value = "获取节点列表", notes = "返回所有节点的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回节点列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/node/list", method = RequestMethod.GET)
   public ModelAndView getNodeList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -108,11 +126,19 @@ public class ClusterController {
     return modelAndView;
   }
 
+  @ApiOperation(value = "获取持久卷视图", notes = "返回持久卷视图的路径")
   @RequestMapping(value = "/pv", method = RequestMethod.GET)
   public String pv(){
     return "cluster/pv";
   }
 
+
+
+  @ApiOperation(value = "获取持久卷列表", notes = "返回所有持久卷的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回持久卷列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/pv/list", method = RequestMethod.GET)
   public ModelAndView getPvList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -139,11 +165,19 @@ public class ClusterController {
     return modelAndView;
   }
 
+
+  @ApiOperation(value = "获取角色视图", notes = "返回角色视图的路径")
   @RequestMapping(value = "/role", method = RequestMethod.GET)
   public String role(){
     return "cluster/role";
   }
 
+
+  @ApiOperation(value = "获取角色列表", notes = "返回所有角色的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回角色列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/role/list", method = RequestMethod.GET)
   public ModelAndView getRoleList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -172,11 +206,19 @@ public class ClusterController {
     return modelAndView;
   }
 
+  @ApiOperation(value = "获取存储类视图", notes = "返回存储类视图的路径")
   @RequestMapping(value = "/storageclass", method = RequestMethod.GET)
   public String storageclass(){
     return "cluster/storageclass";
   }
 
+
+
+  @ApiOperation(value = "获取存储类列表", notes = "返回所有存储类的列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功返回存储类列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/storageclass/list", method = RequestMethod.GET)
   public ModelAndView getStorageclassList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");

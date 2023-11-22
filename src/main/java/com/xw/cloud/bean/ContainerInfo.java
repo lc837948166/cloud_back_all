@@ -1,10 +1,19 @@
 package com.xw.cloud.bean;
 
-public class ContainerInfo {
-    private String containerName;
-    private String containerImage;
-    private int port;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
+@ApiModel(description = "容器信息") // 描述整个类
+public class ContainerInfo {
+
+    @ApiModelProperty(value = "容器名称", example = "myapp-container")
+    private String containerName;
+
+    @ApiModelProperty(value = "容器镜像", example = "myapp-image:latest")
+    private String containerImage;
+
+    @ApiModelProperty(value = "容器端口号", example = "8080")
+    private int port;
 
     public String getContainerName() {
         return containerName;

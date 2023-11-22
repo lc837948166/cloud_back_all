@@ -1,11 +1,24 @@
 package com.xw.cloud.bean;
-
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+@ApiModel(description = "请求信息")
 public class RequestInfo {
+    @ApiModelProperty(value = "Pod信息")
     private PodInfo podInfo;
+
+    @ApiModelProperty(value = "持久卷声明信息")
     private PvcInfo pvcInfo;
+
+    @ApiModelProperty(value = "容器信息")
     private ContainerInfo containerInfo;
+
+    @ApiModelProperty(value = "镜像信息")
     private ImageInfo imageInfo;
+
+    @ApiModelProperty(value = "物理卷信息")
     private PvInfo pvInfo;
+
+    @ApiModelProperty(value = "虚拟机信息")
     private VmInfo vmInfo;
 
     public RequestInfo() {

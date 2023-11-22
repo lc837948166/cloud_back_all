@@ -7,6 +7,10 @@ import com.jcraft.jsch.Session;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.ImgFile;
 import com.xw.cloud.service.ImagesService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.util.List;
 
+@Api(tags = "镜像管理", description = "管理和操作镜像文件")
 @CrossOrigin
 @Controller
 @RequestMapping("/Images")
@@ -25,7 +30,7 @@ public class ImagesController {
     @Resource(name = "imagesService")
     private ImagesService imagesService;
 
-
+    @ApiOperation(value = "获取镜像列表", notes = "列出所有可用的镜像文件")
     @ResponseBody
     @RequestMapping("/imgList")
     public CommentResp imgList() {
@@ -34,6 +39,12 @@ public class ImagesController {
         return new CommentResp(true, imgList,"");
     }
 
+
+    @ApiOperation(value = "添加镜像", notes = "上传并添加新的镜像文件")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "添加镜像成功"),
+            @ApiResponse(code = 500, message = "服务器错误或镜像添加失败")
+    })
     @ResponseBody
     @RequestMapping("/addImg")  //前端要用post请求
     public CommentResp addImg(@RequestPart("file") MultipartFile file) {
@@ -41,6 +52,12 @@ public class ImagesController {
         if(result)return new CommentResp(true, null,"添加镜像成功");
         else return new CommentResp(true, null,"添加镜像失败,与其他镜像名重复！");
     }
+
+    @ApiOperation(value = "删除镜像", notes = "根据名称删除指定的镜像文件")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 500, message = "删除失败")
+    })
     @ResponseBody
     @RequestMapping("/deleteImg")
     public CommentResp deleteImg(@RequestParam("name") String name) {
@@ -49,6 +66,11 @@ public class ImagesController {
         else return new CommentResp(true, null,"删除失败");
     }
 
+    @ApiOperation(value = "下载镜像", notes = "根据名称下载指定的镜像文件")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "下载成功"),
+            @ApiResponse(code = 500, message = "下载失败")
+    })
     @ResponseBody
     @RequestMapping("/downImg")
     public CommentResp downImg(@RequestParam("name") String name, HttpServletResponse response) {
@@ -58,6 +80,11 @@ public class ImagesController {
     }
 
 
+    @ApiOperation(value = "克隆虚拟机镜像", notes = "根据模板名称克隆新的虚拟机镜像")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "克隆成功"),
+            @ApiResponse(code = 500, message = "克隆失败")
+    })
     @ResponseBody
     @RequestMapping(value = "/1addImg", method = RequestMethod.GET)
     public CommentResp cloneFromTemplate(@RequestParam("1name") String name,

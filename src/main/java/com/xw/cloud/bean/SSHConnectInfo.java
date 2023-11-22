@@ -1,16 +1,20 @@
 package com.xw.cloud.bean;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.springframework.web.socket.WebSocketSession;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
-import org.springframework.web.socket.WebSocketSession;
-/**
-* @Description: ssh连接信息
-* @Author: NoCortY
-* @Date: 2020/3/8
-*/
+
+@ApiModel(description = "SSH连接信息")
 public class SSHConnectInfo {
+    @ApiModelProperty(value = "WebSocket会话")
     private WebSocketSession webSocketSession;
+
+    @ApiModelProperty(value = "JSch对象")
     private JSch jSch;
+
+    @ApiModelProperty(value = "SSH通道")
     private Channel channel;
 
 
