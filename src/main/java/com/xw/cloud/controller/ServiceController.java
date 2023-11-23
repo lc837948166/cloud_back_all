@@ -12,6 +12,8 @@ import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Yaml;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import okhttp3.Call;
 import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
-
+@Api(tags = "Kubernetes 服务管理", description = "处理和管理 Kubernetes 中的服务")
 @CrossOrigin
 @Controller
 @RequestMapping("service")
@@ -39,6 +41,8 @@ public class ServiceController {
 
     private static final String KUBERNETES_API_SERVER = "https://192.168.243.143:6443";
 
+
+    @ApiOperation(value = "获取服务列表", notes = "获取 Kubernetes 默认命名空间中所有服务的列表")
     @CrossOrigin
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public ModelAndView getDeploymentList() throws IOException, ApiException {

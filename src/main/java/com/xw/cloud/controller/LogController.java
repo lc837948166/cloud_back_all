@@ -24,6 +24,8 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -40,6 +42,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+@Api(tags = "日志管理", description = "处理和管理不同类型的日志")
 @Controller
 @CrossOrigin
 @RequestMapping("log")
@@ -63,6 +66,7 @@ public class LogController {
     @Autowired
     private VMLogServiceImpl vmLogService;
 
+    @ApiOperation(value = "获取操作日志列表", notes = "根据条件获取操作日志列表")
     @RequestMapping(value = "/getLogList", method = RequestMethod.GET)
     @ResponseBody
     @OperationLogDesc(module = "日志管理", events = "列表查询")
@@ -87,6 +91,7 @@ public class LogController {
         return com;
     }
 
+    @ApiOperation(value = "删除操作日志", notes = "根据ID删除指定的操作日志")
     @DeleteMapping(value = "/deleteLog/{id}")
     @ResponseBody
     @OperationLogDesc(module = "日志管理", events = "日志删除")
@@ -96,6 +101,7 @@ public class LogController {
         return com;
     }
 
+    @ApiOperation(value = "删除容器日志", notes = "根据ID删除指定的容器日志")
     @DeleteMapping(value = "/deletePodLog/{id}")
     @ResponseBody
     @OperationLogDesc(module = "日志管理", events = "容器日志删除")
@@ -105,6 +111,7 @@ public class LogController {
         return com;
     }
 
+    @ApiOperation(value = "获取虚拟机日志", notes = "根据条件获取虚拟机日志")
     @RequestMapping(value = "/getVMLog", method = RequestMethod.GET)
     @ResponseBody
     public CommentResp getVMLog(@RequestParam("VMName") String VMName,
@@ -125,6 +132,7 @@ public class LogController {
         return com;
     }
 
+    @ApiOperation(value = "删除虚拟机日志", notes = "根据ID删除指定的虚拟机日志")
     @DeleteMapping(value = "/deleteVMLog/{id}")
     @ResponseBody
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志删除")
@@ -135,6 +143,7 @@ public class LogController {
     }
 
 
+    @ApiOperation(value = "获取Pod日志", notes = "根据条件获取Pod日志")
     //前端调用方法  从数据库读取日志
     @RequestMapping(value = "/getPodLog", method = RequestMethod.GET)
     @ResponseBody
@@ -168,6 +177,7 @@ public class LogController {
     }
 
     //测试方法 从虚拟机读取日志
+    @ApiOperation(value = "获取Pod日志", notes = "根据条件获取Pod日志")
     @RequestMapping(value = "/getPodLogs", method = RequestMethod.GET)
     @ResponseBody
     public CommentResp getPodlogs() throws IOException, ApiException {
@@ -208,7 +218,7 @@ public class LogController {
         }
         return new CommentResp(true,ans,"");
     }
-
+    @ApiOperation(value = "查询命名空间和容器名", notes = "获取所有命名空间及其下的容器名称")
     @RequestMapping(value = "/getCas", method = RequestMethod.GET)
     @OperationLogDesc(module = "日志管理", events = "查询命名空间和容器名")
     @ResponseBody
@@ -258,7 +268,7 @@ public class LogController {
 
 
 
-
+    @ApiOperation(value = "查询虚拟机名", notes = "获取所有虚拟机名称")
     @RequestMapping(value = "/getVMName", method = RequestMethod.GET)
     @OperationLogDesc(module = "虚拟机日志管理", events = "查询虚拟机名")
     @ResponseBody

@@ -1,19 +1,35 @@
 package com.xw.cloud.bean;
 
+import io.swagger.annotations.ApiModel;
 import lombok.*;
-
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 @Builder
 @Getter
 @ToString
+@ApiModel(description = "存储池信息")
 public class Storagepool {
-    private String name;    // 名称
-    private String type;    // 类型
+    @ApiModelProperty(value = "名称")
+    private String name;
 
-    private int capacity;   // GB 容量
-    private int available;  // GB 可用容量
-    private int allocation; // GB 已用容量
-    private String usage;   // 使用率(%)
+    @ApiModelProperty(value = "类型")
+    private String type;
 
-    private String state;   // 状态
-    private String xml;     // 描述xml
+    @ApiModelProperty(value = "容量(GB)")
+    private int capacity;
+
+    @ApiModelProperty(value = "可用容量(GB)")
+    private int available;
+
+    @ApiModelProperty(value = "已用容量(GB)")
+    private int allocation;
+
+    @ApiModelProperty(value = "使用率(%)")
+    private String usage;
+
+    @ApiModelProperty(value = "状态")
+    private String state;
+
+    @ApiModelProperty(value = "描述XML")
+    private String xml;
  }

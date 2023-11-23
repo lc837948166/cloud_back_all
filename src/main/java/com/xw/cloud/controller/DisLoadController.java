@@ -1,5 +1,9 @@
 package com.xw.cloud.controller;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
 import io.kubernetes.client.openapi.ApiClient;
@@ -19,6 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.FileReader;
 import java.io.IOException;
+@Api(tags = "Kubernetes 分布式负载管理", description = "管理 Kubernetes 集群中的 Ingress 和 Service")
 @CrossOrigin
 @Controller
 @RequestMapping("/disload")
@@ -26,11 +31,20 @@ public class DisLoadController {
 
   @Value("${k8s.config}")
   private String k8sConfig;
+
+  @ApiOperation(value = "查看 Ingress 页面", notes = "返回展示 Ingress 资源的页面路径")
   @RequestMapping(value = "/ingress", method = RequestMethod.GET)
   public String ingress(){
     return "disload/ingress";
   }
 
+
+
+  @ApiOperation(value = "获取 Ingress 列表", notes = "获取 Kubernetes 集群中所有命名空间的 Ingress 列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功获取 Ingress 列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/ingress/list", method = RequestMethod.GET)
   public ModelAndView getIngressList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -57,11 +71,18 @@ public class DisLoadController {
     return modelAndView;
   }
 
+
+  @ApiOperation(value = "查看 Service 页面", notes = "返回展示 Service 资源的页面路径")
   @RequestMapping(value = "/service", method = RequestMethod.GET)
   public String service(){
     return "disload/service";
   }
 
+  @ApiOperation(value = "获取 Service 列表", notes = "获取 Kubernetes 集群中所有命名空间的 Service 列表")
+  @ApiResponses({
+          @ApiResponse(code = 200, message = "成功获取 Service 列表"),
+          @ApiResponse(code = 500, message = "服务器错误")
+  })
   @RequestMapping(value = "/service/list", method = RequestMethod.GET)
   public ModelAndView getServiceList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");

@@ -14,6 +14,8 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import okhttp3.Call;
 import okhttp3.Response;
 import org.springframework.stereotype.Controller;
@@ -25,21 +27,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 
+@Api(tags = "虚拟存储管理", description = "处理和管理kvm中的虚拟存储资源")
 @Controller
 @CrossOrigin
 @RequestMapping("/virtuleStorage")
 public class VirtuleStorageController {
 
-    /**
-     * 获取持久卷列表
-     *
-     * @return
-     */
+    @ApiOperation(value = "查看持久卷页面", notes = "返回展示持久卷资源的页面路径")
     @RequestMapping(value = "/vs", method = RequestMethod.GET)
     public String pv() {
         return "virtuleStorage/vs";
     }
 
+    @ApiOperation(value = "获取持久卷列表", notes = "获取 Kubernetes 中所有持久卷的列表")
     @RequestMapping(value = "/vs/list", method = RequestMethod.GET)
     @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
     public ModelAndView getPvList() throws IOException, ApiException {
@@ -74,12 +74,7 @@ public class VirtuleStorageController {
     }
 
 
-    /**
-     * 通过持久卷名、主机路径和容量，持久卷声明名、命名空间和容量，主节点ip、用户名和密码来创建持久卷并关联
-     * @param requestInfo
-     * @return
-     * @throws ApiException
-     */
+    @ApiOperation(value = "创建持久卷", notes = "根据提供的信息创建持久卷并关联持久卷声明")
     @RequestMapping(value = "/createVs", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "虚拟存储管理", events = "创建持久卷")
@@ -258,13 +253,7 @@ public class VirtuleStorageController {
 
     }
 
-    /**
-     * 通过持久卷名删除持久卷
-     * @param pvInfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "删除持久卷", notes = "根据提供的持久卷名称删除持久卷")
     @RequestMapping(value = "/deleteVs", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "虚拟存储管理", events = "删除持久卷")
@@ -323,13 +312,7 @@ public class VirtuleStorageController {
 
     }
 
-    /**
-     * 更新持久卷容量
-     * @param pvInfo
-     * @return
-     * @throws IOException
-     * @throws ApiException
-     */
+    @ApiOperation(value = "更新持久卷", notes = "根据提供的信息更新持久卷的容量")
     @RequestMapping(value = "/updateVs", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "虚拟存储管理", events = "修改持久卷")

@@ -5,6 +5,10 @@ import com.jcraft.jsch.*;
 import com.xw.cloud.bean.VmInfo;
 import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.openapi.ApiException;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -16,16 +20,12 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 import java.io.InputStream;
-
+@Api(tags = "Kubernetes 指标管理", description = "获取和管理 Kubernetes 集群中的 Pods 和 Nodes 指标")
 @Controller
 @RequestMapping("/index")
 public class IndexController {
 
-    /**
-     * 获取持久卷列表
-     *
-     * @return
-     */
+    @ApiOperation(value = "查看 Pod 指标页面", notes = "返回展示 Pod 指标的页面路径")
     @RequestMapping(value = "/podIndex", method = RequestMethod.GET)
     public String pv() {
         return "index/podIndex";
@@ -68,6 +68,11 @@ public class IndexController {
 */
 
 //    @RequestMapping(value = "/podIndex/list", method = RequestMethod.GET)
+    @ApiOperation(value = "获取 Pod 指标列表", notes = "获取 Kubernetes 集群中所有 Pods 的指标")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "成功获取 Pod 指标列表"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @RequestMapping(value = "/podIndex/list", method = RequestMethod.POST)
     @OperationLogDesc(module = "指标管理", events = "获取容器指标")
     public ModelAndView getpodIndexList(@RequestBody VmInfo vmInfo) throws IOException, ApiException {
@@ -131,6 +136,11 @@ public class IndexController {
     }
 
 //    @RequestMapping(value = "/nodeIndex/list", method = RequestMethod.GET)
+    @ApiOperation(value = "获取 Node 指标列表", notes = "获取 Kubernetes 集群中所有 Nodes 的指标")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "成功获取 Node 指标列表"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @RequestMapping(value = "/nodeIndex/list", method = RequestMethod.POST)
     @OperationLogDesc(module = "指标管理", events = "获取节点指标")
 //    public ModelAndView getnodeIndexList() throws IOException, ApiException {

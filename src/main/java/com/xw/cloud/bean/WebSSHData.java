@@ -1,16 +1,28 @@
 package com.xw.cloud.bean;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 /**
-* @Description: webssh数据传输
-*/
+ * WebSSH数据传输
+ */
+@ApiModel(description = "WebSSH数据传输")
 public class WebSSHData {
-    //操作
+    @ApiModelProperty(value = "操作")
     private String operate;
+
+    @ApiModelProperty(value = "主机名或IP地址")
     private String host;
-    //端口号默认为22
+
+    @ApiModelProperty(value = "端口号，默认为22")
     private Integer port = 22;
+
+    @ApiModelProperty(value = "用户名")
     private String username;
+
+    @ApiModelProperty(value = "密码")
     private String password;
+
+    @ApiModelProperty(value = "命令")
     private String command = "";
 
     public String getOperate() {

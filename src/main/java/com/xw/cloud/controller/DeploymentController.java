@@ -11,6 +11,10 @@ import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Yaml;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import okhttp3.Call;
 import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +34,7 @@ import java.util.Collections;
 @CrossOrigin
 @Controller
 @RequestMapping("deployment")
+@Api(tags = "Kubernetes 部署管理", description = "管理 Kubernetes 集群中的部署（Deployments）")
 public class DeploymentController {
     @Value("${k8s.config}")
     private String k8sConfig;
@@ -38,6 +43,12 @@ public class DeploymentController {
     private String k8sToken;
 
     private static final String KUBERNETES_API_SERVER = "https://192.168.243.143:6443";
+
+    @ApiOperation(value = "删除部署和服务", notes = "根据提供的部署名称删除对应的 Kubernetes 部署和服务")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "部署和服务删除成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/deleteDeployment", method = RequestMethod.POST)
@@ -68,6 +79,12 @@ public class DeploymentController {
 
     }
 
+
+    @ApiOperation(value = "创建部署", notes = "从提供的 YAML 文件中创建 Kubernetes 部署")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "部署创建成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @RequestMapping(value = "/createDeployment", method = RequestMethod.POST)
     @ResponseBody
@@ -155,10 +172,16 @@ public class DeploymentController {
 
         return "Deployment created successfully.";
     }
+
+
+    @ApiOperation(value = "获取部署列表", notes = "获取 Kubernetes 集群中所有命名空间的部署列表")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "成功获取部署列表"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public ModelAndView getDeploymentList() throws IOException, ApiException {
-
 
         ModelAndView modelAndView = new ModelAndView("jsonView");
         String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -183,12 +206,21 @@ public class DeploymentController {
         return modelAndView;
     }
 
+
+
     private String getServiceLabelValue(V1Service service, String labelKey) {
         if (service.getMetadata() != null && service.getMetadata().getLabels() != null) {
             return service.getMetadata().getLabels().get(labelKey);
         }
         return null;
     }
+
+
+    @ApiOperation(value = "通过参数部署", notes = "根据提供的参数创建 Kubernetes 部署和服务")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "部署和服务创建成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @RequestMapping(value ="/deployByParam", method = RequestMethod.POST)
     @ResponseBody
@@ -257,6 +289,13 @@ public class DeploymentController {
         // 创建 Service
         coreApi.createNamespacedService("default", service, null, null, null);
     }
+
+
+    @ApiOperation(value = "停止部署", notes = "停止指定的 Kubernetes 部署")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "部署停止成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/stopDeployment", method = RequestMethod.GET)
@@ -288,6 +327,12 @@ public class DeploymentController {
 
     }
 
+
+    @ApiOperation(value = "启动部署", notes = "启动指定的 Kubernetes 部署")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "部署启动成功"),
+            @ApiResponse(code = 500, message = "服务器错误")
+    })
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/startDeployment", method = RequestMethod.GET)
