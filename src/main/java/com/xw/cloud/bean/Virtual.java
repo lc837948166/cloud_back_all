@@ -14,11 +14,11 @@ public class Virtual {
     @JsonProperty(value = "state")
     private String state;
     @JsonProperty(value = "maxMem")
-    private String maxMem;
+    private long maxMem;
     @JsonProperty(value = "useMem")
-    private String useMem;
+    private Double useMem;
     @JsonProperty(value = "cpuNum")
-    private String cpuNum;
-    @JsonProperty(value = "cpuTime")
-    private String cpuTime;
+    private int cpuNum;
+    @JsonProperty(value = "usecpu")
+    private Double usecpu;
 }

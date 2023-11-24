@@ -1,5 +1,9 @@
 package com.xw.cloud.service;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
 import lombok.SneakyThrows;
@@ -12,10 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.swing.*;
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Log
 @Service(value = "libvirtService")
@@ -62,7 +63,37 @@ public class LibvirtService {
                 .id(domain.getID())
                 .name(domain.getName())
                 .state(domain.getInfo().state.toString())
+//                .useMem(getMem(domain.getName())[0])
+//                .maxMem(getMem(domain.getName())[1])
+                .maxMem(domain.getMaxMemory() / 1024)
+                .useMem(getMem(domain))
+                .cpuNum(domain.getMaxVcpus())
+                .usecpu(getCpu(domain))
                 .build();
+    }
+
+    @SneakyThrows
+    public double getMem(Domain domain){
+        double useMem = 0;
+        MemoryStatistic[] memoryStatistics = domain.memoryStats(10);
+        Optional<MemoryStatistic> first = Arrays.stream(memoryStatistics).filter(x -> x.getTag() == 8).findFirst();
+        if (first.isPresent()) {
+            MemoryStatistic memoryStatistic = first.get();
+            long unusedMemory = memoryStatistic.getValue();
+            long maxMemory = domain.getMaxMemory();
+            useMem = (maxMemory - unusedMemory) * 100.0 / maxMemory;
+        }
+        double truncatedValue = (int) (useMem * 100) / 100.0;
+        return truncatedValue;
+    }
+    @SneakyThrows
+    public double getCpu(Domain domain){
+        long c1 = domain.getInfo().cpuTime;
+        Thread.sleep(1000);
+        long c2 = domain.getInfo().cpuTime;
+        int vCpus = domain.getMaxVcpus();
+        Double cpuUsage = 100 * (c2 - c1) / (1 * vCpus * Math.pow(10, 9));
+        return cpuUsage;
     }
 
     /**
@@ -77,6 +108,8 @@ public class LibvirtService {
                 .state(domain.getInfo().state.toString())
                 .build();
     }
+
+
 
     /**
      * 虚拟机列表
@@ -624,6 +657,129 @@ public class LibvirtService {
 
 //        System.out.println(libvirtService.getNetState());
 
+    }
+
+    //ssh命令行来获取mem和cpu，速度慢，已废弃
+    public double[] getMem(String name) throws Exception {
+        double[] array = new double[4];
+        String virtualMachineIp = "127.0.0.1";
+        String username = "root";
+        String password = "111";
+
+        Session session;
+        JSch jsch = new JSch();
+        session = jsch.getSession(username, virtualMachineIp, 22);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.setPassword(password);
+        session.connect();
+        // 执行命令
+        Channel execChannel = session.openChannel("exec");
+        ((ChannelExec) execChannel).setCommand("virsh dommemstat "+name); // 设置执行的命令
+        System.out.println("virsh dommemstat "+name);
+        InputStream in;
+        in = execChannel.getInputStream();  // 获取命令执行结果的输入流
+        execChannel.connect();  // 连接远程执行命令
+        byte[] tmp = new byte[1024];
+        StringBuilder commandOutput = new StringBuilder(); //存储命令执行的输出
+        while (true) {
+            while (in.available() > 0) {
+                int i = in.read(tmp, 0, 1024);
+                if (i < 0) break;
+                commandOutput.append(new String(tmp, 0, i));
+            }
+            if (execChannel.isClosed()) {
+                if (in.available() > 0) continue;
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (Exception ee) {
+                // 处理异常
+            }
+        }
+        String data=commandOutput.toString();
+        double unusedValue = 0;
+        int unusedIndex = data.indexOf("unused");
+        if (unusedIndex != -1) {
+            int startIndex = unusedIndex + "unused".length() + 1; // 跳过空格
+            int endIndex=startIndex;
+            char i =data.charAt(startIndex);
+            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
+//            int endIndex = data.indexOf(" ", startIndex);
+
+            String unusedNumber = data.substring(startIndex, endIndex);
+            try {
+                unusedValue = Integer.parseInt(unusedNumber);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        double availableValue = 0;
+        int availableIndex = data.indexOf("available");
+        if (availableIndex != -1) {
+            int startIndex = availableIndex + "available".length() + 1; // 跳过空格
+            int endIndex=startIndex;
+            char i =data.charAt(startIndex);
+            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
+            String availableNumber = data.substring(startIndex, endIndex);
+            try {
+                availableValue = Integer.parseInt(availableNumber);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        double useValue=availableValue-unusedValue;
+        double useMem=useValue/availableValue * 100;
+        double truncatedValue = (int) (useMem * 100) / 100.0;
+        array[0]=truncatedValue;
+        array[1]=availableValue;
+        System.out.println(truncatedValue);
+        System.out.println(availableValue);
+
+        ((ChannelExec) execChannel).setCommand("virsh dominfo "+name);
+        InputStream in2;
+        in2 = execChannel.getInputStream();  // 获取命令执行结果的输入流
+        execChannel.connect();  // 连接远程执行命令
+        byte[] tmp2 = new byte[1024];
+        StringBuilder commandOutput2 = new StringBuilder(); //存储命令执行的输出
+        while (true) {
+            while (in2.available() > 0) {
+                int i = in2.read(tmp2, 0, 1024);
+                if (i < 0) break;
+                commandOutput2.append(new String(tmp2, 0, i));
+            }
+            if (execChannel.isClosed()) {
+                if (in2.available() > 0) continue;
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (Exception ee) {
+                // 处理异常
+            }
+        }
+        String data2=commandOutput.toString();
+        int cpuNumValue = 0;
+        int cpuNumIndex = data2.indexOf("CPU：");
+        if (cpuNumIndex != -1) {
+            int startIndex = cpuNumIndex + "CPU：".length() + 10; // 跳过空格
+            int endIndex=startIndex;
+            char i =data2.charAt(startIndex);
+            while (i!='\n'){++endIndex;i=data2.charAt(endIndex);}
+//            int endIndex = data.indexOf(" ", startIndex);
+
+            String cpuNumber = data2.substring(startIndex, endIndex);
+            try {
+                cpuNumValue = Integer.parseInt(cpuNumber);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println(cpuNumValue);
+        array[2]=cpuNumValue;
+
+        return array;
     }
 
 }
