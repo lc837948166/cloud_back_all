@@ -45,11 +45,11 @@ public class LogJob {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    private String virtualMachineIp = "192.168.243.143";
+    private String virtualMachineIp = "192.168.239.3";
 
     private String username = "root";
 
-    private String password = "111";
+    private String password = "Klay0627!";
 
 
     @Autowired
@@ -62,7 +62,7 @@ public class LogJob {
     private VMLogServiceImpl vmLogService;
 
     @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 1000*60*60*24)   // 一天执行一次删除操作日志 删除30天之前的
     public void deleteLog(){
         System.out.println("操作日志定时删除");
         Date now = new Date();
@@ -73,8 +73,8 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时删除")
-    @Scheduled(fixedRate = 300000)
-    public void deletePodLog(){
+    @Scheduled(fixedRate = 1000*60*60*24)
+    public void deletePodLog(){  // 一天执行一次删容器日志 删除30天之前的
         Date now = new Date();
         String deleteDate= getDeleteDate(now,30);
         try{
@@ -83,8 +83,8 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时删除")
-    @Scheduled(fixedRate = 300000)
-    public void deleteVMLog(){
+    @Scheduled(fixedRate = 1000*60*60*24)
+    public void deleteVMLog(){ // 一天执行一次虚拟机日志 删除30天之前的
         Date now = new Date();
         String deleteDate= getDeleteDate(now,30);
         try{
@@ -114,6 +114,7 @@ public class LogJob {
                 String name = pod.getMetadata().getName();
                 String podLogs = null;
                 try {
+                    //  只查询最近三十天的日志 2592000s
                     podLogs = api.readNamespacedPodLog(name, namesapceName, null, null, null, null, null, null, 2592000, null, true);
                 } catch (ApiException ae) {
 
@@ -159,8 +160,6 @@ public class LogJob {
         Session session = null;
         StringBuilder result = new StringBuilder();
         JSch jsch = new JSch();
-        System.out.println(username);
-        System.out.println(virtualMachineIp);
         session = jsch.getSession(username, virtualMachineIp, 22);
         session.setConfig("StrictHostKeyChecking", "no");
         session.setPassword(password);
@@ -208,9 +207,7 @@ public class LogJob {
                     break;
                 }
             }
-            System.out.println("vmName:"+vmName);
             String vname = vmName.substring(0,vmName.indexOf("log")-1);
-            System.out.println("vmName:"+vname);
             String[] split = commandOutput.toString().split("\n");
             String ins = "";   //插入数据
             for (String s : split) {
@@ -279,13 +276,9 @@ public class LogJob {
                     vmLogService.save(vmLog);
                 }
             }
-//            return com;
         }
-        CommentResp com = new CommentResp(false,null,"查询失败");
-//        return com;
+
     }
-
-
     public static String getDeleteDate(Date now,int days){
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(now);
