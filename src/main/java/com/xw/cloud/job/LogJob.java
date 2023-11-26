@@ -20,6 +20,7 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -45,11 +46,12 @@ public class LogJob {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    private String virtualMachineIp = "192.168.239.3";
-
-    private String username = "root";
-
-    private String password = "Klay0627!";
+    @Value("${VM.ip}")
+    private String virtualMachineIp;
+    @Value("${VM.username}")
+    private String username;
+    @Value("${VM.password}")
+    private String password;
 
 
     @Autowired
@@ -60,40 +62,41 @@ public class LogJob {
 
     @Autowired
     private VMLogServiceImpl vmLogService;
-
+    @Value("${log.day}")
+    private Integer saveDays;
     @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
-    @Scheduled(fixedRate = 1000*60*60*24)   // 一天执行一次删除操作日志 删除30天之前的
+    @Scheduled(cron = "${log.deleteRate}")
     public void deleteLog(){
         System.out.println("操作日志定时删除");
         Date now = new Date();
-        String deleteDate= getDeleteDate(now,30);
+        String deleteDate= getDeleteDate(now,saveDays);
         try{
             operationLogService.remove(new QueryWrapper<OperationLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时删除")
-    @Scheduled(fixedRate = 1000*60*60*24)
+    @Scheduled(cron = "${log.deleteRate}")
     public void deletePodLog(){  // 一天执行一次删容器日志 删除30天之前的
         Date now = new Date();
-        String deleteDate= getDeleteDate(now,30);
+        String deleteDate= getDeleteDate(now,saveDays);
         try{
             podLogService.remove(new QueryWrapper<PodLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时删除")
-    @Scheduled(fixedRate = 1000*60*60*24)
+    @Scheduled(cron = "${log.deleteRate}")
     public void deleteVMLog(){ // 一天执行一次虚拟机日志 删除30天之前的
         Date now = new Date();
-        String deleteDate= getDeleteDate(now,30);
+        String deleteDate= getDeleteDate(now,saveDays);
         try{
             vmLogService.remove(new QueryWrapper<VMLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时添加")
-    @Scheduled(fixedRate = 300000)   //每五分钟执行一次
+    @Scheduled(cron = "${log.insertRate}")
     public void addPodLog() throws IOException, ApiException, ParseException {
         System.out.println("容器定时添加");
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -115,7 +118,7 @@ public class LogJob {
                 String podLogs = null;
                 try {
                     //  只查询最近三十天的日志 2592000s
-                    podLogs = api.readNamespacedPodLog(name, namesapceName, null, null, null, null, null, null, 2592000, null, true);
+                    podLogs = api.readNamespacedPodLog(name, namesapceName, null, null, null, null, null, null, saveDays*24*60*60, null, true);
                 } catch (ApiException ae) {
 
                 }
@@ -154,7 +157,7 @@ public class LogJob {
     }
 
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时添加")
-    @Scheduled(fixedRate = 300000)   //每五分钟执行一次
+    @Scheduled(cron = "${log.insertRate}")
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         System.out.println("虚拟机定时添加");
         Session session = null;
@@ -224,7 +227,7 @@ public class LogJob {
 
                         //增加判断日志是否为30天以内的
                         //VM Container
-                        String deleteDate = getDeleteDate(new Date(), 30);
+                        String deleteDate = getDeleteDate(new Date(), saveDays);
                         Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                         if(da.compareTo(before30) > 0) {
                             List list = vmLogService.list(qw);
@@ -256,7 +259,7 @@ public class LogJob {
             String t = date + " " + time;
             SimpleDateFormat dateFormat_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date da = dateFormat_.parse(t);
-            String deleteDate = getDeleteDate(new Date(), 30);
+            String deleteDate = getDeleteDate(new Date(), saveDays);
             Date before30 = dateFormat_.parse(deleteDate);  //30天之前
             if(da.compareTo(before30) > 0) {
                 QueryWrapper qw = new QueryWrapper<>();

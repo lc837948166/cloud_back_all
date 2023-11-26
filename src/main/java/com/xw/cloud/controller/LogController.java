@@ -50,11 +50,13 @@ public class LogController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    private String virtualMachineIp = "192.168.239.3";
+    @Value("${VM.ip}")
+    private String virtualMachineIp;
+    @Value("${VM.username}")
+    private String username;
+    @Value("${VM.password}")
+    private String password;
 
-    private String username = "root";
-
-    private String password = "Klay0627!";
 
 
     @Autowired
