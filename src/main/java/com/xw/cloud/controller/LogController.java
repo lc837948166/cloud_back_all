@@ -50,11 +50,13 @@ public class LogController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    private String virtualMachineIp = "192.168.243.143";
+    @Value("${VM.ip}")
+    private String virtualMachineIp;
+    @Value("${VM.username}")
+    private String username;
+    @Value("${VM.password}")
+    private String password;
 
-    private String username = "root";
-
-    private String password = "111";
 
 
     @Autowired
@@ -69,7 +71,7 @@ public class LogController {
     @ApiOperation(value = "获取操作日志列表", notes = "根据条件获取操作日志列表")
     @RequestMapping(value = "/getLogList", method = RequestMethod.GET)
     @ResponseBody
-    @OperationLogDesc(module = "日志管理", events = "列表查询")
+    @OperationLogDesc(module = "日志管理", events = "操作日志列表查询")
     public CommentResp getLogList(@RequestParam("operationModule")String operationModule,@RequestParam("operationStatus")String operationStatus,@RequestParam("starttime")String starttime,@RequestParam("endtime")String endtime) {
         QueryWrapper<OperationLog> qw = new QueryWrapper();
         if(operationModule!=null&& !operationModule.equals("")){
@@ -79,10 +81,10 @@ public class LogController {
             qw.eq("OperationStatus",operationStatus);
         }
         if(starttime!=null&&!starttime.equals("")&&!starttime.equals("Invalid date")){
-            qw.ge("add_time",starttime);
+            qw.ge("addTime",starttime);
         }
         if(endtime!=null&&!endtime.equals("")&&!endtime.equals("Invalid date")){
-            qw.le("add_time",endtime);
+            qw.le("addTime",endtime);
         }
         System.out.println(starttime);
         List<OperationLog> list = operationLogService.list(qw);
@@ -94,7 +96,7 @@ public class LogController {
     @ApiOperation(value = "删除操作日志", notes = "根据ID删除指定的操作日志")
     @DeleteMapping(value = "/deleteLog/{id}")
     @ResponseBody
-    @OperationLogDesc(module = "日志管理", events = "日志删除")
+    @OperationLogDesc(module = "日志管理", events = "操作日志删除")
     public CommentResp deleteLog(@PathVariable Long id) {
         boolean b = operationLogService.removeById(id);
         CommentResp com = new CommentResp(b,null,"");
@@ -114,6 +116,7 @@ public class LogController {
     @ApiOperation(value = "获取虚拟机日志", notes = "根据条件获取虚拟机日志")
     @RequestMapping(value = "/getVMLog", method = RequestMethod.GET)
     @ResponseBody
+    @OperationLogDesc(module = "日志管理", events = "虚拟机日志列表查询")
     public CommentResp getVMLog(@RequestParam("VMName") String VMName,
                                 @RequestParam("starttime") String starttime,
                                 @RequestParam("endtime") String endtime) throws Exception {
@@ -142,11 +145,11 @@ public class LogController {
         return com;
     }
 
-
     @ApiOperation(value = "获取Pod日志", notes = "根据条件获取Pod日志")
     //前端调用方法  从数据库读取日志
     @RequestMapping(value = "/getPodLog", method = RequestMethod.GET)
     @ResponseBody
+    @OperationLogDesc(module = "日志管理", events = "虚拟机日志删除")
     public CommentResp getPodlog(@RequestParam("podNamespace") String podNamespace,
                                  @RequestParam("starttime") String starttime,
                                  @RequestParam("endtime") String endtime
@@ -270,7 +273,7 @@ public class LogController {
 
     @ApiOperation(value = "查询虚拟机名", notes = "获取所有虚拟机名称")
     @RequestMapping(value = "/getVMName", method = RequestMethod.GET)
-    @OperationLogDesc(module = "虚拟机日志管理", events = "查询虚拟机名")
+    @OperationLogDesc(module = "日志管理", events = "查询虚拟机名")
     @ResponseBody
     public CommentResp getVMName() throws IOException, ApiException, JSchException {
 

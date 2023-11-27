@@ -1,9 +1,6 @@
 package com.xw.cloud.controller;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.ImgFile;
 import com.xw.cloud.service.ImagesService;
@@ -11,6 +8,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +16,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -30,10 +29,12 @@ public class ImagesController {
     @Resource(name = "imagesService")
     private ImagesService imagesService;
 
+    @Value("${image.filepath}")
+    private String filepath;
     @ApiOperation(value = "获取镜像列表", notes = "列出所有可用的镜像文件")
     @ResponseBody
     @RequestMapping("/imgList")
-    public CommentResp imgList() {
+    public CommentResp imgList() throws JSchException, IOException {
         List<ImgFile> imgList = imagesService.getImgList();
         System.out.println(imgList);
         return new CommentResp(true, imgList,"");
@@ -72,10 +73,11 @@ public class ImagesController {
             @ApiResponse(code = 500, message = "下载失败")
     })
     @ResponseBody
-    @RequestMapping("/downImg")
-    public CommentResp downImg(@RequestParam("name") String name, HttpServletResponse response) {
-        boolean result=imagesService.downImgFile(name,response);
-        if(result)return new CommentResp(true, null,"下载成功");
+    @GetMapping("/downImg")
+    public CommentResp downImg(@RequestParam("name") String name) {
+        System.out.println("enter");
+        boolean result = imagesService.downImgFile(name);
+        if(result)return new CommentResp(true, null,"下载成功,镜像保存在文件夹"+filepath);
         else return new CommentResp(true, null,"下载失败");
     }
 

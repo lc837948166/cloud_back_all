@@ -16,4 +16,6 @@ public class ImgFile {
 
     @ApiModelProperty(notes = "镜像大小")
     private String size;
+    @ApiModelProperty(notes = "文件名后缀")
+    private String end;
 }
