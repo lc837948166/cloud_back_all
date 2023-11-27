@@ -1,14 +1,12 @@
 package com.xw.cloud.service;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.libvirt.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +15,7 @@ import javax.swing.*;
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
-
+import com.xw.cloud.Utils.SftpUtils;
 @Log
 @Service(value = "libvirtService")
 public class LibvirtService {
@@ -59,6 +57,8 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualById(int id) {
         Domain domain = getDomainById(id);
+//        DomainBlockInfo blockInfo = domain.blockInfo(home+"/VM_place/"+domain.getName()+".img");
+//        long totalSize = blockInfo.getCapacity();
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
@@ -66,9 +66,8 @@ public class LibvirtService {
 //                .useMem(getMem(domain.getName())[0])
 //                .maxMem(getMem(domain.getName())[1])
                 .maxMem(domain.getMaxMemory() / 1024)
-                .useMem(getMem(domain))
+//                .useMem(getMem(domain))
                 .cpuNum(domain.getMaxVcpus())
-                .usecpu(getCpu(domain))
                 .build();
     }
 
@@ -93,6 +92,7 @@ public class LibvirtService {
         long c2 = domain.getInfo().cpuTime;
         int vCpus = domain.getMaxVcpus();
         Double cpuUsage = 100 * (c2 - c1) / (1 * vCpus * Math.pow(10, 9));
+        System.out.println(cpuUsage);
         return cpuUsage;
     }
 
@@ -446,17 +446,33 @@ public class LibvirtService {
         return false;
     }
 
+    @SneakyThrows
+    public Boolean addImgFile2(String name, MultipartFile file) {
+        if (!file.isEmpty()) {
 
+            String localFilePath = home + "/VM_place/" + name + ".qcow2";
+            String remoteFilePath = home + "/VM_place/" + name + ".qcow2";
+
+            file.transferTo(new File(home + "/VM_place/" + name + ".qcow2"));
+            log.info("文件" + name + ".qcow2已经保存！");
+            // 创建 SSH 连接
+            ChannelSftp channel=SftpUtils.getSftpcon();
+            channel.put(localFilePath, remoteFilePath);
+            SftpUtils.discon();
+        }
+        log.info("文件" + name + ".qcow2保存失败！");
+        return false;
+    }
     /**
      * 删除 img
      */
+    @SneakyThrows
     public Boolean deleteImgFile(String name) {
-        if (new File(home+"/VM_place/" + name).delete()) {
-            log.info("文件" + name + "已经删除！");
-            return true;
-        }
-        log.info("文件" + name + "文件不存在");
-        return false;
+        ChannelSftp channel=SftpUtils.getSftpcon();
+        channel.cd(home+"/VM_place/");
+        channel.rm(name);
+        SftpUtils.discon();
+        return true;
     }
 
     /**
