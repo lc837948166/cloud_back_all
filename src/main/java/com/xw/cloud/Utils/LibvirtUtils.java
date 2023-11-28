@@ -14,7 +14,7 @@ public class LibvirtUtils {
     @SneakyThrows
     public static Connect getConnection() {
         if (null == connect) {
-            connect = new Connect("qemu+ssh://192.168.243.145/system", false);
+            connect = new Connect("qemu+ssh:///system", false);
             log.info("Libvirt local connection successful" + "\n"
                     + "     连接URI: " + connect.getURI() + "\n"
                     + "     宿主机主机名: " + connect.getHostName() + "\n"
