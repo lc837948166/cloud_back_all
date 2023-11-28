@@ -1,23 +1,24 @@
 package com.xw.cloud.bean;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 
 @Builder
 @Getter
 @ToString
-@ApiModel(description = "虚拟机信息")
 public class Virtual {
-    @ApiModelProperty(value = "虚拟机ID")
+    @JsonProperty(value = "id")
     private int id;
-
-    @ApiModelProperty(value = "虚拟机名称")
+    @JsonProperty(value = "name")
     private String name;
-
-    @ApiModelProperty(value = "虚拟机状态")
+    @JsonProperty(value = "state")
     private String state;
+    @JsonProperty(value = "maxMem")
+    private long maxMem;
+    @JsonProperty(value = "useMem")
+    private Double useMem;
+    @JsonProperty(value = "cpuNum")
+    private int cpuNum;
+    @JsonProperty(value = "usecpu")
+    private Double usecpu;
 }

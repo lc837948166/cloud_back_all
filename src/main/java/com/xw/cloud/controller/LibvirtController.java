@@ -135,7 +135,7 @@ public class LibvirtController {
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
         libvirtService.deleteDomainByName(name);
         libvirtService.deleteImgFile(name + ".qcow2");
-        return new CommentResp(true, null,"删除成功");
+        return new CommentResp(true, null,name+"qcow2删除成功");
     }
 
     @ApiOperation(value = "跳转至添加虚拟机页面", notes = "返回添加虚拟机的界面")
@@ -163,17 +163,17 @@ public class LibvirtController {
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")
     @ResponseBody
     @RequestMapping("/addVirtual")
-    public String addVirtual(@RequestParam("file") MultipartFile file, @RequestParam("name") String name,
-                             @RequestParam("memory") int memory, @RequestParam("cpuNum") String cpuNum,
+    public CommentResp addVirtual(@RequestParam("file") MultipartFile file, @RequestParam("name") String name,
+                             @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam("OStype") String OStype) {
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
-        vmc.setCpuNum(Integer.parseInt(cpuNum));
+        vmc.setCpuNum(cpuNum);
         vmc.setOStype(OStype);
         libvirtService.addDomainByName(vmc);
-        libvirtService.addImgFile(vmc.getName(), file);
-        return "ok";
+        libvirtService.addImgFile2(vmc.getName(), file);
+        return new CommentResp(true, null,"创建虚拟机成功");
     }
 
 
