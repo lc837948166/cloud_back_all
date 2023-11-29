@@ -1,7 +1,9 @@
 package com.xw.cloud.service;
-import com.xw.cloud.Utils.LibvirtUtils;
+
 import com.jcraft.jsch.*;
-import com.xw.cloud.Utils.*;
+import com.xw.cloud.Utils.RemoteVMUtils;
+import com.xw.cloud.Utils.SftpUtils;
+import com.xw.cloud.Utils.SigarUtils;
 import com.xw.cloud.bean.*;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -10,12 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.*;
-import com.xw.cloud.Utils.SftpUtils;
+
 @Log
-@Service(value = "libvirtService")
-public class LibvirtService {
+@Service(value = "remoteVMService")
+public class RemoteVMService {
 
     String home = System.getenv("HOME");
     /**
@@ -28,32 +33,32 @@ public class LibvirtService {
     /**
      * getLibvirtConnectInformation
      */
-    public LibvirtConnect getLibvirtConnectInformation() {
-        return LibvirtUtils.getConnectionIo();
+    public LibvirtConnect getLibvirtConnectInformation(String ipaddr) {
+        return RemoteVMUtils.getConnectionIo(ipaddr);
     }
 
     /**
      * getDomainById
      */
     @SneakyThrows
-    public Domain getDomainById(int id) {
-        return LibvirtUtils.getConnection().domainLookupByID(id);
+    public Domain getDomainById(int id,String ipaddr) {
+        return RemoteVMUtils.getConnection(ipaddr).domainLookupByID(id);
     }
 
     /**
      * getDomainByName
      */
     @SneakyThrows
-    public Domain getDomainByName(String name) {
-        return LibvirtUtils.getConnection().domainLookupByName(name);
+    public Domain getDomainByName(String name,String ipaddr) {
+        return RemoteVMUtils.getConnection(ipaddr).domainLookupByName(name);
     }
 
     /**
      * getVirtualById
      */
     @SneakyThrows
-    public Virtual getVirtualById(int id) {
-        Domain domain = getDomainById(id);
+    public Virtual getVirtualById(int id,String ipaddr) {
+        Domain domain = getDomainById(id,ipaddr);
 //        DomainBlockInfo blockInfo = domain.blockInfo(home+"/VM_place/"+domain.getName()+".img");
 //        long totalSize = blockInfo.getCapacity();
         return Virtual.builder()
@@ -62,7 +67,7 @@ public class LibvirtService {
                 .state(domain.getInfo().state.toString())
                 .maxMem(domain.getMaxMemory() >>20)
                 .cpuNum(domain.getMaxVcpus())
-                .ipaddr(getVMip(domain.getName()))
+                .ipaddr(getVMip(domain.getName(),ipaddr))
                 .build();
     }
 
@@ -72,13 +77,42 @@ public class LibvirtService {
      * getVirtualByName
      */
     @SneakyThrows
-    public Virtual getVirtualByName(String name) {
-        Domain domain = getDomainByName(name);
+    public Virtual getVirtualByName(String name,String ipaddr) {
+        Domain domain = getDomainByName(name,ipaddr);
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
                 .state(domain.getInfo().state.toString())
                 .build();
+    }
+
+    @SneakyThrows
+    public Virtual getVMstat(String name,String ipaddr) {
+        Domain domain = getDomainByName(name,ipaddr);
+        return Virtual.builder()
+                .id(domain.getID())
+                .name(domain.getName())
+                .state(domain.getInfo().state.toString())
+                .build();
+    }
+
+    @SneakyThrows
+    public String getVMip(String name,String ipaddr) {
+
+        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
+        String ip =SftpUtils.getexecon1(ipaddr,command);
+        System.out.println(ip);
+
+        return ip;
+    }
+
+    @SneakyThrows
+    public ArrayList<Virtual> getRemoteVMList(String ipaddr) {
+        ArrayList<Virtual> virtualList = new ArrayList<>();
+        // live
+        int[] ids = RemoteVMUtils.getConnection(ipaddr).listDomains();
+        for (int id : ids) virtualList.add(getVirtualByLive(id,ipaddr));
+        return virtualList;
     }
 
 
@@ -87,41 +121,31 @@ public class LibvirtService {
      * 虚拟机列表
      */
     @SneakyThrows
-    public List<Virtual> getVirtualList() {
+    public List<Virtual> getVirtualList(String ipaddr) {
         ArrayList<Virtual> virtualList = new ArrayList<>();
         // live
-        int[] ids = LibvirtUtils.getConnection().listDomains();
-        for (int id : ids) virtualList.add(getVirtualById(id));
+        int[] ids = RemoteVMUtils.getConnection(ipaddr).listDomains();
+        for (int id : ids) virtualList.add(getVirtualById(id,ipaddr));
         // down
-        String[] names = LibvirtUtils.getConnection().listDefinedDomains();
-        for (String name : names) virtualList.add(getVirtualByName(name));
+        String[] names = RemoteVMUtils.getConnection(ipaddr).listDefinedDomains();
+        for (String name : names) virtualList.add(getVirtualByName(name,ipaddr));
         return virtualList;
-    }
-
-    @SneakyThrows
-    public String getVMip(String name) {
-
-        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
-        String ip =SftpUtils.getexecon(command);
-        System.out.println(ip);
-
-        return ip;
     }
 
     /**
      * 虚拟机指标列表
      */
     @SneakyThrows
-    public List<Virtual> getIndexList() {
+    public List<Virtual> getIndexList(String ipaddr) {
         ArrayList<Virtual> virtualList = new ArrayList<>();
         // live
-        int[] ids = LibvirtUtils.getConnection().listDomains();
-        for (int id : ids) virtualList.add(getVirtualByLive(id));
+        int[] ids = RemoteVMUtils.getConnection(ipaddr).listDomains();
+        for (int id : ids) virtualList.add(getVirtualByLive(id,ipaddr));
         return virtualList;
     }
     @SneakyThrows
-    public Virtual getVirtualByLive(int id) {
-        Domain domain = getDomainById(id);
+    public Virtual getVirtualByLive(int id,String ipaddr) {
+        Domain domain = getDomainById(id,ipaddr);
 //        DomainBlockInfo blockInfo = domain.blockInfo(home+"/VM_place/"+domain.getName()+".img");
 //        long totalSize = blockInfo.getCapacity();
         return Virtual.builder()
@@ -146,8 +170,7 @@ public class LibvirtService {
             long maxMemory = domain.getMaxMemory();
             useMem = (maxMemory - unusedMemory) * 100.0 / maxMemory;
         }
-        double truncatedValue = (int) (useMem * 100) / 100.0;
-        return truncatedValue;
+        return (int) (useMem * 100) / 100.0;
     }
     @SneakyThrows
     public double getCpu(Domain domain){
@@ -174,12 +197,12 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void suspendedDomainById(int id) {
-        suspendedDomain(getDomainById(id));
+    public void suspendedDomainById(int id,String ipaddr) {
+        suspendedDomain(getDomainById(id,ipaddr));
     }
 
-    public void suspendedDomainName(String name) {
-        suspendedDomain(getDomainByName(name));
+    public void suspendedDomainName(String name,String ipaddr) {
+        suspendedDomain(getDomainByName(name,ipaddr));
     }
 
 
@@ -194,12 +217,12 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void resumeDomainById(int id) {
-        resumeDomain(getDomainById(id));
+    public void resumeDomainById(int id,String ipaddr) {
+        resumeDomain(getDomainById(id,ipaddr));
     }
 
-    public void resumeDomainByName(String name) {
-        resumeDomain(getDomainByName(name));
+    public void resumeDomainByName(String name,String ipaddr) {
+        resumeDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -217,12 +240,12 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void saveDomainById(int id) {
-        saveDomain(getDomainById(id));
+    public void saveDomainById(int id,String ipaddr) {
+        saveDomain(getDomainById(id,ipaddr));
     }
 
-    public void saveDomainByName(String name) {
-        saveDomain(getDomainByName(name));
+    public void saveDomainByName(String name,String ipaddr) {
+        saveDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -241,12 +264,12 @@ public class LibvirtService {
         }
     }
 
-    public void restoreDomainById(int id) {
-        restoreDomain(getDomainById(id));
+    public void restoreDomainById(int id,String ipaddr) {
+        restoreDomain(getDomainById(id,ipaddr));
     }
 
-    public void restoreDomainByName(String name) {
-        restoreDomain(getDomainByName(name));
+    public void restoreDomainByName(String name,String ipaddr) {
+        restoreDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -260,8 +283,8 @@ public class LibvirtService {
         } else log.info("虚拟机已经打开过！");
     }
 
-    public void initiateDomainByName(String name) {
-        initiateDomain(getDomainByName(name));
+    public void initiateDomainByName(String name,String ipaddr) {
+        initiateDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -275,12 +298,12 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void shutdownDomainById(int id) {
-        shutdownDomain(getDomainById(id));
+    public void shutdownDomainById(int id,String ipaddr) {
+        shutdownDomain(getDomainById(id,ipaddr));
     }
 
-    public void shutdownDomainByName(String name) {
-        shutdownDomain(getDomainByName(name));
+    public void shutdownDomainByName(String name,String ipaddr) {
+        shutdownDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -294,12 +317,12 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void shutdownMustDomainById(int id) {
-        shutdownMustDomain(getDomainById(id));
+    public void shutdownMustDomainById(int id,String ipaddr) {
+        shutdownMustDomain(getDomainById(id,ipaddr));
     }
 
-    public void shutdownMustDomainByName(String name) {
-        shutdownMustDomain(getDomainByName(name));
+    public void shutdownMustDomainByName(String name,String ipaddr) {
+        shutdownMustDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -313,19 +336,19 @@ public class LibvirtService {
         } else log.info("虚拟机未打开");
     }
 
-    public void rebootDomainById(int id) {
-        rebootDomain(getDomainById(id));
+    public void rebootDomainById(int id,String ipaddr) {
+        rebootDomain(getDomainById(id,ipaddr));
     }
 
-    public void rebootDomainByName(String name) {
-        rebootDomain(getDomainByName(name));
+    public void rebootDomainByName(String name,String ipaddr) {
+        rebootDomain(getDomainByName(name,ipaddr));
     }
 
     /**
      * 添加 虚拟机 xml------>name   1024MB
      */
     @SneakyThrows
-    public void addDomainByName(VM_create vmc) {
+    public void addDomainByName(VM_create vmc,String ipaddr) {
         String xml = "<domain type='kvm'>\n" +
                 "  <name>" + vmc.getName() + "</name>\n" +
                 "  <uuid>" + UUID.randomUUID() + "</uuid>\n" +
@@ -445,7 +468,7 @@ public class LibvirtService {
                 "    </memballoon>\n" +
                 "  </devices>\n" +
                 "</domain>";
-        LibvirtUtils.getConnection().domainDefineXML(xml);    // define ------> creat
+        RemoteVMUtils.getConnection(ipaddr).domainDefineXML(xml);    // define ------> creat
         log.info(vmc.getName() + "虚拟机已创建！");
     }
 
@@ -459,12 +482,12 @@ public class LibvirtService {
         log.info(domain.getName() + "虚拟机已删除！");
     }
 
-    public void deleteDomainById(int id) {
-        deleteDomain(getDomainById(id));
+    public void deleteDomainById(int id,String ipaddr) {
+        deleteDomain(getDomainById(id,ipaddr));
     }
 
-    public void deleteDomainByName(String name) {
-        deleteDomain(getDomainByName(name));
+    public void deleteDomainByName(String name,String ipaddr) {
+        deleteDomain(getDomainByName(name,ipaddr));
     }
 
     /**
@@ -517,8 +540,8 @@ public class LibvirtService {
      * 关闭网络
      */
     @SneakyThrows
-    public void closeNetWork() {
-        Domain domain = getDomainByName(getVirtualList().get(0).getName());
+    public void closeNetWork(String ipaddr) {
+        Domain domain = getDomainByName(getVirtualList(ipaddr).get(0).getName(),ipaddr);
         Network network = domain.getConnect().networkLookupByName("default");
         if (network.isActive() == 1) {
             network.destroy();
@@ -530,8 +553,8 @@ public class LibvirtService {
      * 启动网络
      */
     @SneakyThrows
-    public void openNetWork() {
-        Domain domain = getDomainByName(getVirtualList().get(0).getName());
+    public void openNetWork(String ipaddr) {
+        Domain domain = getDomainByName(getVirtualList(ipaddr).get(0).getName(),ipaddr);
         Network network = domain.getConnect().networkLookupByName("default");
         if (network.isActive() == 0) {
             network.create();
@@ -543,9 +566,9 @@ public class LibvirtService {
      * 网络 State
      */
     @SneakyThrows
-    public String getNetState() {
-        if(getVirtualList().isEmpty()) return "off";
-        Domain domain = getDomainByName(getVirtualList().get(0).getName());
+    public String getNetState(String ipaddr) {
+        if(getVirtualList(ipaddr).isEmpty()) return "off";
+        Domain domain = getDomainByName(getVirtualList(ipaddr).get(0).getName(),ipaddr);
         if (domain.getConnect().networkLookupByName("default").isActive() == 1) return "on";
         else return "off";
     }
@@ -554,7 +577,7 @@ public class LibvirtService {
      * getSnapshotList
      */
     @SneakyThrows
-    public List<Snapshot> getSnapshotListByName(String name) {
+    public List<Snapshot> getSnapshotListByName(String name,String ipaddr) {
         // virsh snapshot-list      虚拟机名
         String cmd = "virsh snapshot" + "-list " + name;
         Process process = Runtime.getRuntime().exec(cmd);
@@ -562,7 +585,7 @@ public class LibvirtService {
         ArrayList<Snapshot> snapshots = new ArrayList<>();
         String str;
         int linCount = 0;
-        int snapshotNum = getDomainByName(name).snapshotNum(); // 2
+        int snapshotNum = getDomainByName(name,ipaddr).snapshotNum(); // 2
         while ((str = line.readLine()) != null && snapshotNum > 0) {
             linCount++;
             if (linCount <= 2) continue;  // -2 line
@@ -626,13 +649,13 @@ public class LibvirtService {
      * getStoragePoolList
      */
     @SneakyThrows
-    public List<Storagepool> getStoragePoolList() {
-        String[] pools = LibvirtUtils.getConnection().listStoragePools();
-        String[] definedPools = LibvirtUtils.getConnection().listDefinedStoragePools();
+    public List<Storagepool> getStoragePoolList(String ipaddr) {
+        String[] pools = RemoteVMUtils.getConnection(ipaddr).listStoragePools();
+        String[] definedPools = RemoteVMUtils.getConnection(ipaddr).listDefinedStoragePools();
         log.info("pools" + Arrays.toString(pools) + "definedPools" + Arrays.toString(definedPools));
         List<Storagepool> storagePoolList = new ArrayList<>();
-        for (String pool : pools) storagePoolList.add(getStoragePool(pool));
-        for (String pool : definedPools) storagePoolList.add(getStoragePool(pool));
+        for (String pool : pools) storagePoolList.add(getStoragePool(pool,ipaddr));
+        for (String pool : definedPools) storagePoolList.add(getStoragePool(pool,ipaddr));
         return storagePoolList;
     }
 
@@ -640,8 +663,8 @@ public class LibvirtService {
      * getStoragePool ByName
      */
     @SneakyThrows
-    public Storagepool getStoragePool(String name) {
-        StoragePool storagePool = LibvirtUtils.getConnection().storagePoolLookupByName(name);
+    public Storagepool getStoragePool(String name,String ipaddr) {
+        StoragePool storagePool = RemoteVMUtils.getConnection(ipaddr).storagePoolLookupByName(name);
         StoragePoolInfo info = storagePool.getInfo();
         return Storagepool.builder()
                 .name(name)     // 名称
@@ -659,11 +682,11 @@ public class LibvirtService {
      * 删除StoragePool ByName
      */
     @SneakyThrows
-    public void deleteStoragePool(String name) {
-        StoragePool storagePool = LibvirtUtils.getConnection().storagePoolLookupByName(name);
-        for (String pool : LibvirtUtils.getConnection().listStoragePools())
+    public void deleteStoragePool(String name,String ipaddr) {
+        StoragePool storagePool = RemoteVMUtils.getConnection(ipaddr).storagePoolLookupByName(name);
+        for (String pool : RemoteVMUtils.getConnection(ipaddr).listStoragePools())
             if (pool.equals(name)) storagePool.destroy();
-        for (String pool : LibvirtUtils.getConnection().listDefinedStoragePools())
+        for (String pool : RemoteVMUtils.getConnection(ipaddr).listDefinedStoragePools())
             if (pool.equals(name)) storagePool.undefine();
     }
 
@@ -671,7 +694,7 @@ public class LibvirtService {
      * 创建Storagepool  >>>>>> url必须存在
      */
     @SneakyThrows
-    public boolean createStoragepool(String name, String url) {
+    public boolean createStoragepool(String name, String url,String ipaddr) {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "\n" +
                 "<pool type=\"dir\">\n" +
@@ -687,13 +710,13 @@ public class LibvirtService {
                 "        </permissions>\n" +
                 "    </target>\n" +
                 "</pool>";
-        return LibvirtUtils.getConnection().storagePoolCreateXML(xml, 0) == null ? false : true;
+        return RemoteVMUtils.getConnection(ipaddr).storagePoolCreateXML(xml, 0) == null ? false : true;
     }
 
 
     @SneakyThrows
     public static void main(String[] args) {
-        LibvirtService libvirtService = new LibvirtService();
+        RemoteVMService libvirtService = new RemoteVMService();
 
 
 //        for (Virtual virtual : libvirtService.getVirtualList()) System.out.println(virtual);
@@ -714,126 +737,6 @@ public class LibvirtService {
     }
 
     //ssh命令行来获取mem和cpu，速度慢，已废弃
-    public double[] getMem(String name) throws Exception {
-        double[] array = new double[4];
-        String virtualMachineIp = "127.0.0.1";
-        String username = "root";
-        String password = "111";
 
-        Session session;
-        JSch jsch = new JSch();
-        session = jsch.getSession(username, virtualMachineIp, 22);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.setPassword(password);
-        session.connect();
-        // 执行命令
-        Channel execChannel = session.openChannel("exec");
-        ((ChannelExec) execChannel).setCommand("virsh dommemstat "+name); // 设置执行的命令
-        System.out.println("virsh dommemstat "+name);
-        InputStream in;
-        in = execChannel.getInputStream();  // 获取命令执行结果的输入流
-        execChannel.connect();  // 连接远程执行命令
-        byte[] tmp = new byte[1024];
-        StringBuilder commandOutput = new StringBuilder(); //存储命令执行的输出
-        while (true) {
-            while (in.available() > 0) {
-                int i = in.read(tmp, 0, 1024);
-                if (i < 0) break;
-                commandOutput.append(new String(tmp, 0, i));
-            }
-            if (execChannel.isClosed()) {
-                if (in.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String data=commandOutput.toString();
-        double unusedValue = 0;
-        int unusedIndex = data.indexOf("unused");
-        if (unusedIndex != -1) {
-            int startIndex = unusedIndex + "unused".length() + 1; // 跳过空格
-            int endIndex=startIndex;
-            char i =data.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
-//            int endIndex = data.indexOf(" ", startIndex);
-
-            String unusedNumber = data.substring(startIndex, endIndex);
-            try {
-                unusedValue = Integer.parseInt(unusedNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-
-        double availableValue = 0;
-        int availableIndex = data.indexOf("available");
-        if (availableIndex != -1) {
-            int startIndex = availableIndex + "available".length() + 1; // 跳过空格
-            int endIndex=startIndex;
-            char i =data.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
-            String availableNumber = data.substring(startIndex, endIndex);
-            try {
-                availableValue = Integer.parseInt(availableNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-        double useValue=availableValue-unusedValue;
-        double useMem=useValue/availableValue * 100;
-        double truncatedValue = (int) (useMem * 100) / 100.0;
-        array[0]=truncatedValue;
-        array[1]=availableValue;
-        System.out.println(truncatedValue);
-        System.out.println(availableValue);
-
-        ((ChannelExec) execChannel).setCommand("virsh dominfo "+name);
-        InputStream in2;
-        in2 = execChannel.getInputStream();  // 获取命令执行结果的输入流
-        execChannel.connect();  // 连接远程执行命令
-        byte[] tmp2 = new byte[1024];
-        StringBuilder commandOutput2 = new StringBuilder(); //存储命令执行的输出
-        while (true) {
-            while (in2.available() > 0) {
-                int i = in2.read(tmp2, 0, 1024);
-                if (i < 0) break;
-                commandOutput2.append(new String(tmp2, 0, i));
-            }
-            if (execChannel.isClosed()) {
-                if (in2.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String data2=commandOutput.toString();
-        int cpuNumValue = 0;
-        int cpuNumIndex = data2.indexOf("CPU：");
-        if (cpuNumIndex != -1) {
-            int startIndex = cpuNumIndex + "CPU：".length() + 10; // 跳过空格
-            int endIndex=startIndex;
-            char i =data2.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data2.charAt(endIndex);}
-//            int endIndex = data.indexOf(" ", startIndex);
-
-            String cpuNumber = data2.substring(startIndex, endIndex);
-            try {
-                cpuNumValue = Integer.parseInt(cpuNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println(cpuNumValue);
-        array[2]=cpuNumValue;
-
-        return array;
-    }
 
 }

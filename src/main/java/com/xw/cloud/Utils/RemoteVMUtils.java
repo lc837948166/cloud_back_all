@@ -6,15 +6,15 @@ import lombok.extern.java.Log;
 import org.libvirt.Connect;
 
 @Log
-public class LibvirtUtils {
+public class RemoteVMUtils {
 
     private static Connect connect;
 
     // Connection
     @SneakyThrows
-    public static Connect getConnection() {
+    public static Connect getConnection(String ipaddr) {
 
-            connect = new Connect("qemu:///system", false);
+            connect = new Connect("qemu+ssh://"+ipaddr+"/system", false);
             log.info("Libvirt local connection successful" + "\n"
                     + "     连接URI: " + connect.getURI() + "\n"
                     + "     宿主机主机名: " + connect.getHostName() + "\n"
@@ -29,8 +29,8 @@ public class LibvirtUtils {
 
     // ConnectionInfo
     @SneakyThrows
-    public static LibvirtConnect getConnectionIo() {
-        Connect connect = getConnection();
+    public static LibvirtConnect getConnectionIo(String ipaddr) {
+        Connect connect = getConnection(ipaddr);
         return LibvirtConnect.builder()
                 .url(connect.getURI())
                 .hostName(connect.getHostName())
@@ -39,9 +39,9 @@ public class LibvirtUtils {
                 .build();
     }
 
-    public static void main(String[] args) {
-        LibvirtUtils.getConnection();
-        System.out.println(LibvirtUtils.getConnectionIo());
+    public static void main(String[] args,String ipaddr) {
+        RemoteVMUtils.getConnection(ipaddr);
+        System.out.println(RemoteVMUtils.getConnectionIo(ipaddr));
     }
 
 }

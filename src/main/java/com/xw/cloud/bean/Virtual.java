@@ -15,10 +15,15 @@ public class Virtual {
     private String state;
     @JsonProperty(value = "maxMem")
     private long maxMem;
-    @JsonProperty(value = "useMem")
-    private Double useMem;
     @JsonProperty(value = "cpuNum")
     private int cpuNum;
+
+    @JsonProperty(value = "usemem")
+    private Double useMem;
     @JsonProperty(value = "usecpu")
     private Double usecpu;
+
+    @JsonProperty(value = "ipaddr")
+    private String ipaddr;
+
 }
