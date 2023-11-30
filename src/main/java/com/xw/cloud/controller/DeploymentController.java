@@ -1,6 +1,5 @@
 package com.xw.cloud.controller;
 
-import com.xw.cloud.Utils.CommentResp;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.openapi.ApiClient;
@@ -42,6 +41,11 @@ public class DeploymentController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
+    @Value("${k8s.token}")
+    private String k8sToken;
+
+    private static final String KUBERNETES_API_SERVER = "https://192.168.243.143:6443";
+
     @ApiOperation(value = "删除部署和服务", notes = "根据提供的部署名称删除对应的 Kubernetes 部署和服务")
     @ApiResponses({
             @ApiResponse(code = 200, message = "部署和服务删除成功"),
@@ -56,7 +60,6 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
         AppsV1Api appsApi = new AppsV1Api();
@@ -94,7 +97,6 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
         AppsV1Api appsApi = new AppsV1Api();
@@ -144,7 +146,14 @@ public class DeploymentController {
 //            api.createNamespacedPod(namespace, pod, null, null, null);
                             break;
                         case "Deployment":
-                            appsApi.createNamespacedDeployment(namespace, deployment, null, null, null);
+                            try{
+                                appsApi.createNamespacedDeployment(namespace, deployment, null, null, null);
+                            }catch (ApiException e){
+                                System.out.println("Exception caught!");
+                                System.out.println("Status code: " + e.getCode());
+                                System.out.println("Response body: " + e.getResponseBody());
+                                return "Deployment created failed.";
+                            }
                             break;
                         // 处理其他资源类型的逻辑
                         default:
@@ -167,6 +176,53 @@ public class DeploymentController {
                         // 处理其他资源类型的逻辑
                     }
                 }
+            } else if(obj instanceof V1PersistentVolumeClaim){
+                //PersistentVolume
+                System.out.println("V1PersistentVolumeClaim");
+                V1PersistentVolumeClaim persistentVolumeClaim = (V1PersistentVolumeClaim) obj;
+                V1ObjectMeta metadata = persistentVolumeClaim.getMetadata();
+                if (metadata != null) {
+                    String kind = persistentVolumeClaim.getKind();
+                    String namespace = metadata.getNamespace() != null ? metadata.getNamespace() : "default";
+                    switch (kind) {
+                        case "PersistentVolumeClaim":
+                            api.createNamespacedPersistentVolumeClaim(namespace, persistentVolumeClaim, null, null, null);
+                            break;
+                        // 处理其他资源类型的逻辑
+                    }
+                }
+
+            }else if (obj instanceof V1PersistentVolume ){
+                //PersistentVolume
+                System.out.println("V1PersistentVolume");
+                V1PersistentVolume persistentVolume = (V1PersistentVolume) obj;
+                V1ObjectMeta metadata = persistentVolume.getMetadata();
+                if (metadata != null) {
+                    String kind = persistentVolume.getKind();
+                    String namespace = metadata.getNamespace() != null ? metadata.getNamespace() : "default";
+                    switch (kind) {
+                        case "PersistentVolume":
+                            api.createPersistentVolume(persistentVolume, null, null, null);
+                            break;
+                        // 处理其他资源类型的逻辑
+                    }
+                }
+            } else if (obj instanceof V1StatefulSet) {
+                // 处理StatefulSet
+                System.out.println("V1StatefulSet");
+                V1StatefulSet statefulSet = (V1StatefulSet) obj;
+                V1ObjectMeta metadata = statefulSet.getMetadata();
+                if (metadata != null) {
+                    String kind = statefulSet.getKind();
+                    String namespace = metadata.getNamespace() != null ? metadata.getNamespace() : "default";
+                    switch (kind) {
+                        case "StatefulSet":
+                            appsApi.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
+                            break;
+                        // 处理其他资源类型的逻辑
+                    }
+                }
+
             } else if (obj != null) {
                 return "null";
             }
@@ -191,7 +247,6 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         AppsV1Api api = new AppsV1Api();
 
@@ -228,14 +283,13 @@ public class DeploymentController {
     @CrossOrigin
     @RequestMapping(value ="/deployByParam", method = RequestMethod.POST)
     @ResponseBody
-    public CommentResp deploy(@RequestBody DeploymentInfo request) throws IOException, ApiException {
+    public String deploy(@RequestBody DeploymentInfo request) throws IOException, ApiException {
 
         // 通过流读取，方式1
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         /*//初始化DeploymentInfo
         DeploymentInfo deploymentInfo = new DeploymentInfo();
@@ -249,7 +303,7 @@ public class DeploymentController {
         createDeploymentByParam(request);
         createServiceByParam(request);
 
-        return new CommentResp(true,null,"");
+        return "Deployment and Service created successfully.";
     }
     @CrossOrigin
     private void createDeploymentByParam(DeploymentInfo request) throws ApiException {
@@ -311,7 +365,6 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         AppsV1Api appsApi = new AppsV1Api();
         //修改k3s中Deployment的replicas为0
@@ -350,7 +403,6 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-        Configuration.setDefaultApiClient(client);
 
         AppsV1Api appsApi = new AppsV1Api();
         //修改k3s中Deployment的replicas为0
