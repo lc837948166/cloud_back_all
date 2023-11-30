@@ -1,5 +1,6 @@
 package com.xw.cloud.controller;
 
+import com.xw.cloud.Utils.CommentResp;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.openapi.ApiClient;
@@ -27,6 +28,8 @@ import com.xw.cloud.bean.DeploymentInfo;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
@@ -53,9 +56,11 @@ public class DeploymentController {
     @ResponseBody
     @RequestMapping(value = "/deleteDeployment", method = RequestMethod.POST)
     public String deleteDeploymentAndService(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
@@ -89,9 +94,11 @@ public class DeploymentController {
     @RequestMapping(value = "/createDeployment", method = RequestMethod.POST)
     @ResponseBody
     public String createDeployment(@RequestParam("yamlFile") MultipartFile yamlFile) throws IOException, ApiException {
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
@@ -184,9 +191,11 @@ public class DeploymentController {
     public ModelAndView getDeploymentList() throws IOException, ApiException {
 
         ModelAndView modelAndView = new ModelAndView("jsonView");
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         AppsV1Api api = new AppsV1Api();
@@ -224,11 +233,13 @@ public class DeploymentController {
     @CrossOrigin
     @RequestMapping(value ="/deployByParam", method = RequestMethod.POST)
     @ResponseBody
-    public String deploy(@RequestBody DeploymentInfo request) throws IOException, ApiException {
+    public CommentResp deploy(@RequestBody DeploymentInfo request) throws IOException, ApiException {
 
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         /*//初始化DeploymentInfo
@@ -243,7 +254,7 @@ public class DeploymentController {
         createDeploymentByParam(request);
         createServiceByParam(request);
 
-        return "Deployment and Service created successfully.";
+        return new CommentResp(true,null,"");
     }
     @CrossOrigin
     private void createDeploymentByParam(DeploymentInfo request) throws ApiException {
@@ -300,9 +311,11 @@ public class DeploymentController {
     @ResponseBody
     @RequestMapping(value = "/stopDeployment", method = RequestMethod.GET)
     public String stopDeployment(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         AppsV1Api appsApi = new AppsV1Api();
@@ -337,9 +350,11 @@ public class DeploymentController {
     @ResponseBody
     @RequestMapping(value = "/startDeployment", method = RequestMethod.GET)
     public String startDeploymentName(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         AppsV1Api appsApi = new AppsV1Api();
@@ -364,12 +379,12 @@ public class DeploymentController {
 
     }
 
-    
-
-    
 
 
-   
+
+
+
+
 
 
 }

@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 @Api(tags = "Kubernetes 指标管理", description = "获取和管理 Kubernetes 集群中的 Pods 和 Nodes 指标")
 @Controller
+@CrossOrigin
 @RequestMapping("/index")
 public class IndexController {
 
@@ -67,7 +69,7 @@ public class IndexController {
     }
 */
 
-//    @RequestMapping(value = "/podIndex/list", method = RequestMethod.GET)
+    //    @RequestMapping(value = "/podIndex/list", method = RequestMethod.GET)
     @ApiOperation(value = "获取 Pod 指标列表", notes = "获取 Kubernetes 集群中所有 Pods 的指标")
     @ApiResponses({
             @ApiResponse(code = 200, message = "成功获取 Pod 指标列表"),
@@ -135,7 +137,7 @@ public class IndexController {
         return modelAndView;
     }
 
-//    @RequestMapping(value = "/nodeIndex/list", method = RequestMethod.GET)
+    //    @RequestMapping(value = "/nodeIndex/list", method = RequestMethod.GET)
     @ApiOperation(value = "获取 Node 指标列表", notes = "获取 Kubernetes 集群中所有 Nodes 的指标")
     @ApiResponses({
             @ApiResponse(code = 200, message = "成功获取 Node 指标列表"),

@@ -65,27 +65,28 @@
             <artifactId>spring-plugin-core</artifactId>
             <version>2.0.0.RELEASE</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>mysql</groupId>-->
-<!--            <artifactId>mysql-connector-java</artifactId>-->
-<!--            <scope>runtime</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.mariadb.jdbc</groupId>-->
-<!--            <artifactId>mariadb-java-client</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>mysql</groupId>-->
+        <!--            <artifactId>mysql-connector-java</artifactId>-->
+        <!--            <scope>runtime</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.mariadb.jdbc</groupId>-->
+        <!--            <artifactId>mariadb-java-client</artifactId>-->
+        <!--        </dependency>-->
         <dependency>
-            <groupId>com.dm</groupId>
-            <artifactId>DmJdbcDriver</artifactId>
-            <version>1.8.0</version>
+            <groupId>com.dameng</groupId>
+            <artifactId>DmJdbcDriver18</artifactId>
+            <version>8.1.1.193</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.dm</groupId>-->
-<!--            <artifactId>DmJdbcDriver18</artifactId>-->
-<!--            <version>1.8</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${project.basedir}/src/main/resources/lib/DmJdbcDriver18.jar</systemPath>-->
-<!--        </dependency>-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>com.dm</groupId>-->
+        <!--            <artifactId>DmJdbcDriver18</artifactId>-->
+        <!--            <version>1.8</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${project.basedir}/src/main/resources/lib/DmJdbcDriver18.jar</systemPath>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
@@ -199,23 +200,23 @@
             <artifactId>spring-boot-starter-aop</artifactId>
             <version>2.4.0</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework</groupId>-->
-<!--            <artifactId>spring-aop</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.aspectj</groupId>-->
-<!--            <artifactId>aspectjrt</artifactId>-->
-<!--            <version>1.9.1</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework</groupId>-->
+        <!--            <artifactId>spring-aop</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.aspectj</groupId>-->
+        <!--            <artifactId>aspectjrt</artifactId>-->
+        <!--            <version>1.9.1</version>-->
+        <!--        </dependency>-->
     </dependencies>
 
     <build>
         <plugins>
-            			<plugin>
-            				<groupId>org.springframework.boot</groupId>
-            				<artifactId>spring-boot-maven-plugin</artifactId>
-            			</plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 

@@ -64,9 +64,11 @@ public class WorkloadController {
     @RequestMapping(value = "/namespace/list", method = RequestMethod.GET)
     public ModelAndView getNamespaceList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
@@ -676,7 +678,7 @@ public class WorkloadController {
 
             // 在新节点上创建 Pod
 
-            Thread.sleep(5000);
+            Thread.sleep(1000);
 
 //      System.out.println(newPod.getSpec().getNodeName());
 //      System.out.println(newPod);
@@ -804,11 +806,11 @@ public class WorkloadController {
     @RequestMapping(value = "/createPod", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "容器管理", events = "创建容器")
-    public String createPod(@RequestBody PodInfo podinfo) throws IOException, ApiException {
+    public String createPod(@RequestBody RequestInfo requestInfo) throws IOException, ApiException {
 
 //
-//        PodInfo podinfo = requestInfo.getPodInfo();
-////        PvcInfo pvcInfo = requestInfo.getPvcInfo();
+        PodInfo podinfo = requestInfo.getPodInfo();
+        PvcInfo pvcInfo = requestInfo.getPvcInfo();
 //        System.out.println("1222222222222222222222222");
 
         System.out.println(podinfo);
@@ -816,7 +818,7 @@ public class WorkloadController {
         String podNamespace = podinfo.getPodNamespace();
         String podNodeName = podinfo.getPodNodeName();
         List<ContainerInfo> containerInfoList = podinfo.getContainerInfoList();
-//        String pvcName = pvcInfo.getPvcName();
+        String pvcName = pvcInfo.getPvcName();
 
 
         System.out.println(podNamespace);
@@ -869,17 +871,17 @@ public class WorkloadController {
 
 
             // 创建 PVC
-//            V1PersistentVolumeClaimVolumeSource pvcVolumeSource = new V1PersistentVolumeClaimVolumeSource();
-//            pvcVolumeSource.setClaimName(pvcName);
-//
-//            V1Volume pvcVolume = new V1Volume();
-//            pvcVolume.setName(pvcName);
-//            pvcVolume.setPersistentVolumeClaim(pvcVolumeSource);
+            V1PersistentVolumeClaimVolumeSource pvcVolumeSource = new V1PersistentVolumeClaimVolumeSource();
+            pvcVolumeSource.setClaimName(pvcName);
+
+            V1Volume pvcVolume = new V1Volume();
+            pvcVolume.setName(pvcName);
+            pvcVolume.setPersistentVolumeClaim(pvcVolumeSource);
 
             //创建spec
             V1PodSpec podSpec = new V1PodSpec()
                     .nodeName(podNodeName)
-//                    .volumes(Collections.singletonList(pvcVolume))
+                    .volumes(Collections.singletonList(pvcVolume))
                     .containers(containers);
 
             //添加单个container
@@ -1188,7 +1190,7 @@ public class WorkloadController {
 
 
             appsApi.deleteNamespacedDeployment(
-                                deploymentName,
+                    deploymentName,
                     deploymentNamespace,
                     null,
                     null,
@@ -1196,7 +1198,7 @@ public class WorkloadController {
                     null,
                     null,
                     deleteOptions
-                        );
+            );
 
             return "Deployment deleted successfully";
         } catch (ApiException e) {

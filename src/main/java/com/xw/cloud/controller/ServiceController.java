@@ -25,6 +25,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
@@ -49,9 +51,11 @@ public class ServiceController {
 
 
         ModelAndView modelAndView = new ModelAndView("jsonView");
-        String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
-        ApiClient client =
-                ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
         Configuration.setDefaultApiClient(client);
 
         /*AppsV1Api api = new AppsV1Api();

@@ -58,7 +58,10 @@ public class VirtuleStorageController {
 
         Response response = call.execute();
 
+        System.out.println(response);
         String responseBody = response.body().string();
+
+
 
         if (!response.isSuccessful()) {
             modelAndView.addObject("result", "error!");
@@ -67,6 +70,37 @@ public class VirtuleStorageController {
 
         System.out.println("========================");
         System.out.println(responseBody);
+
+        modelAndView.addObject("result", responseBody);
+
+        return modelAndView;
+    }
+
+    @ApiOperation(value = "获取持久卷声明列表", notes = "获取 Kubernetes 中所有持久卷声明的列表")
+    @RequestMapping(value = "/vs/pvclist", method = RequestMethod.GET)
+    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷声明列表")
+    public ModelAndView getPvcList() throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+
+        Configuration.setDefaultApiClient(client);
+
+        CoreV1Api api = new CoreV1Api();
+
+
+        Call call = api.listNamespacedPersistentVolumeClaimCall("default", null, null, null, null, null, null, null, null, 5,null, null);
+
+        Response response = call.execute();
+
+        String responseBody = response.body().string();
+        if (!response.isSuccessful()) {
+            modelAndView.addObject("result", "error!");
+            return modelAndView;
+        }
+
 
         modelAndView.addObject("result", responseBody);
 
