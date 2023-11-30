@@ -42,11 +42,6 @@ public class DeploymentController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    @Value("${k8s.token}")
-    private String k8sToken;
-
-    private static final String KUBERNETES_API_SERVER = "https://192.168.243.143:6443";
-
     @ApiOperation(value = "删除部署和服务", notes = "根据提供的部署名称删除对应的 Kubernetes 部署和服务")
     @ApiResponses({
             @ApiResponse(code = 200, message = "部署和服务删除成功"),

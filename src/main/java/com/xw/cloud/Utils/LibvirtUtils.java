@@ -13,7 +13,7 @@ public class LibvirtUtils {
     // Connection
     @SneakyThrows
     public static Connect getConnection() {
-        if (null == connect) {
+
             connect = new Connect("qemu:///system", false);
             log.info("Libvirt local connection successful" + "\n"
                     + "     连接URI: " + connect.getURI() + "\n"
@@ -23,7 +23,7 @@ public class LibvirtUtils {
                     + "     libvirt库版本号: " + connect.getLibVirVersion() + "\n"
                     + "     hypervisor名称: " + connect.getType()
             );
-        }
+
         return connect;
     }
 

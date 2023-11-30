@@ -38,10 +38,6 @@ public class ServiceController {
     @Value("${k8s.config}")
     private String k8sConfig;
 
-    @Value("${k8s.token}")
-    private String k8sToken;
-
-    private static final String KUBERNETES_API_SERVER = "https://192.168.243.143:6443";
 
 
     @ApiOperation(value = "获取服务列表", notes = "获取 Kubernetes 默认命名空间中所有服务的列表")
