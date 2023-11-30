@@ -34,128 +34,7 @@ public class ImagesService {
     private String pathQcow;
     @Value("${image.filepath}")
     private String localPath;
-    public List<ImgFile> getImgList() throws JSchException, IOException {
-        List<ImgFile> list = new ArrayList<>();
-        Session session = null;
-        JSch jsch = new JSch();
-
-        session = jsch.getSession(username, remoteHost, 22);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.setPassword(password);
-        session.connect();
-        // 执行命令
-        Channel execChannel = session.openChannel("exec");
-        ((ChannelExec) execChannel).setCommand("ls "+pathISO); // 设置执行的命令
-        InputStream in = null;
-        in = execChannel.getInputStream();  // 获取命令执行结果的输入流
-        execChannel.connect();  // 连接远程执行命令
-        byte[] tmp = new byte[1024];
-        StringBuilder commandOutput = new StringBuilder();
-        while (true) {
-            while (in.available() > 0) {
-                int i = in.read(tmp, 0, 1024);
-                if (i < 0) break;
-                commandOutput.append(new String(tmp, 0, i));
-            }
-            if (execChannel.isClosed()) {
-                if (in.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String[] split = commandOutput.toString().split("\n");
-        for(String isoImage: split){
-            System.out.println(isoImage);
-            if(!isoImage.contains(".iso"))
-                continue;
-            Channel execChannel1 = session.openChannel("exec");
-            ((ChannelExec) execChannel1).setCommand("ls -l " + pathISO+"/"+isoImage);
-            System.out.println("ls -l " + pathISO+"/"+isoImage);
-            execChannel1.connect();
-            in = execChannel1.getInputStream();  // 获取命令执行结果的输入流
-            commandOutput.setLength(0);
-            while (true) {
-                while (in.available() > 0) {
-                    int i = in.read(tmp, 0, 1024);
-                    if (i < 0) break;
-                    commandOutput.append(new String(tmp, 0, i));
-                }
-                if (execChannel1.isClosed()) {
-                    if (in.available() > 0) continue;
-                    break;
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception ee) {
-                    // 处理异常
-                }
-            }
-
-            String fileSizeOutput = commandOutput.toString();
-            long fileSizeBytes = Long.parseLong(fileSizeOutput.split(" ")[4]);
-            Double fileSizeMB = Double.valueOf(fileSizeBytes / (1024 * 1024));
-            list.add(ImgFile.builder().name(isoImage).end("iso").size(fileSizeMB.toString()).build());
-        }
-        Channel execChannel2= session.openChannel("exec");
-        ((ChannelExec) execChannel2).setCommand("ls "+pathQcow); // 设置执行的命令
-        in = execChannel2.getInputStream();  // 获取命令执行结果的输入流
-        execChannel2.connect();  // 连接远程执行命令
-        commandOutput.setLength(0);
-        while (true) {
-            while (in.available() > 0) {
-                int i = in.read(tmp, 0, 1024);
-                if (i < 0) break;
-                commandOutput.append(new String(tmp, 0, i));
-            }
-            if (execChannel2.isClosed()) {
-                if (in.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String[] split1 = commandOutput.toString().split("\n");
-        for(String qcowImage: split1){
-            if(!qcowImage.contains(".qcow2"))
-                continue;
-            Channel execChannel3= session.openChannel("exec");
-            ((ChannelExec) execChannel3).setCommand("ls -l " + pathISO+"/"+qcowImage + " | awk '{print $5}'");
-            execChannel3.connect();
-            commandOutput.setLength(0);
-            in = execChannel3.getInputStream();
-            while (true) {
-                while (in.available() > 0) {
-                    int i = in.read(tmp, 0, 1024);
-                    if (i < 0) break;
-                    commandOutput.append(new String(tmp, 0, i));
-                }
-                if (execChannel.isClosed()) {
-                    if (in.available() > 0) continue;
-                    break;
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception ee) {
-                    // 处理异常
-                }
-            }
-
-            String fileSizeOutput = commandOutput.toString();
-            long fileSizeBytes = Long.parseLong(fileSizeOutput.split(" ")[4]);
-            Double fileSizeMB = Double.valueOf(fileSizeBytes / (1024 * 1024));
-            list.add(ImgFile.builder().name(qcowImage).end("qcow2").size(fileSizeMB.toString()).build());
-        }
-        return list;
-    }
-/*
-
+    
     public List<ImgFile> getImgList() {
         List<ImgFile> list = new ArrayList<>();
         File[] files = new File(home+"/images/").listFiles();
@@ -164,24 +43,11 @@ public class ImagesService {
                 list.add(ImgFile.builder()
                         .name(file.getName())
                         .size(FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(file)))
-                        .end(file.getName().split(".")[1])
                         .build());
             }
         }
-        File[] fileqcow = new File(home+"/VM_place/").listFiles();
-        if (fileqcow != null) {
-            for (File file : fileqcow) {
-                list.add(ImgFile.builder()
-                        .name(file.getName())
-                        .size(FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(file)))
-                                .end(file.getName().split(".")[1])
-                        .build());
-            }
-        }
-
         return list;
     }
-*/
 
     /**
      * 添加 img
