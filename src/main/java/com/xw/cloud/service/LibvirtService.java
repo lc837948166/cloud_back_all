@@ -1,11 +1,14 @@
 package com.xw.cloud.service;
 import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
+
+import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.libvirt.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -353,7 +356,7 @@ public class LibvirtService {
                 "  <features>\n" +
                 "    <acpi/>\n" +
                 "    <apic/>\n" +
-                "    <vmport state='off'/>\n" +
+//                "    <vmport state='off'/>\n" +
                 "  </features>\n" +
                 "  <cpu mode='host-model' check='partial'/>\n" +
                 "  <clock offset='utc'>\n" +

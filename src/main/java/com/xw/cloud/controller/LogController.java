@@ -57,7 +57,8 @@ public class LogController {
     @Value("${VM.password}")
     private String password;
 
-
+    @Value("${log.day}")
+    private String saveDay;
 
     @Autowired
     private OperationLogServiceImpl operationLogService;
@@ -92,7 +93,12 @@ public class LogController {
         CommentResp com = new CommentResp(true,list,"");
         return com;
     }
-
+    @ApiOperation(value = "日志保存时间", notes = "获取日志保存时间")
+    @RequestMapping(value = "/getSaveDays", method = RequestMethod.GET)
+    @ResponseBody
+    public CommentResp getSaveDays() {
+        return new CommentResp(true,saveDay,"");
+    }
     @ApiOperation(value = "删除操作日志", notes = "根据ID删除指定的操作日志")
     @DeleteMapping(value = "/deleteLog/{id}")
     @ResponseBody
