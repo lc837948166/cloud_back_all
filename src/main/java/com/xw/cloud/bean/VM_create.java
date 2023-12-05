@@ -27,4 +27,12 @@ public class VM_create {
     @ApiModelProperty(value = "操作系统类型")
     @JsonProperty(value = "OStype")
     private String OStype;
+
+    @ApiModelProperty(value = "镜像名")
+    @JsonProperty(value = "ImgName")
+    private String ImgName;
+
+    @ApiModelProperty(value = "网络类型")
+    @JsonProperty(value = "nettype")
+    private String NetType;
 }
