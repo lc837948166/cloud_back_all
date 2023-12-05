@@ -154,7 +154,7 @@ public class NodeController {
                 } else {
                     nodeType = "边";
                 }
-                Long nodeConnectivity = (long) (ping(nodeIP)?1:0);
+                Integer nodeConnectivity = (Integer) (ping(nodeIP)?1:0);
                 // 检查节点是否存在于tNodeList中
                 boolean found = false;
                 for (NodeInfo tNode : tNodeList) {

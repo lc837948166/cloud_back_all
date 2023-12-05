@@ -24,7 +24,7 @@ public class NodeInfo implements Serializable {
 	private static final long serialVersionUID =  8153717320003653421L;
 
 	@TableId(type = IdType.AUTO,value = "ID")
-	private Long id;
+	private Integer id;
 
 	@TableField(value = "nodeName")
 	private String nodeName;
@@ -42,12 +42,12 @@ public class NodeInfo implements Serializable {
 	private String nodeType;
 
 	@TableField(value = "nodeConnectivity")
-	private Long nodeConnectivity;
+	private Integer nodeConnectivity;
 
 	public NodeInfo() {
 	}
 
-	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Long nodeConnectivity) {
+	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity) {
 
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
@@ -57,11 +57,11 @@ public class NodeInfo implements Serializable {
 		this.nodeConnectivity = nodeConnectivity;
 	}
 
-	public Long getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
@@ -105,11 +105,11 @@ public class NodeInfo implements Serializable {
 		this.nodeType = nodeType;
 	}
 
-	public Long getNodeConnectivity() {
+	public Integer getNodeConnectivity() {
 		return nodeConnectivity;
 	}
 
-	public void setNodeConnectivity(Long nodeConnectivity) {
+	public void setNodeConnectivity(Integer nodeConnectivity) {
 		this.nodeConnectivity = nodeConnectivity;
 	}
 

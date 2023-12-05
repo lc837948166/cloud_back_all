@@ -1,11 +1,11 @@
 package com.xw.cloud.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcraft.jsch.*;
-import com.xw.cloud.bean.PvInfo;
-import com.xw.cloud.bean.PvcInfo;
-import com.xw.cloud.bean.RequestInfo;
-import com.xw.cloud.bean.VmInfo;
+import com.xw.cloud.bean.*;
 import com.xw.cloud.inter.OperationLogDesc;
+import com.xw.cloud.service.impl.NodeServiceImpl;
+import com.xw.cloud.service.impl.PvServiceImpl;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -18,6 +18,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import okhttp3.Call;
 import okhttp3.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -26,12 +27,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
+import java.util.List;
 
 @Api(tags = "虚拟存储管理", description = "处理和管理kvm中的虚拟存储资源")
 @Controller
 @CrossOrigin
 @RequestMapping("/virtuleStorage")
 public class VirtuleStorageController {
+
+    @Autowired
+    private PvServiceImpl pvService;
+
+    @Autowired
+    private NodeServiceImpl nodeService;
 
     @ApiOperation(value = "查看持久卷页面", notes = "返回展示持久卷资源的页面路径")
     @RequestMapping(value = "/vs", method = RequestMethod.GET)
@@ -68,10 +76,14 @@ public class VirtuleStorageController {
             return modelAndView;
         }
 
+        List<PvInfo> pvList = pvService.list();
+        System.out.println(pvList);
+
         System.out.println("========================");
         System.out.println(responseBody);
 
         modelAndView.addObject("result", responseBody);
+        modelAndView.addObject("pvList", pvList);
 
         return modelAndView;
     }
@@ -100,6 +112,7 @@ public class VirtuleStorageController {
             modelAndView.addObject("result", "error!");
             return modelAndView;
         }
+
 
 
         modelAndView.addObject("result", responseBody);
@@ -136,6 +149,11 @@ public class VirtuleStorageController {
         String persistentVolumePath = pvInfo.getPvPath();
         String persistentVolumeQuantity = pvInfo.getPvQuantity();
         String persistentVolumeAccessMode = pvInfo.getPvAccessMode();
+        String persistentVolumeNodeName = "master1";
+        Integer persistentVolumeNodeId;
+
+
+
 
         String persistentVolumeClaimName = pvcInfo.getPvcName();
         String persistentVolumeClaimNamespace = pvcInfo.getPvcNamespace();
@@ -145,6 +163,9 @@ public class VirtuleStorageController {
         String virtualMachineIp = vmInfo.getVirtualMachineIp();
         String userName = vmInfo.getUserName();
         String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
+
+
+
 
         Session session = null;
         Channel channel = null;
@@ -272,6 +293,25 @@ public class VirtuleStorageController {
             V1PersistentVolumeClaim createdPvc = api.createNamespacedPersistentVolumeClaim(persistentVolumeClaimNamespace, persistentVolumeClaim, null, null, null);
             System.out.println("Created PVC: " + createdPvc.getMetadata().getName());
 
+            //添加到数据库
+            QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+//            qw.eq("nodeIp", virtualMachineIp);
+            qw.eq("nodeName", persistentVolumeNodeName);
+
+//            persistentVolumeNodeName = nodeService.getOne(qw).getNodeName();
+            persistentVolumeNodeId = nodeService.getOne(qw).getId();
+
+
+            PvInfo pvInfo1 = new PvInfo(persistentVolumeName,
+                    persistentVolumePath,
+                    persistentVolumeQuantity,
+                    persistentVolumeAccessMode,
+                    persistentVolumeNodeName,
+                    persistentVolumeNodeId);
+
+
+            pvService.save(pvInfo1);
+
 
             return "Persistent volume created successfully";
         } catch (Exception e) {
@@ -334,12 +374,15 @@ public class VirtuleStorageController {
                             null, null, null, null, null, deleteOptions  // 其他参数为null
                     );
                     System.out.println("Persistent volume and its related claim deleted successfully");
-                    return "Persistent volume and its related claim deleted successfully";
                 }
             }
 
+            QueryWrapper<PvInfo> qw = new QueryWrapper<>();
+            qw.eq("pvName", persistentVolumeName);
+            pvService.removeById(pvService.getOne(qw).getId());
+
             System.out.println("11111112222222222222333333333333");
-            return "Persistent volume deleted successfully";
+            return "Persistent volume and its related claim deleted successfully";
         } catch (ApiException e) {
             return "Failed to delete persistent volume: " + e.getMessage();
         }
@@ -385,6 +428,13 @@ public class VirtuleStorageController {
             persistentVolume.setSpec(spec);
             api.replacePersistentVolume(persistentVolumeName, persistentVolume, null, null, null);
 
+            QueryWrapper<PvInfo> qw = new QueryWrapper<>();
+            qw.eq("pvName", persistentVolumeName);
+
+            PvInfo pvInfo1 = pvService.getOne(qw);
+            pvInfo1.setPvQuantity(newVolumeQuantity);
+            pvService.removeById(pvService.getOne(qw).getId());
+            pvService.save(pvInfo1);
 
             return "Persistent volume capacity updated successfully";
         } catch (ApiException e) {
