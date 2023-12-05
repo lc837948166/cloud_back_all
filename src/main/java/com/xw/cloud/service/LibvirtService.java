@@ -1,14 +1,11 @@
 package com.xw.cloud.service;
 import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
-
-import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.libvirt.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,8 +54,7 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualById(int id) {
         Domain domain = getDomainById(id);
-//        DomainBlockInfo blockInfo = domain.blockInfo(home+"/VM_place/"+domain.getName()+".img");
-//        long totalSize = blockInfo.getCapacity();
+        
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
@@ -332,24 +328,17 @@ public class LibvirtService {
         String xml = "<domain type='kvm'>\n" +
                 "  <name>" + vmc.getName() + "</name>\n" +
                 "  <uuid>" + UUID.randomUUID() + "</uuid>\n" +
-//                "  <metadata>\n" +
-//                "    <libosinfo:libosinfo xmlns:libosinfo=\"http://libosinfo.org/xmlns/libvirt/domain/1.0\">\n" +
-//                "      <libosinfo:os id=\"http://ubuntu.com/ubuntu/14.04\"/>\n" +
-//                "    </libosinfo:libosinfo>\n" +
-//                "  </metadata>\n" +
                 "  <memory unit='GiB'>"+vmc.getMemory()+"</memory>\n" +                 // 1024 MB
                 "  <currentMemory unit='GiB'>"+vmc.getMemory()+"</currentMemory>\n" +   // 1024 MB same with up
                 "  <vcpu placement='static'>"+vmc.getCpuNum()+"</vcpu>\n";
                 if(vmc.getOStype().equals("arm")){
                     xml+="  <os>\n" +
                          "    <type arch='aarch64' machine='virt'>hvm</type>\n" +
-//                <type arch='aarch64' machine='virt'>hvm</type> armVM
                          "    <boot dev='hd'/>\n" +
                          "  </os>\n";}
                 else if (vmc.getOStype().equals("X86")){
                     xml+=   "  <os>\n" +
                             "    <type arch='x86_64' machine='pc'>hvm</type>\n" +
-//                <type arch='aarch64' machine='virt'>hvm</type> armVM
                             "    <boot dev='hd'/>\n" +
                             "  </os>\n";}
                 xml+=
@@ -374,9 +363,8 @@ public class LibvirtService {
                 "  <devices>\n" +
                 "    <emulator>" + "/usr/libexec/qemu-kvm" + "</emulator>\n" +
                 "    <disk type='file' device='disk'>\n" +
-                "      <driver name='qemu' type='raw'/>\n" +
-                "      <source file='"+home+"/VM_place/" + vmc.getName() + ".qcow2'/>\n" +   // FileSource
-//                "      <target dev='vda' bus='virtio'/>\n" +
+                "      <driver name='qemu' type='qcow2'/>\n" +
+                "      <source file='"+home+"/images/" + vmc.getImgName() + "'/>\n" +   // FileSource
                         "      <target dev='hdb' bus='ide'/>\n" +
                 "      <address type='drive' controller='0' bus='0' target='0' unit='0'/>\n" +
                         "    </disk>\n" +
@@ -399,13 +387,16 @@ public class LibvirtService {
                 "    <controller type='virtio-serial' index='0'>\n" +
                 "      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>\n" +
                 "    </controller>\n" +
-                "    <interface type='network'>\n" +
-//                "      <mac address='52:54:00:27:6d:ef'/>\n" +
-                "      <source network='default'/>\n" +
-                "      <model type='virtio'/>\n" +
-//                        "      <ip address='dhcp'/>\n"+
-                "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
-                "    </interface>\n" +
+//                "    <interface type='network'>\n" +
+//                "      <source network='default'/>\n" +
+//                "      <model type='virtio'/>\n" +
+//                "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
+//                "    </interface>\n" +
+                  "    <interface type='bridge'>\n" +
+                  "      <source bridge='br0'/>\n" +
+                  "      <model type='virtio'/>\n" +
+                  "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
+                  "    </interface>"+
                 "    <serial type='pty'>\n" +
                 "      <target type='isa-serial' port='0'>\n" +
                 "        <model name='isa-serial'/>\n" +

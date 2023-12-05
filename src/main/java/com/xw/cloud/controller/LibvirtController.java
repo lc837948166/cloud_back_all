@@ -93,7 +93,7 @@ public class LibvirtController {
         return new CommentResp(true, null,"还原成功");
     }
 
-    @ApiOperation(value = "恢复虚拟机", notes = "根据虚拟机名称恢复虚拟机")
+    @ApiOperation(value = "保存虚拟机", notes = "根据虚拟机名称保存虚拟机")
     @SneakyThrows
     @RequestMapping("/save")
     public String saveVirtual(@RequestParam("name") String name) {
@@ -101,7 +101,7 @@ public class LibvirtController {
         return "redirect:main";
     }
 
-    @ApiOperation(value = "恢复虚拟机", notes = "根据虚拟机名称恢复虚拟机")
+    @ApiOperation(value = "还原虚拟机", notes = "根据虚拟机名称还原虚拟机")
     @SneakyThrows
     @RequestMapping("/restore")
     public String restoreVirtual(@RequestParam("name") String name) {
@@ -170,7 +170,7 @@ public class LibvirtController {
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")
     @ResponseBody
     @RequestMapping("/addVirtual")
-    public CommentResp addVirtual(@RequestParam("file") MultipartFile file, @RequestParam("name") String name,
+    public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam("OStype") String OStype) {
         VM_create vmc = new VM_create();
@@ -178,8 +178,9 @@ public class LibvirtController {
         vmc.setMemory(memory);
         vmc.setCpuNum(cpuNum);
         vmc.setOStype(OStype);
+        vmc.setImgName(ImgName);
         libvirtService.addDomainByName(vmc);
-        libvirtService.addImgFile(vmc.getName(), file);
+//        libvirtService.addImgFile(vmc.getName(), file);
         return new CommentResp(true, null,"创建虚拟机成功");
     }
 
