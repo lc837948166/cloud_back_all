@@ -54,7 +54,7 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualById(int id) {
         Domain domain = getDomainById(id);
-        
+
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
@@ -386,18 +386,22 @@ public class LibvirtService {
                 "    <controller type='pci' index='0' model='pci-root'/>\n" +
                 "    <controller type='virtio-serial' index='0'>\n" +
                 "      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>\n" +
-                "    </controller>\n" +
-//                "    <interface type='network'>\n" +
-//                "      <source network='default'/>\n" +
-//                "      <model type='virtio'/>\n" +
-//                "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
-//                "    </interface>\n" +
-                  "    <interface type='bridge'>\n" +
-                  "      <source bridge='br0'/>\n" +
-                  "      <model type='virtio'/>\n" +
-                  "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
-                  "    </interface>"+
-                "    <serial type='pty'>\n" +
+                "    </controller>\n";
+        if(vmc.getNetType().equals("bridge")){
+            xml+="    <interface type='bridge'>\n" +
+                    "      <source bridge='br0'/>\n" +
+                    "      <model type='virtio'/>\n" +
+                    "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
+                    "    </interface>";
+        }
+        else if (vmc.getNetType().equals("nat")) {
+            xml += "    <interface type='network'>\n" +
+                    "      <source network='default'/>\n" +
+                    "      <model type='virtio'/>\n" +
+                    "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
+                    "    </interface>\n";
+        }
+                xml+="    <serial type='pty'>\n" +
                 "      <target type='isa-serial' port='0'>\n" +
                 "        <model name='isa-serial'/>\n" +
                 "      </target>\n" +
