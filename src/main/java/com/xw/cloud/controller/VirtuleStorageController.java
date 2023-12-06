@@ -41,6 +41,20 @@ public class VirtuleStorageController {
     @Autowired
     private NodeServiceImpl nodeService;
 
+    @ApiOperation(value = "获取持久卷路径", notes = "获取 Kubernetes 中所有持久卷的路径")
+    @RequestMapping(value = "/pvPath", method = RequestMethod.GET)
+    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
+    public ModelAndView getPvPath(@RequestParam("pvName") String pvName) throws IOException, ApiException {
+        ModelAndView modelAndView = new ModelAndView("jsonView");
+
+        QueryWrapper<PvInfo> qw = new QueryWrapper<>();
+        qw.eq("pvName", pvName);
+        String pvPath = pvService.getOne(qw).getPvPath();
+
+        modelAndView.addObject("pvPath", pvPath);
+        return modelAndView;
+    }
+
     @ApiOperation(value = "查看持久卷页面", notes = "返回展示持久卷资源的页面路径")
     @RequestMapping(value = "/vs", method = RequestMethod.GET)
     public String pv() {
@@ -149,7 +163,8 @@ public class VirtuleStorageController {
         String persistentVolumePath = pvInfo.getPvPath();
         String persistentVolumeQuantity = pvInfo.getPvQuantity();
         String persistentVolumeAccessMode = pvInfo.getPvAccessMode();
-        String persistentVolumeNodeName = "master1";
+//        String persistentVolumeNodeName = "master1";
+        String persistentVolumeNodeName = pvInfo.getPvNodeName();
         Integer persistentVolumeNodeId;
 
 
@@ -159,10 +174,14 @@ public class VirtuleStorageController {
         String persistentVolumeClaimNamespace = pvcInfo.getPvcNamespace();
         String persistentVolumeClaimQuantity = pvcInfo.getPvcQuantity();
 
+        //添加到数据库
+        QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+//            qw.eq("nodeIp", virtualMachineIp);
+        qw.eq("nodeName", persistentVolumeNodeName);
 
-        String virtualMachineIp = vmInfo.getVirtualMachineIp();
-        String userName = vmInfo.getUserName();
-        String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
+        String virtualMachineIp = nodeService.getOne(qw).getNodeIp();
+        String userName = nodeService.getOne(qw).getNodeUserName();
+        String userPassword = nodeService.getOne(qw).getNodeUserPasswd(); // 请替换为您的实际密码
 
 
 
@@ -293,10 +312,7 @@ public class VirtuleStorageController {
             V1PersistentVolumeClaim createdPvc = api.createNamespacedPersistentVolumeClaim(persistentVolumeClaimNamespace, persistentVolumeClaim, null, null, null);
             System.out.println("Created PVC: " + createdPvc.getMetadata().getName());
 
-            //添加到数据库
-            QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
-//            qw.eq("nodeIp", virtualMachineIp);
-            qw.eq("nodeName", persistentVolumeNodeName);
+
 
 //            persistentVolumeNodeName = nodeService.getOne(qw).getNodeName();
             persistentVolumeNodeId = nodeService.getOne(qw).getId();
@@ -309,6 +325,7 @@ public class VirtuleStorageController {
                     persistentVolumeNodeName,
                     persistentVolumeNodeId);
 
+            System.out.println(pvInfo1);
 
             pvService.save(pvInfo1);
 

@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.soap.Node;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -81,15 +82,20 @@ public class NodeController {
     @ResponseBody
     @GetMapping("/ping")
     @OperationLogDesc(module = "节点管理", events = "ping通")
-    public ResponseEntity<String> pingTest(@RequestParam("ip1") String ip1) {
+    public ResponseEntity<String> pingTest(@RequestParam("ip") String ip) {
         try {
-            InetAddress address1 = InetAddress.getByName(ip1);
-
-            boolean isReachable1 = address1.isReachable(5000); // 5000表示超时时间，单位为毫秒
-
-            if (isReachable1 ) {
+            InetAddress address = InetAddress.getByName(ip);
+            boolean isReachable = address.isReachable(5000); // 5000表示超时时间，单位为毫秒
+            QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+            qw.eq("nodeIp", ip);
+            NodeInfo nodeInfo = nodeService.getOne(qw);
+            if (isReachable ) {
+                nodeInfo.setNodeConnectivity(1);
+                nodeService.updateById(nodeInfo);
                 return ResponseEntity.ok(" IP are reachable");
             } else {
+                nodeInfo.setNodeConnectivity(0);
+                nodeService.updateById(nodeInfo);
                 return ResponseEntity.ok(" IP are not reachable");
             }
         } catch (IOException e) {
@@ -155,6 +161,10 @@ public class NodeController {
                     nodeType = "边";
                 }
                 Integer nodeConnectivity = (Integer) (ping(nodeIP)?1:0);
+
+                String nodeUserName = "root";
+                String nodeUserPasswd = "@wsad1234";
+
                 // 检查节点是否存在于tNodeList中
                 boolean found = false;
                 for (NodeInfo tNode : tNodeList) {
@@ -165,7 +175,7 @@ public class NodeController {
                 }
                 // 如果在tNodeList中找不到相同的节点名和节点IP
                 if (!found) {
-                    NodeInfo newNode = new NodeInfo(nodeName, nodeIP, nodeStatus, nodeLocation, nodeType, nodeConnectivity);
+                    NodeInfo newNode = new NodeInfo(nodeName, nodeIP, nodeStatus, nodeLocation, nodeType, nodeConnectivity, nodeUserName, nodeUserPasswd);
                     nodeService.save(newNode);
                 }
             }

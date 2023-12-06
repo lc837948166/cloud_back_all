@@ -44,10 +44,16 @@ public class NodeInfo implements Serializable {
 	@TableField(value = "nodeConnectivity")
 	private Integer nodeConnectivity;
 
+	@TableField(value = "nodeUserName")
+	private String nodeUserName;
+
+	@TableField(value = "nodeUserPasswd")
+	private String nodeUserPasswd;
+
 	public NodeInfo() {
 	}
 
-	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity) {
+	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd) {
 
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
@@ -55,6 +61,8 @@ public class NodeInfo implements Serializable {
 		this.nodeLocation = nodeLocation;
 		this.nodeType = nodeType;
 		this.nodeConnectivity = nodeConnectivity;
+		this.nodeUserName = nodeUserName;
+		this.nodeUserPasswd = nodeUserPasswd;
 	}
 
 	public Integer getId() {
@@ -113,6 +121,22 @@ public class NodeInfo implements Serializable {
 		this.nodeConnectivity = nodeConnectivity;
 	}
 
+	public String getNodeUserName() {
+		return nodeUserName;
+	}
+
+	public void setNodeUserName(String nodeUserName) {
+		this.nodeUserName = nodeUserName;
+	}
+
+	public String getNodeUserPasswd() {
+		return nodeUserPasswd;
+	}
+
+	public void setNodeUserPasswd(String nodeUserPasswd) {
+		this.nodeUserPasswd = nodeUserPasswd;
+	}
+
 	@Override
 	public String toString() {
 		return "NodeInfo{" +
@@ -123,6 +147,8 @@ public class NodeInfo implements Serializable {
 				", nodeLocation='" + nodeLocation + '\'' +
 				", nodeType='" + nodeType + '\'' +
 				", nodeConnectivity=" + nodeConnectivity +
+				", nodeUserName='" + nodeUserName + '\'' +
+				", nodeUserPasswd='" + nodeUserPasswd + '\'' +
 				'}';
 	}
 }
