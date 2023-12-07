@@ -1,16 +1,20 @@
 package com.xw.cloud.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcraft.jsch.*;
 import com.xw.cloud.bean.ImageInfo;
+import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.RequestInfo;
 import com.xw.cloud.bean.VmInfo;
 import com.xw.cloud.inter.OperationLogDesc;
+import com.xw.cloud.service.impl.NodeServiceImpl;
 import groovy.util.logging.Slf4j;
 import io.kubernetes.client.openapi.ApiException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +29,8 @@ import java.io.InputStream;
 @RequestMapping("/containerd")
 @Api(tags = "Containerd 镜像管理", description = "管理 Kubernetes 容器中的镜像")
 public class ContainerdImageController {
+    @Autowired
+    NodeServiceImpl nodeService;
 
     @ApiOperation(value = "查看镜像页面", notes = "返回容器化镜像页面的路径")
     @RequestMapping(value = "/images", method = RequestMethod.GET)
@@ -41,7 +47,7 @@ public class ContainerdImageController {
     @RequestMapping(value = "/images/list", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "获取镜像列表")
-    public ModelAndView getContainerdImages(@RequestBody VmInfo vmInfo) throws IOException {
+    public ModelAndView getContainerdImages(@RequestParam String nodeName) throws IOException {
 //    public ModelAndView getContainerdImages() throws IOException {
 
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -147,9 +153,18 @@ public class ContainerdImageController {
 //        String userName = "root";
 //        String userPassword = "@wsad1234"; // 请替换为您的实际密码
 
-        String virtualMachineIp = vmInfo.getVirtualMachineIp();
-        String userName = vmInfo.getUserName();
-        String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
+        QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+        qw.eq("nodeName", nodeName);
+        NodeInfo nodeInfo = nodeService.getOne(qw);
+
+        String virtualMachineIp = nodeInfo.getNodeIp();
+        String userName = nodeInfo.getNodeUserName();
+        String userPassword = nodeInfo.getNodeUserPasswd();
+
+
+//        String virtualMachineIp = vmInfo.getVirtualMachineIp();
+//        String userName = vmInfo.getUserName();
+//        String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
 
         System.out.println(virtualMachineIp+ userName+ userPassword);
 
@@ -247,9 +262,8 @@ public class ContainerdImageController {
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "上传并导入镜像")
     public String uploadImage(@RequestParam("tarFile") MultipartFile tarFile,
-                              @RequestParam("virtualMachineIp") String virtualMachineIp,
-                              @RequestParam("userName") String userName,
-                              @RequestParam("userPassword") String userPassword) throws IOException {
+                              @RequestParam("nodeName") String nodeName
+                             ) throws IOException {
 
 //        String virtualMachineIp = "192.168.174.133";
 //        String userName = "root";
@@ -258,6 +272,14 @@ public class ContainerdImageController {
 //        String virtualMachineIp = vmInfo.getVirtualMachineIp();
 //        String userName = vmInfo.getUserName();
 //        String userPassword = vmInfo.getUserPassword();
+
+        QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+        qw.eq("nodeName", nodeName);
+        NodeInfo nodeInfo = nodeService.getOne(qw);
+
+        String virtualMachineIp = nodeInfo.getNodeIp();
+        String userName = nodeInfo.getNodeUserName();
+        String userPassword = nodeInfo.getNodeUserPasswd();
 
         Session session = null;
         Channel channel = null;
@@ -361,22 +383,31 @@ public class ContainerdImageController {
     @RequestMapping(value = "/deleteImage", method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "镜像管理", events = "删除镜像")
-    public String deletePod(@RequestBody RequestInfo requestInfo) throws IOException, ApiException {
+    public String deletePod(@RequestParam("imageId") String imageId,
+                            @RequestParam("nodeName") String nodeName) throws IOException, ApiException {
 
-        VmInfo vmInfo = requestInfo.getVmInfo();
-        ImageInfo imageInfo = requestInfo.getImageInfo();
+//        VmInfo vmInfo = requestInfo.getVmInfo();
+//        ImageInfo imageInfo = requestInfo.getImageInfo();
 
-        System.out.println("11111");
 
 //        String virtualMachineIp = "192.168.174.133";
 //        String username = "root";
 //        String password = "@wsad1234"; // 请替换为您的实际密码
 //        String imageId = "80d28bedfe5de";
 
-        String virtualMachineIp = vmInfo.getVirtualMachineIp();
-        String userName = vmInfo.getUserName();
-        String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
-        String imageId = imageInfo.getImageId();
+//        String virtualMachineIp = vmInfo.getVirtualMachineIp();
+//        String userName = vmInfo.getUserName();
+//        String userPassword = vmInfo.getUserPassword(); // 请替换为您的实际密码
+//        String imageId = imageInfo.getImageId();
+
+
+        QueryWrapper<NodeInfo> qw = new QueryWrapper<>();
+        qw.eq("nodeName", nodeName);
+        NodeInfo nodeInfo = nodeService.getOne(qw);
+
+        String virtualMachineIp = nodeInfo.getNodeIp();
+        String userName = nodeInfo.getNodeUserName();
+        String userPassword = nodeInfo.getNodeUserPasswd();
 
         Session session = null;
         Channel channel = null;
