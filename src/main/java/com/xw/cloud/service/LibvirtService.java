@@ -3,12 +3,14 @@ import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.VMMapper;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.libvirt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
@@ -16,6 +18,8 @@ import com.xw.cloud.Utils.SftpUtils;
 @Log
 @Service(value = "libvirtService")
 public class LibvirtService {
+    @Resource
+    private VMMapper vmMapper;
 
     String home = System.getenv("HOME");
     /**
@@ -54,7 +58,6 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualById(int id) {
         Domain domain = getDomainById(id);
-
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
@@ -73,9 +76,11 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualByName(String name) {
         Domain domain = getDomainByName(name);
+        String ip=vmMapper.selectById(domain.getName()).getIp();
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
+                .ipaddr(getVMip(name))
                 .state(domain.getInfo().state.toString())
                 .build();
     }
@@ -99,11 +104,19 @@ public class LibvirtService {
 
     @SneakyThrows
     public String getVMip(String name) {
-
-        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
-        String ip =SftpUtils.getexecon(command);
+//        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
+//        String ip =SftpUtils.getexecon(command);
+        String ip = vmMapper.selectById(name).getIp();
         System.out.println(ip);
+        return ip;
+    }
 
+    @SneakyThrows
+    public String getallVMip() {
+//        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
+//        String ip =SftpUtils.getexecon(command);
+        String command="bash virsh-ip.sh all 192.168.243";
+        String ip =SftpUtils.getexecon(command);
         return ip;
     }
 
@@ -131,6 +144,7 @@ public class LibvirtService {
                 .useMem(getMem(domain))
                 .cpuNum(domain.getMaxVcpus())
                 .usecpu(getCpu(domain))
+                .ipaddr(getVMip(domain.getName()))
                 .build();
     }
 
@@ -445,6 +459,27 @@ public class LibvirtService {
                 "</domain>";
         LibvirtUtils.getConnection().domainDefineXML(xml);    // define ------> creat
         log.info(vmc.getName() + "虚拟机已创建！");
+        Thread.sleep(1000);
+        initiateDomainByName(vmc.getName());
+        updateVMtable(getDomainByName(vmc.getName()));
+    }
+
+    /**
+     * 更新数据库的虚拟机信息
+     */
+    @SneakyThrows
+    private void updateVMtable(Domain domain) {
+        String name=domain.getName();
+
+        VMInfo2 vmInfo2=VMInfo2.builder()
+                .name(name)
+                .ip(getVMip(name))
+                .username("lc")
+                .passwd("111")
+                .serverip("127.0.0.1").build();
+        if(vmInfo2.getIp().isEmpty())
+            Thread.sleep(10000);
+        vmMapper.insert(vmInfo2);
     }
 
     /**
