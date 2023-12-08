@@ -3,7 +3,7 @@ package com.xw.cloud.controller;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.VMInfo2;
 import com.xw.cloud.inter.OperationLogDesc;
-import com.xw.cloud.mapper.VMMapper;
+import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
 import org.springframework.stereotype.Controller;
@@ -22,7 +22,7 @@ import java.util.List;
 public class VMInfoController {
 
     @Resource
-    private VMMapper vmMapper;
+    private VmMapper vmMapper;
 
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
