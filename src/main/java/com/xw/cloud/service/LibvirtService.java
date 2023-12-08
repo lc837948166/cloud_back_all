@@ -115,7 +115,7 @@ public class LibvirtService {
     public String getallVMip() {
 //        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
 //        String ip =SftpUtils.getexecon(command);
-        String command="bash virsh-ip.sh all 192.168.243";
+        String command="bash virsh-ip.sh all 172.26.82";
         String ip =SftpUtils.getexecon(command);
         return ip;
     }
@@ -461,24 +461,20 @@ public class LibvirtService {
         log.info(vmc.getName() + "虚拟机已创建！");
         Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
-        updateVMtable(getDomainByName(vmc.getName()));
+        updateVMtable(vmc.getName());
     }
 
     /**
      * 更新数据库的虚拟机信息
      */
     @SneakyThrows
-    private void updateVMtable(Domain domain) {
-        String name=domain.getName();
+    private void updateVMtable(String name) {
 
         VMInfo2 vmInfo2=VMInfo2.builder()
                 .name(name)
-                .ip(getVMip(name))
                 .username("lc")
                 .passwd("111")
                 .serverip("127.0.0.1").build();
-        if(vmInfo2.getIp().isEmpty())
-            Thread.sleep(10000);
         vmMapper.insert(vmInfo2);
     }
 
@@ -746,127 +742,6 @@ public class LibvirtService {
 
     }
 
-    //ssh命令行来获取mem和cpu，速度慢，已废弃
-    public double[] getMem(String name) throws Exception {
-        double[] array = new double[4];
-        String virtualMachineIp = "127.0.0.1";
-        String username = "root";
-        String password = "111";
 
-        Session session;
-        JSch jsch = new JSch();
-        session = jsch.getSession(username, virtualMachineIp, 22);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.setPassword(password);
-        session.connect();
-        // 执行命令
-        Channel execChannel = session.openChannel("exec");
-        ((ChannelExec) execChannel).setCommand("virsh dommemstat "+name); // 设置执行的命令
-        System.out.println("virsh dommemstat "+name);
-        InputStream in;
-        in = execChannel.getInputStream();  // 获取命令执行结果的输入流
-        execChannel.connect();  // 连接远程执行命令
-        byte[] tmp = new byte[1024];
-        StringBuilder commandOutput = new StringBuilder(); //存储命令执行的输出
-        while (true) {
-            while (in.available() > 0) {
-                int i = in.read(tmp, 0, 1024);
-                if (i < 0) break;
-                commandOutput.append(new String(tmp, 0, i));
-            }
-            if (execChannel.isClosed()) {
-                if (in.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String data=commandOutput.toString();
-        double unusedValue = 0;
-        int unusedIndex = data.indexOf("unused");
-        if (unusedIndex != -1) {
-            int startIndex = unusedIndex + "unused".length() + 1; // 跳过空格
-            int endIndex=startIndex;
-            char i =data.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
-//            int endIndex = data.indexOf(" ", startIndex);
-
-            String unusedNumber = data.substring(startIndex, endIndex);
-            try {
-                unusedValue = Integer.parseInt(unusedNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-
-        double availableValue = 0;
-        int availableIndex = data.indexOf("available");
-        if (availableIndex != -1) {
-            int startIndex = availableIndex + "available".length() + 1; // 跳过空格
-            int endIndex=startIndex;
-            char i =data.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data.charAt(endIndex);}
-            String availableNumber = data.substring(startIndex, endIndex);
-            try {
-                availableValue = Integer.parseInt(availableNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-        double useValue=availableValue-unusedValue;
-        double useMem=useValue/availableValue * 100;
-        double truncatedValue = (int) (useMem * 100) / 100.0;
-        array[0]=truncatedValue;
-        array[1]=availableValue;
-        System.out.println(truncatedValue);
-        System.out.println(availableValue);
-
-        ((ChannelExec) execChannel).setCommand("virsh dominfo "+name);
-        InputStream in2;
-        in2 = execChannel.getInputStream();  // 获取命令执行结果的输入流
-        execChannel.connect();  // 连接远程执行命令
-        byte[] tmp2 = new byte[1024];
-        StringBuilder commandOutput2 = new StringBuilder(); //存储命令执行的输出
-        while (true) {
-            while (in2.available() > 0) {
-                int i = in2.read(tmp2, 0, 1024);
-                if (i < 0) break;
-                commandOutput2.append(new String(tmp2, 0, i));
-            }
-            if (execChannel.isClosed()) {
-                if (in2.available() > 0) continue;
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ee) {
-                // 处理异常
-            }
-        }
-        String data2=commandOutput.toString();
-        int cpuNumValue = 0;
-        int cpuNumIndex = data2.indexOf("CPU：");
-        if (cpuNumIndex != -1) {
-            int startIndex = cpuNumIndex + "CPU：".length() + 10; // 跳过空格
-            int endIndex=startIndex;
-            char i =data2.charAt(startIndex);
-            while (i!='\n'){++endIndex;i=data2.charAt(endIndex);}
-//            int endIndex = data.indexOf(" ", startIndex);
-
-            String cpuNumber = data2.substring(startIndex, endIndex);
-            try {
-                cpuNumValue = Integer.parseInt(cpuNumber);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println(cpuNumValue);
-        array[2]=cpuNumValue;
-
-        return array;
-    }
 
 }
