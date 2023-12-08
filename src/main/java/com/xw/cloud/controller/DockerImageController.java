@@ -33,11 +33,12 @@ public class DockerImageController {
     VmServiceImpl vmService;
 
 
-    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
+//    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
 
     @GetMapping("/imageList")
     @ApiOperation("获取 Docker 镜像列表")
-    public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName) {
+    public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName,
+                                                   @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -48,41 +49,37 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
+        String userName1 = "root";
+        String userPassword1 = "Upc123456@";
+        String host1 = "39.101.136.242";
+
+        String url = "http://" + endIp +":8081/api/ssh";
         String command = "docker image ls";
 
-        SshClient sshClient = new SshClient();
-        String output = sshClient.runCommand(host, userName, userPassword, command);
-        List<String> images = Arrays.asList(output.split("\n"));
-
-        for (String list : images) {
-            System.out.println(list);
-        }
-        return ResponseEntity.ok(images);
-
-        /*
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 构建请求体
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("host", host);
-        requestBody.put("username", userName);
-        requestBody.put("password", userPassword);
+        requestBody.put("host", host1);
+        requestBody.put("username", userName1);
+        requestBody.put("password", userPassword1);
         List<String> commands = Arrays.asList(
-                "docker image ls"
+                command
         );
         requestBody.put("commands", commands);
 
+        System.out.println(commands);
 
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
-                apiUrl,
+                url,
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody, headers),
                 String.class
         );
 
-
+        System.out.println("111");
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
@@ -94,15 +91,15 @@ public class DockerImageController {
             // 处理请求失败情况
             return ResponseEntity.ok(Collections.emptyList());
         }
-
-        */
     }
 
 
     @PostMapping("/uploadAndImport")
     @ApiOperation("上传并导入 Docker 镜像")
     public ResponseEntity<String> uploadAndImportImage(@RequestParam("imageFile") MultipartFile imageFile,
-                                                       @RequestParam("vmName") String vmName) {
+                                                       @RequestParam("vmName") String vmName,
+                                                       @RequestParam("targetPath") String targetPath,
+                                                       @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -113,91 +110,61 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        Session session = null;
-        Channel channel = null;
+        String url = "http://" + endIp +":8081/api/ssh";
+        String imagePath = "/etc/usr/xwfiles/";
+        String filePath = imagePath + imageFile.getOriginalFilename();
+        String mkdirCommand = "mkdir -p " + targetPath;
+        String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
+
+        System.out.println(imagePath);
+        System.out.println(transCommand);
+
+        //加载镜像
+        String uploadCommand = "docker load -i " + filePath;
+        System.out.println(uploadCommand);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                mkdirCommand,
+                transCommand,
+                uploadCommand
+        );
+        requestBody.put("commands", commands);
 
 
-        try {
-            JSch jsch = new JSch();
-            session = jsch.getSession(userName, host, 22);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.setPassword(userPassword);
-            session.connect();
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
 
-            channel = session.openChannel("sftp");
-            channel.connect();
-            ChannelSftp sftpChannel = (ChannelSftp) channel;
-
-            String imagePath = "/opt/images";
-
-            // 检查目标文件夹是否存在，如果不存在则创建
-            try {
-                sftpChannel.ls(imagePath); // 尝试列出目录
-            } catch (SftpException e) {
-                if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
-                    String[] dirs = imagePath.split("/");
-                    String path = "";
-                    for (String dir : dirs) {
-                        if (!dir.isEmpty()) {
-                            path += "/" + dir;
-                            try {
-                                sftpChannel.ls(path); // 尝试列出目录
-                            } catch (SftpException ex) {
-                                if (ex.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
-                                    sftpChannel.mkdir(path); // 目录不存在，创建目录
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 传输文件
-            sftpChannel.put(imageFile.getInputStream(), imagePath+ "/" + imageFile.getOriginalFilename());
-
-            System.out.println(imageFile.getOriginalFilename());
-
-            String filePath = imagePath + "/" + imageFile.getOriginalFilename();
-            String imageNameAndTag = "";
-
-            //加载镜像
-            String uploadCommand = "docker load -i " + filePath;
-            String uploadOutput = runCommand(session, uploadCommand);
-
-            System.out.println(uploadOutput);
-
-            int startIndex = uploadOutput.lastIndexOf(" ") + 1;
-
-            imageNameAndTag = uploadOutput.substring(startIndex);
-
-            //提取镜像名称和标签
-//            imageNameAndTag = uploadOutput.substring(uploadOutput.lastIndexOf("/") + 1, uploadOutput.lastIndexOf(":"));
-
-            System.out.println(imageNameAndTag);
-
-            //导入镜像
-            String importCommand = "docker tag " + imageNameAndTag + " " + imageNameAndTag + "-imported " +
-                    "&& docker rmi " + imageNameAndTag + " " +
-                    "&& docker tag " + imageNameAndTag + "-imported " + imageNameAndTag;
-            String importOutput = runCommand(session, importCommand);
-
-            System.out.println("Imported image with name: " + imageNameAndTag);
-
-
-            return ResponseEntity.ok(importOutput);
-//            return "Image uploaded successfully";
-        } catch (JSchException | SftpException e) {
-            throw new RuntimeException("Failed to upload image", e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (channel != null) {
-                channel.disconnect();
-            }
-            if (session != null) {
-                session.disconnect();
-            }
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            // 处理响应字符串
+            // 将输出结果按行分割，并返回镜像名称列表
+            List<String> images = Arrays.asList(responseBody.split("\n"));
+            return ResponseEntity.ok("1");
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("1");
         }
+
+
+
+
+
+
+
     }
 
 
@@ -216,11 +183,41 @@ public class DockerImageController {
 
         String command = "docker run -d " + imageName;
 
-        SshClient sshClient = new SshClient();
-        String output = sshClient.runCommand(host, userName, userPassword, command);
+        String url = "http://" + host +":8081/api/ssh";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                command
+        );
+        requestBody.put("commands", commands);
 
 
-        return ResponseEntity.ok(output);
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
+
+
     }
 
     @GetMapping("/listContainer")
@@ -270,29 +267,40 @@ public class DockerImageController {
 
         String command = "docker rmi " + imageName;
 
-        SshClient sshClient = new SshClient();
-        String output = sshClient.runCommand(host, userName, userPassword, command);
 
-        /*
-        // 先删除容器
-        ResponseEntity<String> deleteContainerResponse = deleteContainer(containerId, vmName);
+        String url = "http://" + host +":8081/api/ssh";
 
-        if (deleteContainerResponse.getStatusCode().is2xxSuccessful()) {
-            // 删除容器成功，再使用 Docker 命令行工具删除镜像
-            String command = "docker rmi " + imageName;
-            SshClient sshClient = new SshClient();
-            String output = sshClient.runCommand(host, userName, userPassword, command);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-            if (output.contains("Untagged")) {
-                return ResponseEntity.ok("容器和镜像删除成功");
-            } else {
-                return ResponseEntity.ok("删除容器成功，但删除镜像失败");
-            }
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                command
+        );
+        requestBody.put("commands", commands);
+
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+
+            return ResponseEntity.ok(responseBody);
         } else {
-            // 删除容器失败，直接返回错误响应
-            return ResponseEntity.ok("删除容器失败");
-        }*/
-        return ResponseEntity.ok("删除镜像成功");
+            // 处理请求失败情况
+            return ResponseEntity.ok("删除失败");
+        }
 
     }
 
@@ -307,18 +315,42 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-
+        String url = "http://" + host +":8081/api/ssh";
         String command = "docker ps -a ";
 
-        SshClient sshClient = new SshClient();
-        String output = sshClient.runCommand(host, userName, userPassword, command);
-        List<String> containers = Arrays.asList(output.split("\n"));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        for (String list : containers) {
-            System.out.println(list);
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                command
+        );
+        requestBody.put("commands", commands);
 
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            // 处理响应字符串
+            // 将输出结果按行分割，并返回镜像名称列表
+            List<String> containers = Arrays.asList(responseBody.split("\n"));
+            return ResponseEntity.ok(containers);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok(Collections.emptyList());
         }
-        return ResponseEntity.ok(containers);
     }
 
 
@@ -338,10 +370,40 @@ public class DockerImageController {
 
         String command = "docker rm " + containerId;
 
-        SshClient sshClient = new SshClient();
-        String output = sshClient.runCommand(host, userName, userPassword, command);
 
-        return ResponseEntity.ok(output);
+        String url = "http://" + host +":8081/api/ssh";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                command
+        );
+        requestBody.put("commands", commands);
+
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
     }
 
     // 执行远程命令

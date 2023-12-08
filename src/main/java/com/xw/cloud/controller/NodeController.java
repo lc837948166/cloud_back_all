@@ -32,9 +32,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.util.*;
 
 @Api(tags = "节点管理", description = "管理节点")
 @CrossOrigin
@@ -121,6 +122,83 @@ public class NodeController {
 
     }
 
+    /**
+     * 专用于更新创建时间、经纬度测试用
+     * @return
+     * @throws IOException
+     */
+    @PostMapping(value = "/updateNodeList2")
+    @ResponseBody
+    public CommentResp updateNode1() throws IOException {
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        // 使用 InputStream 和 InputStreamReader 读取配置文件
+        KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+        ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+        Configuration.setDefaultApiClient(client);
+        CoreV1Api api = new CoreV1Api();
+        try {
+            QueryWrapper<NodeInfo> qw = new QueryWrapper();
+            qw.in("nodeType", "云", "边");
+            List<NodeInfo> tNodeList = nodeService.list(qw);
+            // 获取集群节点信息
+            V1NodeList nodeList = api.listNode(null, null, null, null, null, null, null, null, null, null);
+            for (V1Node node : nodeList.getItems()) {
+                String nodeName = node.getMetadata().getName();
+                String nodeIP = node.getStatus().getAddresses().get(0).getAddress();
+
+                String creationTime = String.valueOf(node.getMetadata().getCreationTimestamp());
+
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+                inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+                Date parsedDate = inputFormat.parse(creationTime);
+
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date formattedDate = outputFormat.parse(outputFormat.format(parsedDate));
+
+                Double nodeLon = 116.391276;//北京经度
+                Double nodeLat = 39.906217;//北京纬度
+                List<V1NodeCondition> conditions = node.getStatus().getConditions();
+                String nodeStatus = "异常";
+                for (V1NodeCondition condition : conditions) {
+                    String type = condition.getType();
+                    String status = condition.getStatus();
+                    System.out.println(type + " " +status);
+                    if(type.equals("Ready")&& status.equals("True")){
+                        nodeStatus = "正常";
+                        break;
+                    }
+                }
+
+
+
+                for (NodeInfo tNode : tNodeList) {
+                    if (tNode.getNodeName().equals(nodeName) && tNode.getNodeIp().equals(nodeIP)) {
+                        tNode.setNodeCreateTime(formattedDate);
+                        tNode.setNodeLon(nodeLon);
+                        tNode.setNodeLat(nodeLat);
+                        tNode.setNodeStatus(nodeStatus);
+                        nodeService.updateById(tNode);
+                        break;
+                    }
+                }
+
+            }}
+            catch(ApiException | ParseException e){
+                // 处理异常情况
+                System.err.println("Exception when calling CoreV1Api#listNode");
+                e.printStackTrace();
+            }
+            CommentResp com = new CommentResp(true, null, "");
+            return com;
+    }
+
+    /**
+     * 更新节点信息
+     * @return
+     * @throws IOException
+     */
     @ApiOperation(value = "更新", notes = "更新节点")
     @PostMapping(value = "/updateNodeList1")
     @ResponseBody
@@ -146,12 +224,19 @@ public class NodeController {
                 String nodeIP = node.getStatus().getAddresses().get(0).getAddress();
                 // 获取节点状态
                 List<V1NodeCondition> conditions = node.getStatus().getConditions();
-                String nodeStatus = "Unknown";
+                String nodeStatus = "异常";
                 for (V1NodeCondition condition : conditions) {
-                    nodeStatus = condition.getType();
+                    String type = condition.getType();
+                    String status = condition.getStatus();
+                    System.out.println(type + " " +status);
+                    if(type.equals("Ready")&& status.equals("True")){
+                        nodeStatus = "正常";
+                        break;
+                    }
                 }
+
                 // 获取节点位置
-                String nodeLocation = "beijing";
+                String nodeLocation = "北京";
                 // 判断节点角色
                 String nodeType ;
                 Map<String, String> labels = node.getMetadata().getLabels();
@@ -165,6 +250,23 @@ public class NodeController {
                 String nodeUserName = "root";
                 String nodeUserPasswd = "@wsad1234";
 
+
+
+                String creationTime = String.valueOf(node.getMetadata().getCreationTimestamp());
+
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+                inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+                Date parsedDate = inputFormat.parse(creationTime);
+
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date formattedDate = outputFormat.parse(outputFormat.format(parsedDate));
+
+                System.out.println("11111111111111111111111111 " + formattedDate);
+
+                Double nodeLon = 116.391276;//北京经度
+                Double nodeLat = 39.906217;//北京纬度
+
                 // 检查节点是否存在于tNodeList中
                 boolean found = false;
                 for (NodeInfo tNode : tNodeList) {
@@ -175,7 +277,8 @@ public class NodeController {
                 }
                 // 如果在tNodeList中找不到相同的节点名和节点IP
                 if (!found) {
-                    NodeInfo newNode = new NodeInfo(nodeName, nodeIP, nodeStatus, nodeLocation, nodeType, nodeConnectivity, nodeUserName, nodeUserPasswd);
+                    NodeInfo newNode = new NodeInfo(nodeName, nodeIP, nodeStatus, nodeLocation, nodeType,
+                            nodeConnectivity, nodeUserName, nodeUserPasswd, formattedDate, nodeLon, nodeLat);
                     nodeService.save(newNode);
                 }
             }
@@ -199,7 +302,7 @@ public class NodeController {
                 }
             }
 
-        } catch (ApiException e) {
+        } catch (ApiException | ParseException e) {
             // 处理异常情况
             System.err.println("Exception when calling CoreV1Api#listNode");
             e.printStackTrace();

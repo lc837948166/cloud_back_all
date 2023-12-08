@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @Description  
@@ -18,7 +19,7 @@ import java.io.Serializable;
  */
 
 
-@TableName("T_Node")
+@TableName("T_Cloud_Node")
 public class NodeInfo implements Serializable {
 
 	private static final long serialVersionUID =  8153717320003653421L;
@@ -50,11 +51,21 @@ public class NodeInfo implements Serializable {
 	@TableField(value = "nodeUserPasswd")
 	private String nodeUserPasswd;
 
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+	@ApiModelProperty("操作时间")
+	@TableField(value = "nodeCreateTime")
+	Date nodeCreateTime;
+
+	@TableField(value = "nodeLon")
+	private Double nodeLon;
+
+	@TableField(value = "nodeLat")
+	private Double nodeLat;
+
 	public NodeInfo() {
 	}
 
-	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd) {
-
+	public NodeInfo(String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat) {
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
 		this.nodeStatus = nodeStatus;
@@ -63,6 +74,9 @@ public class NodeInfo implements Serializable {
 		this.nodeConnectivity = nodeConnectivity;
 		this.nodeUserName = nodeUserName;
 		this.nodeUserPasswd = nodeUserPasswd;
+		this.nodeCreateTime = nodeCreateTime;
+		this.nodeLon = nodeLon;
+		this.nodeLat = nodeLat;
 	}
 
 	public Integer getId() {
@@ -137,6 +151,30 @@ public class NodeInfo implements Serializable {
 		this.nodeUserPasswd = nodeUserPasswd;
 	}
 
+	public Date getNodeCreateTime() {
+		return nodeCreateTime;
+	}
+
+	public void setNodeCreateTime(Date nodeCreateTime) {
+		this.nodeCreateTime = nodeCreateTime;
+	}
+
+	public Double getNodeLon() {
+		return nodeLon;
+	}
+
+	public void setNodeLon(Double nodeLon) {
+		this.nodeLon = nodeLon;
+	}
+
+	public Double getNodeLat() {
+		return nodeLat;
+	}
+
+	public void setNodeLat(Double nodeLat) {
+		this.nodeLat = nodeLat;
+	}
+
 	@Override
 	public String toString() {
 		return "NodeInfo{" +
@@ -149,6 +187,9 @@ public class NodeInfo implements Serializable {
 				", nodeConnectivity=" + nodeConnectivity +
 				", nodeUserName='" + nodeUserName + '\'' +
 				", nodeUserPasswd='" + nodeUserPasswd + '\'' +
+				", nodeCreateTime=" + nodeCreateTime +
+				", nodeLon='" + nodeLon + '\'' +
+				", nodeLat='" + nodeLat + '\'' +
 				'}';
 	}
 }

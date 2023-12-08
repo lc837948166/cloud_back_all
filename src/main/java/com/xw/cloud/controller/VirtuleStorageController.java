@@ -51,7 +51,14 @@ public class VirtuleStorageController {
         qw.eq("pvName", pvName);
         String pvPath = pvService.getOne(qw).getPvPath();
 
-        modelAndView.addObject("pvPath", pvPath);
+        if(pvPath == null) {
+            // 如果找不到pvName对应的记录，返回错误信息或提示信息。
+            modelAndView.addObject("error", "指定的 pvName 不存在！");
+        }
+        else {
+            // 否则返回pvPath。
+            modelAndView.addObject("pvPath", pvPath);
+        }
         return modelAndView;
     }
 

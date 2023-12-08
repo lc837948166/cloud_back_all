@@ -15,7 +15,7 @@ import lombok.Data;
  * 虚拟机信息
  */
 @Data
-@TableName(value = "T_VM")
+@TableName(value = "T_Cloud_VM")
 @ApiModel(description = "虚拟机信息")
 public class VMInfo2 {
 

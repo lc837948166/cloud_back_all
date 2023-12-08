@@ -10,7 +10,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
 
 @ApiModel(description = "PV信息")
-@TableName("T_PV")
+@TableName("T_Cloud_PV")
 public class PvInfo implements Serializable {
 
 
