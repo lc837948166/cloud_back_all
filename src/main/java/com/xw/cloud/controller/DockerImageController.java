@@ -3,7 +3,9 @@ package com.xw.cloud.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.SshClient;
+import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.VMInfo2;
+import com.xw.cloud.service.impl.NodeServiceImpl;
 import com.xw.cloud.service.impl.VmServiceImpl;
 import groovy.util.logging.Slf4j;
 import io.swagger.annotations.Api;
@@ -30,13 +32,16 @@ import java.util.*;
 public class DockerImageController {
 
     @Autowired
-    VmServiceImpl vmService;
+    private VmServiceImpl vmService;
+
+    @Autowired
+    private NodeServiceImpl nodeService;
 
 
 //    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
 
     @GetMapping("/imageList")
-    @ApiOperation("获取 Docker 镜像列表")
+    @ApiOperation("获取虚拟机 Docker 镜像列表")
     public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName,
                                                    @RequestParam("endIp") String endIp) {
 
@@ -44,16 +49,16 @@ public class DockerImageController {
         if (vmName != null && !vmName.equals("")) {
             qw.eq("name", vmName);
         }
-        VMInfo2 vmInfo2 = vmService.getOne(qw);
-        String userName = vmInfo2.getUsername();
-        String userPassword = vmInfo2.getPasswd();
-        String host = vmInfo2.getIp();
+//        VMInfo2 vmInfo2 = vmService.getOne(qw);
+//        String userName = vmInfo2.getUsername();
+//        String userPassword = vmInfo2.getPasswd();
+//        String host = vmInfo2.getIp();
 
         String userName1 = "root";
         String userPassword1 = "Upc123456@";
         String host1 = "39.101.136.242";
 
-        String url = "http://" + endIp +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
         String command = "docker image ls";
 
         HttpHeaders headers = new HttpHeaders();
@@ -93,13 +98,11 @@ public class DockerImageController {
         }
     }
 
-
-    @PostMapping("/uploadAndImport")
-    @ApiOperation("上传并导入 Docker 镜像")
-    public ResponseEntity<String> uploadAndImportImage(@RequestParam("imageFile") MultipartFile imageFile,
-                                                       @RequestParam("vmName") String vmName,
-                                                       @RequestParam("targetPath") String targetPath,
-                                                       @RequestParam("endIp") String endIp) {
+    @PostMapping("/mkdir")
+    @ApiOperation("创建虚拟机目标目录")
+    public ResponseEntity<String> mkdir(@RequestParam("vmName") String vmName,
+                                        @RequestParam("targetPath") String targetPath,
+                                        @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -110,10 +113,84 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        String url = "http://" + endIp +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
+
+
+        //加载镜像
+        String uploadCommand = "docker load -i " + targetPath;
+        System.out.println(uploadCommand);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                uploadCommand
+        );
+        requestBody.put("commands", commands);
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
+    }
+
+
+    /**
+     * 在云上调用接口，在端上写sshpass命令向虚拟机传
+     * @param imageFile 镜像文件
+     * @param vmName 虚拟机名
+     * @param targetPath 存放镜像的文件目录
+     * @param endIp 端ip
+     * @param sourceIp 云ip
+     * @return
+     */
+    @PostMapping("/upload")
+    @ApiOperation("上传到虚拟机 Docker 镜像")
+    public ResponseEntity<String> upload(@RequestParam("imageFile") MultipartFile imageFile,
+                                         @RequestParam("vmName") String vmName,
+                                         @RequestParam("targetPath") String targetPath,
+                                         @RequestParam("endIp") String endIp,
+                                         @RequestParam("sourceIp") String sourceIp) {
+
+        QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw1.eq("nodeIp", endIp);
+        }
+        NodeInfo nodeInfo = nodeService.getOne(qw1);
+
+        String nodeUserName = nodeInfo.getNodeUserName();
+        String nodeUserPassword = nodeInfo.getNodeUserPasswd();
+        String nodeHost = nodeInfo.getNodeIp();
+
+        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw.eq("name", vmName);
+        }
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
+
+        String url = "http://" + sourceIp +":8081/api/ssh/execute";
         String imagePath = "/etc/usr/xwfiles/";
         String filePath = imagePath + imageFile.getOriginalFilename();
-        String mkdirCommand = "mkdir -p " + targetPath;
         String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
 
         System.out.println(imagePath);
@@ -128,16 +205,13 @@ public class DockerImageController {
 
         // 构建请求体
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("host", host);
-        requestBody.put("username", userName);
-        requestBody.put("password", userPassword);
+        requestBody.put("host", nodeUserName);
+        requestBody.put("username", nodeUserPassword);
+        requestBody.put("password", nodeHost);
         List<String> commands = Arrays.asList(
-                mkdirCommand,
-                transCommand,
-                uploadCommand
+                transCommand
         );
         requestBody.put("commands", commands);
-
 
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
@@ -150,27 +224,75 @@ public class DockerImageController {
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-            // 处理响应字符串
-            // 将输出结果按行分割，并返回镜像名称列表
-            List<String> images = Arrays.asList(responseBody.split("\n"));
-            return ResponseEntity.ok("1");
+            return ResponseEntity.ok(responseBody);
         } else {
             // 处理请求失败情况
-            return ResponseEntity.ok("1");
+            return ResponseEntity.ok("fail");
         }
+    }
 
+    @PostMapping("/import")
+    @ApiOperation("导入虚拟机中的 Docker 镜像")
+    public ResponseEntity<String> importImage(@RequestParam("imageFileName") String imageFileName,
+                                              @RequestParam("vmName") String vmName,
+                                              @RequestParam("targetPath") String targetPath,
+                                              @RequestParam("endIp") String endIp) {
 
+        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw.eq("name", vmName);
+        }
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
 
+        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String filePath = targetPath + imageFileName;
 
+        System.out.println(filePath);
 
+        //加载镜像
+        String uploadCommand = "docker load -i " + filePath;
+        System.out.println(uploadCommand);
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                uploadCommand
+        );
+        requestBody.put("commands", commands);
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
     }
 
 
     @PostMapping("/run")
-    @ApiOperation("运行 Docker 容器")
-    public ResponseEntity<String> runContainer(@RequestParam("imageName") String imageName, @RequestParam("vmName") String vmName) {
+    @ApiOperation("运行虚拟机中的 Docker 容器")
+    public ResponseEntity<String> runContainer(@RequestParam("imageName") String imageName,
+                                               @RequestParam("vmName") String vmName,
+                                               @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -183,7 +305,7 @@ public class DockerImageController {
 
         String command = "docker run -d " + imageName;
 
-        String url = "http://" + host +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -198,7 +320,6 @@ public class DockerImageController {
         );
         requestBody.put("commands", commands);
 
-
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
                 url,
@@ -210,16 +331,14 @@ public class DockerImageController {
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-
             return ResponseEntity.ok(responseBody);
         } else {
             // 处理请求失败情况
             return ResponseEntity.ok("fail");
         }
-
-
     }
 
+    //自己测试用
     @GetMapping("/listContainer")
     @ApiOperation(" Docker 容器")
     public ResponseEntity<String> listContainer(
@@ -250,11 +369,18 @@ public class DockerImageController {
         return ResponseEntity.ok(output);
     }
 
+    /**
+     * 删除镜像需要先删除容器
+     * @param imageName
+     * @param vmName
+     * @param endIp
+     * @return
+     */
     @DeleteMapping("/deleteImage")
-    @ApiOperation("删除 Docker 镜像")
+    @ApiOperation("删除虚拟机中 Docker 镜像")
     public ResponseEntity<String> deleteImage(@RequestParam("imageName") String imageName,
-                                              @RequestParam("vmName") String vmName) {
-//                                              @RequestParam("containerId") String containerId) {
+                                              @RequestParam("vmName") String vmName,
+                                              @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -264,11 +390,8 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-
         String command = "docker rmi " + imageName;
-
-
-        String url = "http://" + host +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -283,7 +406,6 @@ public class DockerImageController {
         );
         requestBody.put("commands", commands);
 
-
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
                 url,
@@ -295,18 +417,18 @@ public class DockerImageController {
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-
             return ResponseEntity.ok(responseBody);
         } else {
             // 处理请求失败情况
-            return ResponseEntity.ok("删除失败");
+            return ResponseEntity.ok("fail");
         }
 
     }
 
     @GetMapping("/containerList")
-    @ApiOperation("查询 Docker 容器列表")
-    public ResponseEntity<List<String>> listContainers(@RequestParam("vmName") String vmName) {
+    @ApiOperation("查询虚拟机 Docker 容器列表")
+    public ResponseEntity<List<String>> listContainers(@RequestParam("vmName") String vmName,
+                                                       @RequestParam("endIp") String endIp) {
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
             qw.eq("name", vmName);
@@ -315,7 +437,7 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-        String url = "http://" + host +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
         String command = "docker ps -a ";
 
         HttpHeaders headers = new HttpHeaders();
@@ -343,8 +465,7 @@ public class DockerImageController {
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-            // 处理响应字符串
-            // 将输出结果按行分割，并返回镜像名称列表
+            // 处理响应字符串，将输出结果按行分割，并返回容器名称列表
             List<String> containers = Arrays.asList(responseBody.split("\n"));
             return ResponseEntity.ok(containers);
         } else {
@@ -357,7 +478,8 @@ public class DockerImageController {
     @DeleteMapping("/deleteContainer")
     @ApiOperation("删除 Docker 容器")
     public ResponseEntity<String> deleteContainer(@RequestParam("containerId") String containerId,
-                                                  @RequestParam("vmName") String vmName) {
+                                                  @RequestParam("vmName") String vmName,
+                                                  @RequestParam("endIp") String endIp) {
 
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
         if (vmName != null && !vmName.equals("")) {
@@ -367,11 +489,8 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-
         String command = "docker rm " + containerId;
-
-
-        String url = "http://" + host +":8081/api/ssh";
+        String url = "http://" + endIp +":8081/api/ssh/execute";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -386,7 +505,6 @@ public class DockerImageController {
         );
         requestBody.put("commands", commands);
 
-
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
                 url,
@@ -394,11 +512,9 @@ public class DockerImageController {
                 new HttpEntity<>(requestBody, headers),
                 String.class
         );
-
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-
             return ResponseEntity.ok(responseBody);
         } else {
             // 处理请求失败情况
