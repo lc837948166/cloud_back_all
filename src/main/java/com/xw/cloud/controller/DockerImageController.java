@@ -40,6 +40,7 @@ public class DockerImageController {
 
 //    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
 
+
     @GetMapping("/imageList")
     @ApiOperation("获取虚拟机 Docker 镜像列表")
     public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName,
@@ -49,14 +50,11 @@ public class DockerImageController {
         if (vmName != null && !vmName.equals("")) {
             qw.eq("name", vmName);
         }
-//        VMInfo2 vmInfo2 = vmService.getOne(qw);
-//        String userName = vmInfo2.getUsername();
-//        String userPassword = vmInfo2.getPasswd();
-//        String host = vmInfo2.getIp();
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
 
-        String userName1 = "root";
-        String userPassword1 = "Upc123456@";
-        String host1 = "39.101.136.242";
 
         String url = "http://" + endIp +":8081/api/ssh/execute";
         String command = "docker image ls";
@@ -66,9 +64,9 @@ public class DockerImageController {
 
         // 构建请求体
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("host", host1);
-        requestBody.put("username", userName1);
-        requestBody.put("password", userPassword1);
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
         List<String> commands = Arrays.asList(
                 command
         );
@@ -84,7 +82,7 @@ public class DockerImageController {
                 String.class
         );
 
-        System.out.println("111");
+        System.out.println(response);
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
@@ -117,8 +115,7 @@ public class DockerImageController {
 
 
         //加载镜像
-        String uploadCommand = "docker load -i " + targetPath;
-        System.out.println(uploadCommand);
+        String mkdirCommand = "mkdir -p " + targetPath;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -129,7 +126,7 @@ public class DockerImageController {
         requestBody.put("username", userName);
         requestBody.put("password", userPassword);
         List<String> commands = Arrays.asList(
-                uploadCommand
+                mkdirCommand
         );
         requestBody.put("commands", commands);
 
@@ -195,14 +192,12 @@ public class DockerImageController {
 
         System.out.println(imagePath);
         System.out.println(transCommand);
-
         //加载镜像
         String uploadCommand = "docker load -i " + filePath;
         System.out.println(uploadCommand);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         // 构建请求体
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("host", nodeUserName);
@@ -212,7 +207,6 @@ public class DockerImageController {
                 transCommand
         );
         requestBody.put("commands", commands);
-
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
                 url,
@@ -220,7 +214,6 @@ public class DockerImageController {
                 new HttpEntity<>(requestBody, headers),
                 String.class
         );
-
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
@@ -276,6 +269,7 @@ public class DockerImageController {
                 new HttpEntity<>(requestBody, headers),
                 String.class
         );
+        System.out.println(response);
 
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -434,6 +428,7 @@ public class DockerImageController {
             qw.eq("name", vmName);
         }
         VMInfo2 vmInfo2 = vmService.getOne(qw);
+        System.out.println(vmInfo2);
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
@@ -522,40 +517,5 @@ public class DockerImageController {
         }
     }
 
-    // 执行远程命令
-    private static String runCommand(Session session, String command) throws JSchException, IOException {
-        Channel channel = session.openChannel("exec");
-        ((ChannelExec) channel).setCommand(command);
-        channel.setInputStream(null);
-        ((ChannelExec) channel).setErrStream(System.err);
-
-        InputStream in = channel.getInputStream();
-        channel.connect();
-
-        StringBuilder outputBuffer = new StringBuilder();
-        byte[] tmp = new byte[1024];
-        while (true) {
-            while (in.available() > 0) {
-                int i = in.read(tmp, 0, 1024);
-                if (i < 0) {
-                    break;
-                }
-                outputBuffer.append(new String(tmp, 0, i));
-            }
-            if (channel.isClosed()) {
-                if (in.available() > 0) {
-                    continue;
-                }
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        channel.disconnect();
-        return outputBuffer.toString();
-    }
 
 }
