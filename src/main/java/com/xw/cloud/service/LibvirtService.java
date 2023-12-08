@@ -3,7 +3,7 @@ import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
-import com.xw.cloud.mapper.VMMapper;
+import com.xw.cloud.mapper.VmMapper;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.libvirt.*;
@@ -19,7 +19,7 @@ import com.xw.cloud.Utils.SftpUtils;
 @Service(value = "libvirtService")
 public class LibvirtService {
     @Resource
-    private VMMapper vmMapper;
+    private VmMapper vmMapper;
 
     String home = System.getenv("HOME");
     /**
