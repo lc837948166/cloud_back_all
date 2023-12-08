@@ -44,15 +44,13 @@ public class VMInfoController {
         }
     }
     //更改用户信息
-    @RequestMapping(value = "/updateip")
+    @RequestMapping(value = "/updateip/{serverip}",method = RequestMethod.GET)
     @ResponseBody
     @OperationLogDesc(module = "虚拟机信息管理", events = "虚拟机信息更新")
-    public CommentResp updateip() throws IOException {
-
-        String data=libvirtService.getallVMip();
+    public CommentResp updateip(@PathVariable("serverip") String serverip) throws IOException {
+        String data=libvirtService.getallVMip(serverip);
         StringReader stringReader = new StringReader(data);
         BufferedReader reader = new BufferedReader(stringReader);
-        System.out.println(libvirtService.getallVMip());
         String line;
         int result = 0;
         while ((line = reader.readLine()) != null) {
@@ -99,3 +97,4 @@ public class VMInfoController {
 
 
 }
+
