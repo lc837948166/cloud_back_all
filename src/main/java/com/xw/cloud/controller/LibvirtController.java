@@ -172,7 +172,7 @@ public class LibvirtController {
     @RequestMapping("/addVirtual")
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
-                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType) {
+                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType) throws InterruptedException {
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
@@ -181,6 +181,7 @@ public class LibvirtController {
         vmc.setImgName(ImgName);
         vmc.setNetType(NetType);
         libvirtService.addDomainByName(vmc);
+
 //        libvirtService.addImgFile(vmc.getName(), file);
         return new CommentResp(true, null,"创建虚拟机成功");
     }
