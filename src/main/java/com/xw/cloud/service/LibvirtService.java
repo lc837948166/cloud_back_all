@@ -82,6 +82,7 @@ public class LibvirtService {
                 .name(domain.getName())
                 .ipaddr(getVMip(name))
                 .state(domain.getInfo().state.toString())
+                .ipaddr(ip)
                 .build();
     }
 
@@ -112,12 +113,23 @@ public class LibvirtService {
     }
 
     @SneakyThrows
-    public String getallVMip() {
+    public String getallVMip(String serverip) {
 //        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
 //        String ip =SftpUtils.getexecon(command);
-        String command="bash virsh-ip.sh all 172.26.82";
+        String command="bash /root/VM_place/virsh-ip.sh all "+findserverip(serverip,'.',3);
         String ip =SftpUtils.getexecon(command);
         return ip;
+    }
+
+    public String findserverip(String str, char c, int n) {
+        int index = -1;
+        for (int i = 0; i < n; i++) {
+            index = str.indexOf(c, index + 1);
+            if (index == -1) {
+                break;
+            }
+        }
+        return str.substring(0, index);
     }
 
     /**
@@ -338,7 +350,7 @@ public class LibvirtService {
      * 添加 虚拟机 xml------>name   1024MB
      */
     @SneakyThrows
-    public void addDomainByName(VM_create vmc) {
+    public void addDomainByName(VM_create vmc,String serverip) {
         String xml = "<domain type='kvm'>\n" +
                 "  <name>" + vmc.getName() + "</name>\n" +
                 "  <uuid>" + UUID.randomUUID() + "</uuid>\n" +
@@ -378,7 +390,7 @@ public class LibvirtService {
                 "    <emulator>" + "/usr/libexec/qemu-kvm" + "</emulator>\n" +
                 "    <disk type='file' device='disk'>\n" +
                 "      <driver name='qemu' type='qcow2'/>\n" +
-                "      <source file='"+home+"/images/" + vmc.getImgName() + "'/>\n" +   // FileSource
+                "      <source file='"+home+"/VM_place/" + vmc.getName() +".qcow2'"+"/>\n" +   // FileSource
                         "      <target dev='hdb' bus='ide'/>\n" +
                 "      <address type='drive' controller='0' bus='0' target='0' unit='0'/>\n" +
                         "    </disk>\n" +
@@ -461,20 +473,20 @@ public class LibvirtService {
         log.info(vmc.getName() + "虚拟机已创建！");
         Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
-        updateVMtable(vmc.getName());
+        updateVMtable(vmc.getName(),serverip);
     }
 
     /**
      * 更新数据库的虚拟机信息
      */
     @SneakyThrows
-    private void updateVMtable(String name) {
+    private void updateVMtable(String name,String serverip) {
 
         VMInfo2 vmInfo2=VMInfo2.builder()
                 .name(name)
                 .username("lc")
                 .passwd("111")
-                .serverip("127.0.0.1").build();
+                .serverip(serverip).build();
         vmMapper.insert(vmInfo2);
     }
 
@@ -494,6 +506,7 @@ public class LibvirtService {
 
     public void deleteDomainByName(String name) {
         deleteDomain(getDomainByName(name));
+        vmMapper.deleteById(name);
     }
 
     /**
@@ -503,14 +516,27 @@ public class LibvirtService {
      * 添加 img
      */
     @SneakyThrows
-    public Boolean addImgFile(String name, MultipartFile file) {
-        if (!file.isEmpty()) {
-            file.transferTo(new File(home+"/VM_place/" + name + ".qcow2"));
-            log.info("文件" + name + ".qcow2已经保存！");
-            return true;
+    public void addImgFile(String name,String ImgName) {
+        File sourceFile = new File(home+"/images/"+ImgName);
+        File destinationFile = new File(home+"/VM_place/"+name+".qcow2");
+        try {
+            copyFile(sourceFile, destinationFile);
+        } catch (IOException e) {
+            System.out.println("An error occurred while copying the file: " + e.getMessage());
         }
-        log.info("文件" + name + ".qcow2保存失败！");
-        return false;
+
+    }
+
+    public void copyFile(File source, File destination) throws IOException {
+
+        try (FileInputStream inputStream = new FileInputStream(source); FileOutputStream outputStream = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        }
     }
 
     @SneakyThrows
@@ -534,12 +560,11 @@ public class LibvirtService {
      * 删除 img
      */
     @SneakyThrows
-    public Boolean deleteImgFile(String name) {
+    public void deleteImgFile(String name) {
         ChannelSftp channel=SftpUtils.getSftpcon();
         channel.cd(home+"/VM_place/");
         channel.rm(name);
         SftpUtils.discon();
-        return true;
     }
 
     /**
