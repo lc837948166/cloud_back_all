@@ -159,7 +159,8 @@ public class LibvirtController {
     @RequestMapping("/addVirtual")
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
-                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType, @RequestParam("serverip") String serverip) throws InterruptedException {
+                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType, 
+                                  @RequestParam("serverip") String serverip) throws InterruptedException {
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
