@@ -16,7 +16,7 @@ import lombok.Data;
  * 虚拟机模板信息
  */
 @Data
-@TableName(value = "VM_Template")
+@TableName(value = "T_CLOUD_VM_TEMPLATE")
 @ApiModel(description = "虚拟机模板信息")
 public class Template {
     @TableId(type = IdType.AUTO)
