@@ -11,7 +11,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 
-@TableName("T_Log_VMLog")
+@TableName("T_Cloud_Log_VMLog")
 @ApiModel(value = "VMLog对象", description = "VM日志表")
 public class VMLog {
 

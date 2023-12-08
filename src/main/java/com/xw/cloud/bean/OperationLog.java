@@ -19,7 +19,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * </p>
  *
  */
-@TableName("T_Log_OperationLog")
+@TableName("T_Cloud_Log_OperationLog")
 @ApiModel(value = "OperationLog对象", description = "操作日志表")
 public class OperationLog implements Serializable,Cloneable {
 
