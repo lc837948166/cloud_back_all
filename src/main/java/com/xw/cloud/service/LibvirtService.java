@@ -116,7 +116,9 @@ public class LibvirtService {
     public String getallVMip(String serverip) {
 //        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
 //        String ip =SftpUtils.getexecon(command);
-        String command="bash /root/VM_place/virsh-ip.sh all "+findserverip(serverip,'.',3);
+        String ip1=findserverip(serverip,'.',3);
+        System.out.println(ip1);
+        String command="bash /root/VM_place/virsh-ip.sh all "+ip1;
         String ip =SftpUtils.getexecon(command);
         return ip;
     }
