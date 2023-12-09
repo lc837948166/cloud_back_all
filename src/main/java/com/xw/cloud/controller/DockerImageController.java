@@ -24,6 +24,12 @@ import java.io.InputStream;
 import java.util.*;
 
 
+/**
+ * 整体逻辑：
+ * 1、GetMapping：/imageList和/containerList查看镜像和容器列表
+ * 2、PostMapping：/mkdir创建虚拟机目录，/upload向虚拟机传镜像文件，/import将镜像文件导入到docker，/run创建容器运行导入的镜像（run需要import导入后拿到ImageName:Tag）
+ * 3、DeleteMapping：/deleteContainer停止容器并删除，/deleteImage删除容器后才能删除镜像
+ */
 @Slf4j
 @Controller
 @CrossOrigin
@@ -41,6 +47,12 @@ public class DockerImageController {
 //    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
 
 
+    /**
+     *
+     * @param vmName 端上虚拟机名
+     * @param endIp 端ip
+     * @return
+     */
     @GetMapping("/imageList")
     @ApiOperation("获取虚拟机 Docker 镜像列表")
     public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName,
@@ -96,6 +108,13 @@ public class DockerImageController {
         }
     }
 
+    /**
+     * 虚拟机上创建目标目录
+     * @param vmName 端上虚拟机名
+     * @param targetPath 目标目录
+     * @param endIp 端ip
+     * @return
+     */
     @PostMapping("/mkdir")
     @ApiOperation("创建虚拟机目标目录")
     public ResponseEntity<String> mkdir(@RequestParam("vmName") String vmName,
@@ -151,7 +170,7 @@ public class DockerImageController {
 
     /**
      * 在云上调用接口，在端上写sshpass命令向虚拟机传
-     * @param imageFile 镜像文件
+     * @param fileName 镜像名
      * @param vmName 虚拟机名
      * @param targetPath 存放镜像的文件目录
      * @param endIp 端ip
@@ -160,7 +179,7 @@ public class DockerImageController {
      */
     @PostMapping("/upload")
     @ApiOperation("上传到虚拟机 Docker 镜像")
-    public ResponseEntity<String> upload(@RequestParam("imageFile") MultipartFile imageFile,
+    public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
                                          @RequestParam("vmName") String vmName,
                                          @RequestParam("targetPath") String targetPath,
                                          @RequestParam("endIp") String endIp,
@@ -187,14 +206,11 @@ public class DockerImageController {
 
         String url = "http://" + sourceIp +":8081/api/ssh/execute";
         String imagePath = "/etc/usr/xwfiles/";
-        String filePath = imagePath + imageFile.getOriginalFilename();
+        String filePath = imagePath + fileName;
         String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
 
         System.out.println(imagePath);
         System.out.println(transCommand);
-        //加载镜像
-        String uploadCommand = "docker load -i " + filePath;
-        System.out.println(uploadCommand);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -224,6 +240,14 @@ public class DockerImageController {
         }
     }
 
+    /**
+     *
+     * @param imageFileName 镜像文件名（例如mysql57.tar）
+     * @param vmName 虚拟机名
+     * @param targetPath 端上虚拟机中存放镜像路径
+     * @param endIp 端ip
+     * @return
+     */
     @PostMapping("/import")
     @ApiOperation("导入虚拟机中的 Docker 镜像")
     public ResponseEntity<String> importImage(@RequestParam("imageFileName") String imageFileName,
@@ -282,6 +306,13 @@ public class DockerImageController {
     }
 
 
+    /**
+     *run了之后才能创建容器
+     * @param imageName 镜像名（通过镜像列表查看到到的，例如mysql:5.7,  镜像名：标签）
+     * @param vmName 端上虚拟机名
+     * @param endIp 端节点ip
+     * @return
+     */
     @PostMapping("/run")
     @ApiOperation("运行虚拟机中的 Docker 容器")
     public ResponseEntity<String> runContainer(@RequestParam("imageName") String imageName,
@@ -365,9 +396,9 @@ public class DockerImageController {
 
     /**
      * 删除镜像需要先删除容器
-     * @param imageName
-     * @param vmName
-     * @param endIp
+     * @param imageName 镜像名（通过镜像列表查看到到的，例如mysql:5.7,  镜像名：标签）
+     * @param vmName 端上虚拟机名
+     * @param endIp 端ip
      * @return
      */
     @DeleteMapping("/deleteImage")
@@ -419,6 +450,12 @@ public class DockerImageController {
 
     }
 
+    /**
+     *
+     * @param vmName 端上虚拟机名
+     * @param endIp 端ip
+     * @return
+     */
     @GetMapping("/containerList")
     @ApiOperation("查询虚拟机 Docker 容器列表")
     public ResponseEntity<List<String>> listContainers(@RequestParam("vmName") String vmName,
@@ -470,6 +507,13 @@ public class DockerImageController {
     }
 
 
+    /**
+     *
+     * @param containerId 容器id（通过容器列表查看，需要通过id删除）
+     * @param vmName 端上虚拟机名
+     * @param endIp 端ip
+     * @return
+     */
     @DeleteMapping("/deleteContainer")
     @ApiOperation("删除 Docker 容器")
     public ResponseEntity<String> deleteContainer(@RequestParam("containerId") String containerId,
@@ -484,7 +528,8 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-        String command = "docker rm " + containerId;
+        String stopContainerCommand = "docker stop " + containerId;
+        String deleteContainerCommand = "docker rm " + containerId;
         String url = "http://" + endIp +":8081/api/ssh/execute";
 
         HttpHeaders headers = new HttpHeaders();
@@ -496,7 +541,8 @@ public class DockerImageController {
         requestBody.put("username", userName);
         requestBody.put("password", userPassword);
         List<String> commands = Arrays.asList(
-                command
+                stopContainerCommand,
+                deleteContainerCommand
         );
         requestBody.put("commands", commands);
 
