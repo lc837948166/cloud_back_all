@@ -47,6 +47,8 @@ public class PodLog {
     @TableField(value = "DisplayContent")
     private String DisplayContent;
 
+    @TableField(value = "NODENAME")
+    private String NodeName;
     public void setPodName(String podName) {
         PodName = podName;
     }
@@ -99,6 +101,14 @@ public class PodLog {
         AddTime = addTime;
     }
 
+    public String getNodeName() {
+        return NodeName;
+    }
+
+    public void setNodeName(String nodeName) {
+        NodeName = nodeName;
+    }
+
     @Override
     public String toString() {
         return "PodLog{" +
@@ -108,6 +118,7 @@ public class PodLog {
                 ", PodContent='" + PodContent + '\'' +
                 ", AddTime=" + AddTime +
                 ", DisplayContent='" + DisplayContent + '\'' +
+                ", NodeName='" + NodeName + '\'' +
                 '}';
     }
 }
