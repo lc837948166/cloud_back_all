@@ -418,14 +418,14 @@ public class LibvirtService {
         if(vmc.getNetType().equals("bridge")){
             xml+="    <interface type='bridge'>\n" +
                     "      <source bridge='br0'/>\n" +
-                    "      <model type='virtio'/>\n" +
+                    "      <model/>\n" +
                     "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
                     "    </interface>";
         }
         else if (vmc.getNetType().equals("nat")) {
             xml += "    <interface type='network'>\n" +
                     "      <source network='default'/>\n" +
-                    "      <model type='virtio'/>\n" +
+                    "      <model/>\n" +
                     "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
                     "    </interface>\n";
         }
