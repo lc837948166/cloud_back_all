@@ -169,8 +169,10 @@ public class LibvirtController {
         vmc.setImgName(ImgName);
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
-        libvirtService.addDomainByName(vmc,serverip);
-        return new CommentResp(true, null,"创建虚拟机成功");
+        int result=libvirtService.addDomainByName(vmc,serverip);
+        if(result!=0)return new CommentResp(true, null,"创建虚拟机成功");
+        return new CommentResp(false, null,"创建虚拟机失败");
+
     }
 
 
