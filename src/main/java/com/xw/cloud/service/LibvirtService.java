@@ -116,7 +116,9 @@ public class LibvirtService {
     public String getallVMip(String serverip) {
 //        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
 //        String ip =SftpUtils.getexecon(command);
-        String command="bash /root/VM_place/virsh-ip.sh all "+findserverip(serverip,'.',3);
+        String ip1=findserverip(serverip,'.',3);
+        System.out.println(ip1);
+        String command="bash /root/VM_place/virsh-ip.sh all "+ip1;
         String ip =SftpUtils.getexecon(command);
         return ip;
     }
@@ -350,7 +352,7 @@ public class LibvirtService {
      * 添加 虚拟机 xml------>name   1024MB
      */
     @SneakyThrows
-    public void addDomainByName(VM_create vmc,String serverip) {
+    public int addDomainByName(VM_create vmc,String serverip) {
         String xml = "<domain type='kvm'>\n" +
                 "  <name>" + vmc.getName() + "</name>\n" +
                 "  <uuid>" + UUID.randomUUID() + "</uuid>\n" +
@@ -416,14 +418,14 @@ public class LibvirtService {
         if(vmc.getNetType().equals("bridge")){
             xml+="    <interface type='bridge'>\n" +
                     "      <source bridge='br0'/>\n" +
-                    "      <model type='virtio'/>\n" +
+                    "      <model/>\n" +
                     "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
                     "    </interface>";
         }
         else if (vmc.getNetType().equals("nat")) {
             xml += "    <interface type='network'>\n" +
                     "      <source network='default'/>\n" +
-                    "      <model type='virtio'/>\n" +
+                    "      <model/>\n" +
                     "      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>\n" +
                     "    </interface>\n";
         }
@@ -473,21 +475,23 @@ public class LibvirtService {
         log.info(vmc.getName() + "虚拟机已创建！");
         Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
-        updateVMtable(vmc.getName(),serverip);
+        int result= updateVMtable(vmc.getName(),serverip);
+        return result;
     }
 
     /**
      * 更新数据库的虚拟机信息
      */
     @SneakyThrows
-    private void updateVMtable(String name,String serverip) {
+    private int updateVMtable(String name,String serverip) {
 
         VMInfo2 vmInfo2=VMInfo2.builder()
                 .name(name)
-                .username("lc")
+                .username("root")
                 .passwd("111")
                 .serverip(serverip).build();
-        vmMapper.insert(vmInfo2);
+        int result=vmMapper.insert(vmInfo2);
+        return result;
     }
 
     /**

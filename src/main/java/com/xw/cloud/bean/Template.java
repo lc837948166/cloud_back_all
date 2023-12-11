@@ -35,4 +35,10 @@ public class Template {
     @JsonProperty(value = "OStype")
     @ApiModelProperty(value = "操作系统类型")
     private String OStype;
+    @JsonProperty(value = "ImgName")
+    @ApiModelProperty(value = "镜像名")
+    private String ImgName;
+    @JsonProperty(value = "nettype")
+    @ApiModelProperty(value = "网络类型")
+    private String NetType;
 }

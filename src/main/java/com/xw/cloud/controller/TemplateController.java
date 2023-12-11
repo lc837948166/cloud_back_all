@@ -146,7 +146,7 @@ public class TemplateController {
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
         libvirtService.addDomainByName(vmc,serverip);
-        
+
         return new CommentResp(true, null,"创建虚拟机成功");
     }
 }

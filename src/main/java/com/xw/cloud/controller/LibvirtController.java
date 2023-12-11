@@ -142,7 +142,7 @@ public class LibvirtController {
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
         libvirtService.deleteDomainByName(name);
         libvirtService.deleteImgFile(name + ".qcow2");
-        
+
         return new CommentResp(true, null,name+"qcow2删除成功");
     }
 
@@ -153,13 +153,13 @@ public class LibvirtController {
         model.addAttribute("netState", netState);
         return "addVirtual";
     }
-    
+
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")
     @ResponseBody
     @RequestMapping("/addVirtual")
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
-                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType, 
+                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
         VM_create vmc = new VM_create();
         vmc.setName(name);
@@ -169,8 +169,10 @@ public class LibvirtController {
         vmc.setImgName(ImgName);
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
-        libvirtService.addDomainByName(vmc,serverip);
-        return new CommentResp(true, null,"创建虚拟机成功");
+        int result=libvirtService.addDomainByName(vmc,serverip);
+        if(result!=0)return new CommentResp(true, null,"创建虚拟机成功");
+        return new CommentResp(false, null,"创建虚拟机失败");
+
     }
 
 

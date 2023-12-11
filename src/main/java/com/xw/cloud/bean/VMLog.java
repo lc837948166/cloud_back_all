@@ -38,6 +38,8 @@ public class VMLog {
     @TableField(value = "DisplayContent")
     private String DisplayContent;
 
+    @TableField(value = "NODEIP")
+    private String NodeIp;
     public String getDisplayContent() {
         return DisplayContent;
     }
@@ -79,6 +81,14 @@ public class VMLog {
         AddTime = addTime;
     }
 
+    public String getNodeIp() {
+        return NodeIp;
+    }
+
+    public void setNodeIp(String nodeIp) {
+        NodeIp = nodeIp;
+    }
+
     @Override
     public String toString() {
         return "VMLog{" +
@@ -87,6 +97,7 @@ public class VMLog {
                 ", VmContent='" + VmContent + '\'' +
                 ", AddTime=" + AddTime +
                 ", DisplayContent='" + DisplayContent + '\'' +
+                ", NodeIp='" + NodeIp + '\'' +
                 '}';
     }
 }

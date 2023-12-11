@@ -44,7 +44,7 @@ public class VMInfoController {
         }
     }
     //更改用户信息
-    @RequestMapping(value = "/updateip/{serverip}",method = RequestMethod.GET)
+    @RequestMapping(value = "/updateip/{serverip:.*}",method = RequestMethod.GET)
     @ResponseBody
     @OperationLogDesc(module = "虚拟机信息管理", events = "虚拟机信息更新")
     public CommentResp updateip(@PathVariable("serverip") String serverip) throws IOException {
@@ -66,12 +66,7 @@ public class VMInfoController {
                 }
             }
         }
-        
-        if (result >= 1) {
             return new CommentResp(true, null,"更新成功");
-        } else {
-            return new CommentResp(false, null,"没有可更新的信息");
-        }
     }
     //插入用户信息
     @RequestMapping(value = "/insert")
