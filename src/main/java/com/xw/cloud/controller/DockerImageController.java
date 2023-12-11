@@ -46,7 +46,7 @@ public class DockerImageController {
     private NodeServiceImpl nodeService;
 
 
-    private final String sufixUrl = ":8081/api/ssh/execute2";
+    private final String sufixUrl = ":8081/api/ssh/execute";
 
 
     /**
@@ -168,6 +168,7 @@ public class DockerImageController {
             // 处理请求失败情况
             return ResponseEntity.ok("fail");
         }
+
     }
 
 
@@ -188,57 +189,64 @@ public class DockerImageController {
                                          @RequestParam("endIp") String endIp,
                                          @RequestParam("sourceIp") String sourceIp) {
 
-        QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
-        if (vmName != null && !vmName.equals("")) {
-            qw1.eq("nodeIp", endIp);
-        }
-        NodeInfo nodeInfo = nodeService.getOne(qw1);
+        // 发起获取文件路径的请求
+        String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
+        ResponseEntity<String> dispenseResponse = new RestTemplate().getForEntity(dispenseUrl, String.class);
+        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {
+            QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
+            if (vmName != null && !vmName.equals("")) {
+                qw1.eq("nodeIp", endIp);
+            }
+            NodeInfo nodeInfo = nodeService.getOne(qw1);
 
-        String nodeUserName = nodeInfo.getNodeUserName();
-        String nodeUserPassword = nodeInfo.getNodeUserPasswd();
-        String nodeHost = nodeInfo.getNodeIp();
+            String nodeUserName = nodeInfo.getNodeUserName();
+            String nodeUserPassword = nodeInfo.getNodeUserPasswd();
+            String nodeHost = nodeInfo.getNodeIp();
 
-        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
-        if (vmName != null && !vmName.equals("")) {
-            qw.eq("name", vmName);
-        }
-        VMInfo2 vmInfo2 = vmService.getOne(qw);
-        String userName = vmInfo2.getUsername();
-        String userPassword = vmInfo2.getPasswd();
-        String host = vmInfo2.getIp();
+            QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+            if (vmName != null && !vmName.equals("")) {
+                qw.eq("name", vmName);
+            }
+            VMInfo2 vmInfo2 = vmService.getOne(qw);
+            String userName = vmInfo2.getUsername();
+            String userPassword = vmInfo2.getPasswd();
+            String host = vmInfo2.getIp();
 
-        String url = "http://" + sourceIp + sufixUrl;
-        String imagePath = "/etc/usr/xwfiles/";
-        String filePath = imagePath + fileName;
-        String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
+            String url = "http://" + sourceIp + sufixUrl;
+            String imagePath = "/etc/usr/xwfiles/";
+            String filePath = imagePath + fileName;
+            String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
 
-        System.out.println(imagePath);
-        System.out.println(transCommand);
+            System.out.println(imagePath);
+            System.out.println(transCommand);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        // 构建请求体
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("host", nodeUserName);
-        requestBody.put("username", nodeUserPassword);
-        requestBody.put("password", nodeHost);
-        List<String> commands = Arrays.asList(
-                transCommand
-        );
-        requestBody.put("commands", commands);
-        // 发起请求
-        ResponseEntity<String> response = new RestTemplate().exchange(
-                url,
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody, headers),
-                String.class
-        );
-        // 获取响应
-        if (response.getStatusCode().is2xxSuccessful()) {
-            String responseBody = response.getBody();
-            return ResponseEntity.ok(responseBody);
-        } else {
-            // 处理请求失败情况
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            // 构建请求体
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("host", nodeUserName);
+            requestBody.put("username", nodeUserPassword);
+            requestBody.put("password", nodeHost);
+            List<String> commands = Arrays.asList(
+                    transCommand
+            );
+            requestBody.put("commands", commands);
+            // 发起请求
+            ResponseEntity<String> response = new RestTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    new HttpEntity<>(requestBody, headers),
+                    String.class
+            );
+            // 获取响应
+            if (response.getStatusCode().is2xxSuccessful()) {
+                String responseBody = response.getBody();
+                return ResponseEntity.ok(responseBody);
+            } else {
+                // 处理请求失败情况
+                return ResponseEntity.ok("fail");
+            }
+        }else{
             return ResponseEntity.ok("fail");
         }
     }
