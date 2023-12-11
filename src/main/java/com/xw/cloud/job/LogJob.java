@@ -2,6 +2,7 @@ package com.xw.cloud.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcraft.jsch.*;
+import com.sun.scenario.effect.impl.sw.java.JSWBlend_SRC_OUTPeer;
 import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.OperationLog;
 import com.xw.cloud.bean.PodLog;
@@ -206,7 +207,7 @@ public class LogJob {
             }
             for(String vmName: commandOutput.toString().split("\n")){
                 commandOutput.setLength(0);
-                if(!vmName.contains(".log"))
+                if(!vmName.endsWith(".log"))
                     continue;
                 Channel execChannel1 = session.openChannel("exec");
                 ((ChannelExec) execChannel1).setCommand("cat /var/log/libvirt/qemu/" + vmName); // 设置执行的命令
@@ -232,12 +233,15 @@ public class LogJob {
                             String date = ins.substring(0, 10);
                             String time = ins.substring(11, 19);
                             String t = date + " " + time;
+                            if(!t.contains("202")){
+                                ins = s;
+                                continue;
+                            }
                             SimpleDateFormat dateFormat_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             Date da = dateFormat_.parse(t);
                             QueryWrapper qw = new QueryWrapper<>();
                             qw.eq("VmName", vname);
                             qw.eq("AddTime", t);
-
                             //增加判断日志是否为30天以内的
                             //VM Container
                             String deleteDate = getDeleteDate(new Date(), saveDays);
