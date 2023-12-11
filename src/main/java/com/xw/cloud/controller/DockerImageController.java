@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +28,8 @@ import java.util.*;
 /**
  * 整体逻辑：
  * 1、GetMapping：/imageList和/containerList查看镜像和容器列表
- * 2、PostMapping：/mkdir创建虚拟机目录，/upload向虚拟机传镜像文件，/import将镜像文件导入到docker，/run创建容器运行导入的镜像（run需要import导入后拿到ImageName:Tag）
+ * 2、PostMapping：/mkdir创建虚拟机目录，/upload向虚拟机传镜像文件，/import将镜像文件导入到docker，/run创建容器运行导入的镜像（run需要import导入后拿到ImageName:Tag），
+ * /stopContainer停止容器，/startContainer启动容器
  * 3、DeleteMapping：/deleteContainer停止容器并删除，/deleteImage删除容器后才能删除镜像
  */
 @Slf4j
@@ -44,7 +46,7 @@ public class DockerImageController {
     private NodeServiceImpl nodeService;
 
 
-//    private final String apiUrl = "http://39.98.124.97:8081/api/ssh";
+    private final String sufixUrl = ":8081/api/ssh/execute2";
 
 
     /**
@@ -68,7 +70,7 @@ public class DockerImageController {
         String host = vmInfo2.getIp();
 
 
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
         String command = "docker image ls";
 
         HttpHeaders headers = new HttpHeaders();
@@ -85,6 +87,7 @@ public class DockerImageController {
         requestBody.put("commands", commands);
 
         System.out.println(commands);
+        System.out.println(vmInfo2);
 
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
@@ -130,7 +133,7 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
 
 
         //加载镜像
@@ -204,7 +207,7 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        String url = "http://" + sourceIp +":8081/api/ssh/execute";
+        String url = "http://" + sourceIp + sufixUrl;
         String imagePath = "/etc/usr/xwfiles/";
         String filePath = imagePath + fileName;
         String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
@@ -264,7 +267,7 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
         String filePath = targetPath + imageFileName;
 
         System.out.println(filePath);
@@ -330,7 +333,7 @@ public class DockerImageController {
 
         String command = "docker run -d " + imageName;
 
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -415,8 +418,83 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-        String command = "docker rmi " + imageName;
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String output = String.valueOf(searchContainerByImage(imageName, vmName, endIp).getBody());
+        String deleteImageCommand = "docker rmi " + imageName;
+        String url = "http://" + endIp + sufixUrl;
+        String containerId = "";
+        Gson gson = new Gson();
+
+        try {
+            // 将 JSON 字符串解析为一个 Map 对象
+            Map<String, Object> resultMap = gson.fromJson(output, Map.class);
+
+            // 获取 output 字段的值
+            containerId = ((String) resultMap.get("output")).trim();
+
+            System.out.println(containerId);
+            System.out.println("11111");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 先删除容器
+        ResponseEntity<String> deleteContainerResponse = deleteContainer(containerId, vmName, endIp);
+
+        System.out.println(deleteContainerResponse);
+        if (deleteContainerResponse.getStatusCode().is2xxSuccessful()) {
+            // 删除容器成功，再使用 Docker 命令行工具删除镜像
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // 构建请求体
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("host", host);
+            requestBody.put("username", userName);
+            requestBody.put("password", userPassword);
+            List<String> commands = Arrays.asList(
+                    deleteImageCommand
+            );
+            requestBody.put("commands", commands);
+
+            // 发起请求
+            ResponseEntity<String> response = new RestTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    new HttpEntity<>(requestBody, headers),
+                    String.class
+            );
+
+            // 获取响应
+            if (response.getStatusCode().is2xxSuccessful()) {
+                String responseBody = response.getBody();
+                return ResponseEntity.ok(responseBody);
+            } else {
+                // 处理请求失败情况
+                return ResponseEntity.ok("fail");
+            }
+        } else {
+            // 删除容器失败，直接返回错误响应
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("删除容器失败");
+        }
+    }
+
+    @GetMapping("/searchContainerByImage")
+    @ApiOperation("查询虚拟机中 Docker 容器")
+    public ResponseEntity<String> searchContainerByImage(@RequestParam("imageName") String imageName,
+                                              @RequestParam("vmName") String vmName,
+                                              @RequestParam("endIp") String endIp) {
+
+        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw.eq("name", vmName);
+        }
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
+        String searchCommand = "docker ps -aqf ancestor=" + imageName;
+        String url = "http://" + endIp + sufixUrl;
+
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -427,7 +505,7 @@ public class DockerImageController {
         requestBody.put("username", userName);
         requestBody.put("password", userPassword);
         List<String> commands = Arrays.asList(
-                command
+                searchCommand
         );
         requestBody.put("commands", commands);
 
@@ -469,7 +547,7 @@ public class DockerImageController {
         String userName = vmInfo2.getUsername();
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
         String command = "docker ps -a ";
 
         HttpHeaders headers = new HttpHeaders();
@@ -530,7 +608,7 @@ public class DockerImageController {
         String host = vmInfo2.getIp();
         String stopContainerCommand = "docker stop " + containerId;
         String deleteContainerCommand = "docker rm " + containerId;
-        String url = "http://" + endIp +":8081/api/ssh/execute";
+        String url = "http://" + endIp + sufixUrl;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -561,6 +639,103 @@ public class DockerImageController {
             // 处理请求失败情况
             return ResponseEntity.ok("fail");
         }
+
+    }
+
+    @PostMapping("/stopContainer")
+    @ApiOperation("停止 Docker 容器")
+    public ResponseEntity<String> stopContainer(@RequestParam("containerId") String containerId,
+                                                  @RequestParam("vmName") String vmName,
+                                                  @RequestParam("endIp") String endIp) {
+
+        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw.eq("name", vmName);
+        }
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
+        String stopContainerCommand = "docker stop " + containerId;
+        String url = "http://" + endIp + sufixUrl;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                stopContainerCommand
+        );
+        requestBody.put("commands", commands);
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
+
+    }
+
+    @PostMapping("/startContainer")
+    @ApiOperation("启动 Docker 容器")
+    public ResponseEntity<String> startContainer(@RequestParam("containerId") String containerId,
+                                                  @RequestParam("vmName") String vmName,
+                                                  @RequestParam("endIp") String endIp) {
+
+        QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+        if (vmName != null && !vmName.equals("")) {
+            qw.eq("name", vmName);
+        }
+        VMInfo2 vmInfo2 = vmService.getOne(qw);
+        String userName = vmInfo2.getUsername();
+        String userPassword = vmInfo2.getPasswd();
+        String host = vmInfo2.getIp();
+        String startContainerCommand = "docker start " + containerId;
+        String url = "http://" + endIp + sufixUrl;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("host", host);
+        requestBody.put("username", userName);
+        requestBody.put("password", userPassword);
+        List<String> commands = Arrays.asList(
+                startContainerCommand
+        );
+        requestBody.put("commands", commands);
+
+        // 发起请求
+        ResponseEntity<String> response = new RestTemplate().exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class
+        );
+        // 获取响应
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // 处理请求失败情况
+            return ResponseEntity.ok("fail");
+        }
+
     }
 
 
