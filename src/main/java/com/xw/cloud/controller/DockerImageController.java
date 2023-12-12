@@ -46,7 +46,7 @@ public class DockerImageController {
     private NodeServiceImpl nodeService;
 
 
-    private final String sufixUrl = ":8081/api/ssh/execute";
+    private final String sufixUrl = ":8081/api/ssh/execute2";
 
 
     /**
