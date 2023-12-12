@@ -48,7 +48,6 @@ public class DockerImageController {
 
     private final String sufixUrl = ":8081/api/ssh/execute2";
 
-
     /**
      *
      * @param vmName 端上虚拟机名
@@ -224,9 +223,9 @@ public class DockerImageController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("host", nodeUserName);
-            requestBody.put("username", nodeUserPassword);
-            requestBody.put("password", nodeHost);
+            requestBody.put("host", nodeHost);
+            requestBody.put("username", nodeUserName);
+            requestBody.put("password", nodeUserPassword);
             List<String> commands = Arrays.asList(
                     transCommand
             );
