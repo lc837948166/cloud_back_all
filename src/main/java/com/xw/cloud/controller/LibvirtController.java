@@ -161,6 +161,10 @@ public class LibvirtController {
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("name", name);
+        long count = vmMapper.selectCount(queryWrapper);
+        if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
