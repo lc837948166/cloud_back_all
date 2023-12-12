@@ -1,8 +1,10 @@
 package com.xw.cloud.service;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.IpaddrMapper;
 import com.xw.cloud.mapper.VmMapper;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -20,6 +22,9 @@ import com.xw.cloud.Utils.SftpUtils;
 public class LibvirtService {
     @Resource
     private VmMapper vmMapper;
+
+    @Resource
+    private IpaddrMapper ipaddrMapper;
 
     String home = System.getenv("HOME");
     /**
@@ -123,9 +128,7 @@ public class LibvirtService {
 
     @SneakyThrows
     public void getallVMip(String serverip) {
-//        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
-//        String ip =SftpUtils.getexecon(command);
-        String ip1=findserverip(serverip,'.',3);
+        String ip1=findserverip(findRealIP(serverip),'.',3);
         System.out.println(ip1);
         String command="bash /root/VM_place/virsh-ip.sh all "+ip1;
         String data =SftpUtils.getexecon(command);
@@ -505,7 +508,7 @@ public class LibvirtService {
         updateVMtable(vmc.getName(),serverip);
         Thread.sleep(1500);
             getallVMip(serverip);
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < 5; ++i) {
                 if (vmMapper.selectById(vmc.getName()).getIp().isEmpty()){
                     Thread.sleep(1500);
                     getallVMip(serverip);
@@ -529,6 +532,12 @@ public class LibvirtService {
         vmMapper.insert(vmInfo2);
     }
 
+    public String findRealIP(String serverip){
+        String realip=null;
+        Ipaddr ip= ipaddrMapper.selectById(serverip);
+        if(ip!=null) realip=ip.getRealip();
+        return realip;
+    }
     /**
      * 删除 虚拟机 xml
      */
