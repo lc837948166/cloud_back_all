@@ -2,6 +2,7 @@ package com.xw.cloud.controller;
 
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
