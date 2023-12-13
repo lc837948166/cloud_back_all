@@ -22,6 +22,9 @@ public class LibvirtController {
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
 
+    @Resource
+    private VmMapper vmMapper;
+
     @ApiOperation(value = "虚拟化主页", notes = "返回虚拟化管理的主页")
     @RequestMapping(value = {"/index"})
     public String index(Model model) {
