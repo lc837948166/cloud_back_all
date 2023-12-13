@@ -85,6 +85,8 @@ public class DockerImageController {
         );
         requestBody.put("commands", commands);
 
+        Gson gson = new Gson();
+
         System.out.println(commands);
         System.out.println(vmInfo2);
 
@@ -99,7 +101,17 @@ public class DockerImageController {
         System.out.println(response);
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
-            String responseBody = response.getBody();
+
+            // 将 JSON 字符串解析为一个 Map 对象
+            Map<String, Object> resultMap = gson.fromJson(response.getBody(), Map.class);
+
+
+
+            String responseBody;
+
+            // 获取 output 字段的值
+            responseBody = ((String) resultMap.get("output")).trim();
+
             // 处理响应字符串
             // 将输出结果按行分割，并返回镜像名称列表
             List<String> images = Arrays.asList(responseBody.split("\n"));
@@ -318,14 +330,14 @@ public class DockerImageController {
 
     /**
      *run了之后才能创建容器
-     * @param imageName 镜像名（通过镜像列表查看到到的，例如mysql:5.7,  镜像名：标签）
+     * @param command 镜像名（通过镜像列表查看到到的，docker run -d mysql:5.7,  镜像名：标签）
      * @param vmName 端上虚拟机名
      * @param endIp 端节点ip
      * @return
      */
     @PostMapping("/run")
     @ApiOperation("运行虚拟机中的 Docker 容器")
-    public ResponseEntity<String> runContainer(@RequestParam("imageName") String imageName,
+    public ResponseEntity<String> runContainer(@RequestParam("command") String command,
                                                @RequestParam("vmName") String vmName,
                                                @RequestParam("endIp") String endIp) {
 
@@ -338,7 +350,6 @@ public class DockerImageController {
         String userPassword = vmInfo2.getPasswd();
         String host = vmInfo2.getIp();
 
-        String command = "docker run -d " + imageName;
 
         String url = "http://" + endIp + sufixUrl;
 
@@ -570,6 +581,7 @@ public class DockerImageController {
         );
         requestBody.put("commands", commands);
 
+        Gson gson = new Gson();
 
         // 发起请求
         ResponseEntity<String> response = new RestTemplate().exchange(
@@ -581,7 +593,15 @@ public class DockerImageController {
 
         // 获取响应
         if (response.getStatusCode().is2xxSuccessful()) {
-            String responseBody = response.getBody();
+            // 将 JSON 字符串解析为一个 Map 对象
+            Map<String, Object> resultMap = gson.fromJson(response.getBody(), Map.class);
+
+
+
+            String responseBody;
+
+            // 获取 output 字段的值
+            responseBody = ((String) resultMap.get("output")).trim();
             // 处理响应字符串，将输出结果按行分割，并返回容器名称列表
             List<String> containers = Arrays.asList(responseBody.split("\n"));
             return ResponseEntity.ok(containers);
