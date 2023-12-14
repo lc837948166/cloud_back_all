@@ -1,7 +1,9 @@
 package com.xw.cloud.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,6 +23,9 @@ public class LibvirtController {
 
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
+
+    @Resource
+    private VmMapper vmMapper;
 
     @ApiOperation(value = "虚拟化主页", notes = "返回虚拟化管理的主页")
     @RequestMapping(value = {"/index"})
@@ -161,6 +166,10 @@ public class LibvirtController {
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("name", name);
+        long count = vmMapper.selectCount(queryWrapper);
+        if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
@@ -169,10 +178,8 @@ public class LibvirtController {
         vmc.setImgName(ImgName);
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
-        int result=libvirtService.addDomainByName(vmc,serverip);
-        if(result!=0)return new CommentResp(true, null,"创建虚拟机成功");
-        return new CommentResp(false, null,"创建虚拟机失败");
-
+        libvirtService.addDomainByName(vmc,serverip);
+        return new CommentResp(true, null,"创建虚拟机成功");
     }
 
 
