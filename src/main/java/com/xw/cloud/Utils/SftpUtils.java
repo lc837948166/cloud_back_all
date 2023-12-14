@@ -18,7 +18,7 @@ public class SftpUtils {
 
             String remoteHost = "127.0.0.1";
             String username = "root";
-            String password = "111";
+            String password = "Upc123456@";
 
             // 创建 SSH 连接
             JSch jsch = new JSch();
@@ -38,7 +38,7 @@ public class SftpUtils {
 
         String remoteHost = "127.0.0.1";
         String username = "root";
-        String password = "111";
+        String password = "Upc123456@";
 
         // 创建 SSH 连接
         JSch jsch = new JSch();
