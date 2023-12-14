@@ -29,12 +29,13 @@ public class ProcessController {
 
     @RequestMapping(value = "/process", method = RequestMethod.POST)
     @ResponseBody
-    public String processTask(@RequestParam String taskName) throws Exception {
+    public String processTask(@RequestParam String taskName, @RequestParam String taskType) throws Exception {
         ProcessUtils processUtils = new ProcessUtils();
         QueryWrapper<ConstructionInfo> qw = new QueryWrapper<>();
         qw.eq("TaskName", taskName);
+        qw.eq("TaskType",taskType);
         ConstructionInfo task = constructionService.getOne(qw);
-        if (taskName.contains("CreateVM")) {
+        if (taskType.contains("CreateVM")) {
             String ans = processUtils.createVM(task.getImgName(), task.getVmName(), task.getMemory(), task.getCPUNum(), task.getOSType(), task.getNetType(), task.getServerIp());
             System.out.println(ans);
             if (ans.contains("200")) {
@@ -48,7 +49,7 @@ public class ProcessController {
             } else {
                 return "连接失败";
             }
-        } else if (taskName.contains("Dispense")) {
+        } else if (taskType.contains("Dispense")) {
             String ans = processUtils.dispenseImgByIP("39.98.124.97", task.getFileName(), task.getServerIp());
             System.out.println(ans);
             if (ans.contains("200")) {
@@ -62,7 +63,7 @@ public class ProcessController {
             } else {
                 return "连接失败";
             }
-        } else if (taskName.contains("Upload")) {
+        } else if (taskType.contains("Upload")) {
             QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
             qw1.eq("name",task.getVmName());
             VMInfo2 vm = vmService.getOne(qw1);
@@ -81,7 +82,7 @@ public class ProcessController {
             } else {
                 return "连接失败";
             }
-        }else if(taskName.contains("Import")){
+        }else if(taskType.contains("Import")){
             String ans = processUtils.importImage(task.getFileName(),task.getVmName(),task.getServerIp());
             System.out.println(ans);
             if (ans.contains("200")) {
@@ -95,7 +96,7 @@ public class ProcessController {
             } else {
                 return "连接失败";
             }
-        }else if(taskName.contains("ExecuteCommand")){
+        }else if(taskType.contains("ExecuteCommand")){
 
             String url = "http://" + task.getServerIp() + sufixUrl;
             String command = task.getCmd();

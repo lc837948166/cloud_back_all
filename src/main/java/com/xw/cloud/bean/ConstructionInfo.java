@@ -68,6 +68,8 @@ public class ConstructionInfo implements Serializable {
 	@TableField(value = "OperationStatus")
 	private Integer OperationStatus;
 
+	@TableField(value = "TaskType")
+	private Integer TaskType;
 	public Integer getID() {
 		return ID;
 	}
@@ -188,6 +190,14 @@ public class ConstructionInfo implements Serializable {
 		FileName = fileName;
 	}
 
+	public Integer getTaskType() {
+		return TaskType;
+	}
+
+	public void setTaskType(Integer taskType) {
+		TaskType = taskType;
+	}
+
 	@Override
 	public String toString() {
 		return "ConstructionInfo{" +
@@ -206,6 +216,7 @@ public class ConstructionInfo implements Serializable {
 				", Cmd='" + Cmd + '\'' +
 				", OperationOrder=" + OperationOrder +
 				", OperationStatus=" + OperationStatus +
+				", TaskType=" + TaskType +
 				'}';
 	}
 }
