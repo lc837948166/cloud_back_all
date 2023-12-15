@@ -503,14 +503,14 @@ public class LibvirtService {
                 "</domain>";
         LibvirtUtils.getConnection().domainDefineXML(xml);    // define ------> creat
         log.info(vmc.getName() + "虚拟机已创建！");
-        Thread.sleep(100);
+        Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
         updateVMtable(vmc.getName(),serverip);
-        Thread.sleep(1500);
+        Thread.sleep(6000);
             getallVMip(serverip);
             for (int i = 0; i < 5; ++i) {
-                if (vmMapper.selectById(vmc.getName()).getIp().isEmpty()){
-                    Thread.sleep(1500);
+                if (vmMapper.selectById(vmc.getName()).getIp() == null || vmMapper.selectById(vmc.getName()).getIp().isEmpty()){
+                    Thread.sleep(6000);
                     getallVMip(serverip);
                 }
                 else break;
