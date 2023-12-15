@@ -148,7 +148,7 @@ public class LibvirtController {
         libvirtService.deleteDomainByName(name);
         libvirtService.deleteImgFile(name + ".qcow2");
 
-        return new CommentResp(true, null,name+"qcow2删除成功");
+        return new CommentResp(true, null,name+".qcow2删除成功");
     }
 
     @ApiOperation(value = "跳转至添加虚拟机页面", notes = "返回添加虚拟机的界面")
@@ -168,7 +168,10 @@ public class LibvirtController {
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
         QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
+        System.out.println("123123123123123123");
         long count = vmMapper.selectCount(queryWrapper);
+        System.out.println(count);
+
         if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
         VM_create vmc = new VM_create();
         vmc.setName(name);
