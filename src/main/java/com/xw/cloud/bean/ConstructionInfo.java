@@ -69,7 +69,7 @@ public class ConstructionInfo implements Serializable {
 	private Integer OperationStatus;
 
 	@TableField(value = "TaskType")
-	private Integer TaskType;
+	private String TaskType;
 	public Integer getID() {
 		return ID;
 	}
@@ -190,11 +190,11 @@ public class ConstructionInfo implements Serializable {
 		FileName = fileName;
 	}
 
-	public Integer getTaskType() {
+	public String getTaskType() {
 		return TaskType;
 	}
 
-	public void setTaskType(Integer taskType) {
+	public void setTaskType(String taskType) {
 		TaskType = taskType;
 	}
 
