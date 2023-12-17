@@ -2,6 +2,7 @@ package com.xw.cloud.controller;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.xw.cloud.Utils.CommonResp;
 import com.xw.cloud.Utils.ProcessUtils;
 
 import com.xw.cloud.bean.ConstructionInfo;
@@ -9,6 +10,7 @@ import com.xw.cloud.bean.VMInfo2;
 import com.xw.cloud.service.ConstructionService;
 import com.xw.cloud.service.LibvirtService;
 import com.xw.cloud.service.VmService;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -39,8 +41,9 @@ public class ProcessController {
      * @throws Exception
      */
     @RequestMapping(value = "/start", method = RequestMethod.POST)
+    @ApiOperation(value = "执行任务", notes = "根据任务名查找数据库按照任务顺序执行子任务")
     @ResponseBody
-    public String startTask(@RequestParam String taskName) throws Exception {
+    public CommonResp startTask(@RequestParam String taskName) throws Exception {
         ProcessUtils processUtils = new ProcessUtils();
         QueryWrapper<ConstructionInfo> qw = new QueryWrapper<>();
         qw.eq("TaskName", taskName);
@@ -55,26 +58,26 @@ public class ProcessController {
                 System.out.println(ans);
                 if (ans.contains("200")) {
                     if (ans.contains("重复")) {
-                        return "创建失败，虚拟机名重复";
+                        return new CommonResp(false,"","创建失败，虚拟机名重复");
                     } else {
                         task.setOperationStatus(1);
                         constructionService.updateById(task);
                     }
                 } else {
-                    return "连接失败";
+                    return new CommonResp(false,"","创建失败");
                 }
             } else if (task.getTaskType().contains("Dispense")) {
                 String ans = processUtils.dispenseImgByIP("39.98.124.97", task.getFileName(), task.getServerIp());
                 System.out.println(ans);
                 if (ans.contains("200")) {
                     if (ans.contains("-1")) {
-                        return "文件下发失败";
+                        return new CommonResp(false,"","文件下发失败");
                     } else {
                         task.setOperationStatus(1);
                         constructionService.updateById(task);
                     }
                 } else {
-                    return "连接失败";
+                    return new CommonResp(false,"","文件下发失败");
                 }
             } else if (task.getTaskType().contains("Upload")) {
                 QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
@@ -92,42 +95,41 @@ public class ProcessController {
                         }
                     }
                     if (flag == false)
-                        return "虚拟机IP不存在，上传文件失败";
+                        return new CommonResp(false,"","虚拟机IP不存在，上传文件失败");
                 }
                 String ans = processUtils.uploadDockerToVM(task.getFileName(), task.getVmName(), task.getServerIp(), "39.98.124.97");
                 System.out.println(ans);
                 if (ans.contains("200")) {
                     if (ans.contains("-1")) {
-                        return "上传失败";
+                        return new CommonResp(false,"","上传文件失败");
                     } else {
                         task.setOperationStatus(1);
                         constructionService.updateById(task);
                     }
                 } else {
-                    return "连接失败";
+                    return new CommonResp(false,"","上传文件失败");
                 }
             } else if (task.getTaskType().contains("Import")) {
                 String ans = processUtils.importImage(task.getFileName(), task.getVmName(), task.getServerIp());
                 System.out.println(ans);
                 if (ans.contains("200")) {
                     if (ans.contains("-1")) {
-                        return "导入镜像失败";
+                        return new CommonResp(false,"","导入镜像失败");
                     } else {
                         task.setOperationStatus(1);
                         constructionService.updateById(task);
                     }
                 } else {
-                    return "连接失败";
+                    return new CommonResp(false,"","导入镜像失败");
                 }
             } else if (task.getTaskType().contains("ExecuteCommand")) {
-
                 String url = "http://" + task.getServerIp() + sufixUrl;
                 String command = task.getCmd();
                 QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
                 qw1.eq("name", task.getVmName());
                 VMInfo2 vm = vmService.getOne(qw1);
                 if (vm == null || vm.getIp() == null)
-                    return "虚拟机不存在或IP不存在";
+                    return  new CommonResp(false,"","虚拟机IP不存在");
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -149,18 +151,22 @@ public class ProcessController {
                         String.class
                 );
                 if (!response.toString().contains("\"exitStatus\":0")) {
-                    return "执行命令失败";
+                    return  new CommonResp(false,"","执行命令失败");
+                }else {
+                        task.setOperationStatus(1);
+                        constructionService.updateById(task);
                 }
             } else {
-                return "error";
+                return new CommonResp(false,"","任务类型不存在");
             }
         }
-        return "success";
+        return new CommonResp(true,"","任务执行成功");
     }
 
     @RequestMapping(value = "/process", method = RequestMethod.POST)
+    @ApiOperation(value = "执行子任务", notes = "执行任务中的一个子任务")
     @ResponseBody
-    public String processTask(@RequestParam String taskName, @RequestParam String taskType, @RequestParam Integer order) throws Exception {
+    public CommonResp processTask(@RequestParam String taskName, @RequestParam String taskType, @RequestParam Integer order) throws Exception {
         ProcessUtils processUtils = new ProcessUtils();
         QueryWrapper<ConstructionInfo> qw = new QueryWrapper<>();
         qw.eq("TaskName", taskName);
@@ -172,61 +178,61 @@ public class ProcessController {
             System.out.println(ans);
             if (ans.contains("200")) {
                 if (ans.contains("重复")) {
-                    return "创建失败，虚拟机名重复";
+                    return new CommonResp(false,"","创建失败，虚拟机名重复");
                 } else {
                     task.setOperationStatus(1);
                     constructionService.updateById(task);
-                    return "虚拟机创建成功";
+                    return  new CommonResp(true,"","虚拟机创建成功");
                 }
             } else {
-                return "连接失败";
+                return new CommonResp(false,"","创建失败");
             }
         } else if (taskType.contains("Dispense")) {
             String ans = processUtils.dispenseImgByIP("39.98.124.97", task.getFileName(), task.getServerIp());
             System.out.println(ans);
             if (ans.contains("200")) {
                 if (ans.contains("-1")) {
-                    return "文件下发失败";
+                    return new CommonResp(false,"","文件下发失败");
                 } else {
                     task.setOperationStatus(1);
                     constructionService.updateById(task);
-                    return "文件下发成功";
+                    return new CommonResp(true,"","文件下发成功");
                 }
             } else {
-                return "连接失败";
+                return new CommonResp(false,"","文件下发失败");
             }
         } else if (taskType.contains("Upload")) {
             QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
             qw1.eq("name", task.getVmName());
             VMInfo2 vm = vmService.getOne(qw1);
             if (vm.getIp() == null)
-                return "虚拟机IP不存在，上传文件失败";
+                return new CommonResp(false,"","虚拟机IP不存在，上传文件失败");
             String ans = processUtils.uploadDockerToVM(task.getFileName(), task.getVmName(), task.getServerIp(), "39.98.124.97");
             System.out.println(ans);
             if (ans.contains("200")) {
                 if (ans.contains("-1")) {
-                    return "上传失败";
+                    return new CommonResp(false,"","文件上传失败");
                 } else {
                     task.setOperationStatus(1);
                     constructionService.updateById(task);
-                    return "上传成功";
+                    return new CommonResp(true,"","文件上传成功");
                 }
             } else {
-                return "连接失败";
+                return new CommonResp(false,"","文件上传失败");
             }
         } else if (taskType.contains("Import")) {
             String ans = processUtils.importImage(task.getFileName(), task.getVmName(), task.getServerIp());
             System.out.println(ans);
             if (ans.contains("200")) {
                 if (ans.contains("-1")) {
-                    return "导入镜像失败";
+                    return new CommonResp(false,"","导入镜像失败");
                 } else {
                     task.setOperationStatus(1);
                     constructionService.updateById(task);
-                    return "导入镜像成功";
+                    return new CommonResp(true,"","导入镜像成功");
                 }
             } else {
-                return "连接失败";
+                return new CommonResp(false,"","导入镜像失败");
             }
         } else if (taskType.contains("ExecuteCommand")) {
 
@@ -236,7 +242,7 @@ public class ProcessController {
             qw1.eq("name", task.getVmName());
             VMInfo2 vm = vmService.getOne(qw1);
             if (vm == null || vm.getIp() == null)
-                return "虚拟机不存在或IP不存在";
+                return new CommonResp(false,"","虚拟机IP不存在，执行命令失败");
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -258,12 +264,15 @@ public class ProcessController {
                     String.class
             );
             if (!response.toString().contains("\"exitStatus\":0")) {
-                return "执行命令失败";
+                return new CommonResp(false,"","执行命令失败");
+            }else {
+                task.setOperationStatus(1);
+                constructionService.updateById(task);
             }
         } else {
-            return "error";
+            return  new CommonResp(false,"","任务类型不存在");
         }
-        return "success";
+        return new CommonResp(true,"","执行任务成功");
     }
 
 }
