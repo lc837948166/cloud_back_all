@@ -195,8 +195,8 @@ public class LibvirtService {
     @SneakyThrows
     public double getMem(Domain domain){
         double useMem = 0;
-        MemoryStatistic[] memoryStatistics = domain.memoryStats(10);
-        Optional<MemoryStatistic> first = Arrays.stream(memoryStatistics).filter(x -> x.getTag() == 8).findFirst();
+        MemoryStatistic[] memoryStatistics = domain.memoryStats(9);
+        Optional<MemoryStatistic> first = Arrays.stream(memoryStatistics).filter(x -> x.getTag() == 5).findFirst();
         if (first.isPresent()) {
             MemoryStatistic memoryStatistic = first.get();
             long unusedMemory = memoryStatistic.getValue();
