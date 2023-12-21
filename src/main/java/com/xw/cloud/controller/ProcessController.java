@@ -13,6 +13,7 @@ import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.Task;
 import com.xw.cloud.bean.VMInfo2;
 import com.xw.cloud.service.*;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -20,13 +21,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import springfox.documentation.spring.web.json.Json;
-
+import org.springframework.core.io.Resource;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @CrossOrigin
 @Controller
+@Api(tags = "任务管理", description = "执行任务")
 public class ProcessController {
 
     @Autowired
@@ -43,18 +53,28 @@ public class ProcessController {
     private TaskService taskService;
 
 
-
     @RequestMapping(value = "/addVirtual", method = RequestMethod.POST)
     @ApiOperation(value = "创建虚拟机接口", notes = "创建虚拟机并上传镜像")
     @ResponseBody
-    public void addVirtual() throws JsonProcessingException {
+    public void addVirtual() throws IOException {
         ProcessUtils processUtils = new ProcessUtils();
+        String filePath = "/opt/"+"taskLog.txt";
+        BufferedWriter bw = null;
+        try {
+            bw = new BufferedWriter(new FileWriter(filePath));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         List<Task> tasks = taskService.list();
         for(Task task: tasks){
             //记录中间任务执行失败情况
+            if(task.getTYPE_ID()!=21){
+                continue;
+            }
             String task_attributes_values = task.getTASK_ATTRIBUTES_VALUES();
             ObjectMapper mapper = new ObjectMapper();
             TaskUtils taskUtils = null;
+            System.out.println(task_attributes_values);
             try {
                 taskUtils = mapper.readValue(task_attributes_values, TaskUtils.class);
             } catch (IOException e) {
@@ -64,9 +84,9 @@ public class ProcessController {
                 taskService.updateById(task);
                 continue;
             }
-            System.out.println(taskUtils);
-            if((taskUtils.getTask_status() == 1 || taskUtils.getTask_status() == 5) && (taskUtils.getTask_executor() == 1 || taskUtils.getTask_executor() == 3) && taskUtils.getExecution_method().contains("addVirtual")){
-                System.out.println("开始执行任务");
+            if((taskUtils.getTask_status() == 1 || taskUtils.getTask_status() == 5) && (taskUtils.getTask_executor() == 1 || taskUtils.getTask_executor() == 3)){
+                System.out.println("开始执行任务"+task.getTASK_NAME());
+                bw.write("开始执行任务"+task.getTASK_NAME()+"\n");
                 boolean flag = false;
                 int vmNum = taskUtils.getVm_num();
                 String mkcommand = "mkdir -p /etc/usr/xwfiles";
@@ -83,14 +103,14 @@ public class ProcessController {
                 Integer cpu_num = taskUtils.getCpu_npm();
                 String docker_image_name = taskUtils.getDocker_image_name();
                 String[] com = taskUtils.getCmds().split(",");
-                if(vm_image_name==null || vm_name == null || memory== null || cpu_num == null || docker_image_name == null||com == null) {
+                if(vm_image_name==null ||vm_name.equals("") || vm_name == null || vm_name.equals("") || memory== null || cpu_num == null || docker_image_name == null|| docker_image_name.equals("") || com == null || com.equals("")) {
                     task.setSTATUS(5);
                     taskUtils.setTask_status(5);
                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                     taskService.updateById(task);
+                    bw.write("缺少任务所需信息\n");
                     continue;
                 }
-
                 String OStype = "X86";
                 String nettype = "bridge";
 
@@ -107,8 +127,8 @@ public class ProcessController {
                     taskUtils.setTask_status(2);
                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                     taskService.updateById(task);
-
                     System.out.println("云节点开始下发Docker镜像");
+                    bw.write("云节点开始下发Docker镜像\n");
                     //下发镜像文件
                     String ans = null;
                     try {
@@ -120,6 +140,7 @@ public class ProcessController {
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                         flag = true;
                         taskService.updateById(task);
+                        bw.write("下发失败\n");
                         System.out.println("下发失败");
                         continue;
                     }
@@ -130,6 +151,7 @@ public class ProcessController {
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
                             taskService.updateById(task);
+                            bw.write("下发失败\n");
                             System.out.println("下发失败1");
                             continue;
                         }
@@ -139,6 +161,7 @@ public class ProcessController {
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                         flag = true;
                         taskService.updateById(task);
+                        bw.write("下发失败\n");
                         System.out.println("下发失败2");
                         continue;
                     }
@@ -146,6 +169,7 @@ public class ProcessController {
                     //循环上传镜像
                     for(int i = 1; i <= vmNum;i++) {
                         String vmi_name = vm_name+"_"+i;
+                        bw.write("开始创建第"+i+"个虚拟机\n");
                         System.out.println("开始创建第"+i+"个虚拟机");
                         //创建虚拟机
                         try {
@@ -157,6 +181,8 @@ public class ProcessController {
                                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                     flag = true;
                                     taskService.updateById(task);
+                                    bw.write("创建失败\n");
+                                    System.out.println("创建失败3");
                                     break;
                                 }else {
                                     QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
@@ -186,10 +212,13 @@ public class ProcessController {
                                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                             flag = true;
                                             taskService.updateById(task);
+                                            bw.write("第"+i+"个虚拟机未获得IP"+"\n");
+                                            System.out.println("未获得Ip");
                                             break;
                                         }
                                     }else {
                                         System.out.println("第"+i+"个虚拟机获得IP:"+vmService.getOne(qw1).getIp());
+                                        bw.write("第"+i+"个虚拟机获得IP:"+vmService.getOne(qw1).getIp()+"\n");
                                         if(ips.equals("")){
                                             ips = vmService.getOne(qw1).getIp();
                                         }else
@@ -203,6 +232,8 @@ public class ProcessController {
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
+                                bw.write("创建失败\n");
+                                System.out.println("创建失败2");
                                 taskService.updateById(task);
                                 break;
                             }
@@ -211,11 +242,14 @@ public class ProcessController {
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
+                            bw.write("创建失败\n");
+                            System.out.println("创建失败1");
                             taskService.updateById(task);
                             break;
                         }
 
                         System.out.println("第"+i+"个虚拟机执行命令创建文件夹");
+                        bw.write("第"+i+"个虚拟机执行命令创建文件夹\n");
                         //执行命令创建文件夹
                         QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
                         qw1.eq("name", vmi_name);
@@ -246,10 +280,12 @@ public class ProcessController {
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
                             taskService.updateById(task);
+                            bw.write("命令执行失败\n");
                             break;
                         }
                         //上传文件到虚拟机
                         System.out.println("第"+i+"个虚拟机上传文件到虚拟机");
+                        bw.write("第"+i+"个虚拟机上传文件到虚拟机\n");
                         try {
                             ans = processUtils.uploadDockerToVM(docker_image_name, vmi_name, Pmip, "39.98.124.97");
                         } catch (Exception e) {
@@ -268,6 +304,7 @@ public class ProcessController {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
                                 taskService.updateById(task);
+                                bw.write("上传失败\n");
                                 break;
                             }
                         } else {
@@ -275,10 +312,11 @@ public class ProcessController {
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
+                            bw.write("上传失败\n");
                             taskService.updateById(task);
                             break;
                         }
-
+                        bw.write("第"+i+"个虚拟机导入Docker镜像"+"\n");
                         System.out.println("第"+i+"个虚拟机导入镜像");
                         //导入镜像
                         try {
@@ -298,6 +336,7 @@ public class ProcessController {
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
+                                bw.write("导入失败"+"\n");
                                 taskService.updateById(task);
                                 break;
                             }
@@ -306,9 +345,14 @@ public class ProcessController {
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
+                            bw.write("导入失败"+"\n");
                             taskService.updateById(task);
                             break;
                         }
+        /*                if(com == null || com.equals("")){
+                            continue;
+                        }*/
+                        bw.write("第"+i+"个虚拟机执行命令运行镜像\n");
                         System.out.println("第"+i+"个虚拟机执行命令运行镜像");
                         //执行命令运行镜像
                         HttpHeaders headers1 = new HttpHeaders();
@@ -336,6 +380,7 @@ public class ProcessController {
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                             flag = true;
+                            bw.write("运行命令失败\n");
                             taskService.updateById(task);
                             break;
                         }
@@ -345,6 +390,7 @@ public class ProcessController {
                         taskUtils.setTask_status(4);
                         taskUtils.setVm_ip(ips);
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                        bw.write("任务执行成功\n");
                         taskService.updateById(task);
                     }
                 }else {
@@ -361,6 +407,7 @@ public class ProcessController {
                             break;
                         //下发镜像文件
                         System.out.println("节点"+node.getNodeName()+"下发镜像文件");
+                        bw.write("节点"+node.getNodeName()+"下发镜像文件\n");
                         String ans = null;
                         try {
                             ans = processUtils.dispenseImgByIP("39.98.124.97", docker_image_name, Pmip);
@@ -368,6 +415,7 @@ public class ProcessController {
                             task.setSTATUS(5);
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            bw.write("节点"+node.getNodeName()+"下发镜像文件失败\n");
                             flag = true;
                             taskService.updateById(task);
                             break;
@@ -378,6 +426,7 @@ public class ProcessController {
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
+                                bw.write("节点"+node.getNodeName()+"下发镜像文件失败\n");
                                 taskService.updateById(task);
                                 break;
                             }
@@ -385,6 +434,7 @@ public class ProcessController {
                             task.setSTATUS(5);
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            bw.write("节点"+node.getNodeName()+"下发镜像文件失败\n");
                             flag = true;
                             taskService.updateById(task);
                             break;
@@ -393,6 +443,8 @@ public class ProcessController {
                             String vmi_name = vm_name+"_"+cnt;
                             cnt++;
                             System.out.println("节点"+node.getNodeName()+"创建第"+i+"个虚拟机");
+
+                            bw.write("节点"+node.getNodeName()+"创建第"+i+"个虚拟机\n");
                             //创建虚拟机
                             try {
                                 ans = processUtils.createVM(vm_image_name,vmi_name,memory,cpu_num,OStype,nettype,Pmip);
@@ -402,6 +454,7 @@ public class ProcessController {
                                         taskUtils.setTask_status(5);
                                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                         flag = true;
+                                        bw.write("创建失败\n");
                                         taskService.updateById(task);
                                         break;
                                     }else {
@@ -438,6 +491,7 @@ public class ProcessController {
                                             }
                                         }else {
                                             System.out.println("第"+i+"个虚拟机获得IP:"+vmService.getOne(qw1).getIp());
+                                            bw.write("第"+i+"个虚拟机获得IP:"+vmService.getOne(qw1).getIp()+"\n");
                                             if(ips.equals("")){
                                                 ips = vmService.getOne(qw1).getIp();
                                             }else
@@ -448,6 +502,7 @@ public class ProcessController {
                                     }
                                 } else {
                                     task.setSTATUS(5);
+                                    bw.write("创建失败\n");
                                     taskUtils.setTask_status(5);
                                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                     flag = true;
@@ -459,11 +514,12 @@ public class ProcessController {
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
+                                bw.write("创建失败\n");
                                 taskService.updateById(task);
                                 break;
                             }
 
-
+                            bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令创建文件夹\n");
                             System.out.println("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令创建文件夹");
                             //执行命令创建文件夹
                             QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
@@ -492,6 +548,7 @@ public class ProcessController {
                             if (!response.toString().contains("\"exitStatus\":0")) {
                                 task.setSTATUS(5);
                                 taskUtils.setTask_status(5);
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令创建文件夹失败\n");
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
                                 taskService.updateById(task);
@@ -499,6 +556,7 @@ public class ProcessController {
                             }
                             //上传文件到虚拟机
 
+                            bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机上传文件到虚拟机\n");
                             System.out.println("节点"+node.getNodeName()+"第"+i+"个虚拟机上传文件到虚拟机");
                             try {
                                 ans = processUtils.uploadDockerToVM(docker_image_name, vmi_name, Pmip, "39.98.124.97");
@@ -508,6 +566,7 @@ public class ProcessController {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
                                 taskService.updateById(task);
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机上传文件到虚拟机失败\n");
                                 break;
                             }
                             System.out.println(ans);
@@ -516,6 +575,7 @@ public class ProcessController {
                                     task.setSTATUS(5);
                                     taskUtils.setTask_status(5);
                                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                                    bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机上传文件到虚拟机失败\n");
                                     flag = true;
                                     taskService.updateById(task);
                                     break;
@@ -525,10 +585,11 @@ public class ProcessController {
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机上传文件到虚拟机失败\n");
                                 taskService.updateById(task);
                                 break;
                             }
-
+                            bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机导入镜像\n");
                             System.out.println("节点"+node.getNodeName()+"第"+i+"个虚拟机导入镜像");
                             //导入镜像
                             try {
@@ -539,6 +600,7 @@ public class ProcessController {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 flag = true;
                                 taskService.updateById(task);
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机导入镜像失败\n");
                                 break;
                             }
                             System.out.println(ans);
@@ -548,6 +610,7 @@ public class ProcessController {
                                     flag = true;
                                     taskUtils.setTask_status(5);
                                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                                    bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机导入镜像失败\n");
                                     taskService.updateById(task);
                                     break;
                                 }
@@ -555,11 +618,12 @@ public class ProcessController {
                                 task.setSTATUS(5);
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机导入镜像失败\n");
                                 flag = true;
                                 taskService.updateById(task);
                                 break;
                             }
-
+                            bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令运行镜像\n");
                             System.out.println("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令运行镜像");
                             //执行命令运行镜像
                             HttpHeaders headers1 = new HttpHeaders();
@@ -584,6 +648,7 @@ public class ProcessController {
                             );
                             if (!response1.toString().contains("\"exitStatus\":0")) {
                                 task.setSTATUS(5);
+                                bw.write("节点"+node.getNodeName()+"第"+i+"个虚拟机执行命令运行镜像失败\n");
                                 flag = true;
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -594,6 +659,8 @@ public class ProcessController {
                     }
                     if(flag == false){
                         task.setSTATUS(4);
+                        bw.write("任务"+task.getTASK_NAME()+"成功结束\n");
+                        bw.write("=====================================\n");
                         taskUtils.setVm_ip(ips);
                         taskUtils.setTask_status(4);
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -602,6 +669,7 @@ public class ProcessController {
                 }
             }
         }
+        bw.close();
         System.out.println("任务结束");
     }
 
@@ -848,5 +916,28 @@ public class ProcessController {
         }
         return new CommonResp(true,"","执行任务成功");
     }
+    @GetMapping("/downloadLog")
+    @ApiOperation(value = "创建虚拟机日志", notes = "创建虚拟机日志")
+    public ResponseEntity<Resource> downloadFile() {
+        // 文件存储路径，请根据实际情况修改
+        String filePath = "/opt/"+"taskLog.txt";
+        // 读取文件
+        Path path = Paths.get(filePath);
+        Resource resource = null;
+        try {
+            resource = new org.springframework.core.io.UrlResource(path.toUri());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        // 检查文件是否存在并可读
+        if (resource != null && resource.exists() && resource.isReadable()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
