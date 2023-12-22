@@ -8,6 +8,7 @@ import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
+import org.libvirt.Domain;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -77,6 +78,17 @@ public class LibvirtController {
     public CommentResp initiateVirtual(@PathVariable("name") String name) {
         libvirtService.initiateDomainByName(name);
         return new CommentResp(true, null,"启动成功");
+    }
+
+    @ApiOperation(value = "更改虚拟机配置", notes = "根据虚拟机名称更改虚拟机配置")
+    @SneakyThrows
+    @RequestMapping("/changeVM/{name}")
+    @ResponseBody
+    public CommentResp changeVM(@PathVariable("name") String name,@RequestParam("cpuNum") int cpu,@RequestParam("memory") int mem) {
+        libvirtService.shutdownDomainByName(name);
+        Thread.sleep(5000);
+        libvirtService.changeVMByName(name,cpu,mem);
+        return new CommentResp(true, null,"更改虚拟机配置成功");
     }
 
     @ApiOperation(value = "挂起虚拟机", notes = "根据虚拟机名称挂起虚拟机")
@@ -167,10 +179,7 @@ public class LibvirtController {
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
         QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
-        System.out.println("123123123123123123");
         long count = vmMapper.selectCount(queryWrapper);
-        System.out.println(count);
-
         if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
         VM_create vmc = new VM_create();
         vmc.setName(name);

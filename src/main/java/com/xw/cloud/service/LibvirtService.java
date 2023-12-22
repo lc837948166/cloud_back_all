@@ -336,8 +336,27 @@ public class LibvirtService {
         shutdownDomain(getDomainById(id));
     }
 
-    public void shutdownDomainByName(String name) {
-        shutdownDomain(getDomainByName(name));
+    public void shutdownDomainByName(String name) throws LibvirtException {
+            shutdownDomain(getDomainByName(name));
+    }
+
+    public void changeVMByName(String name,int mem,int cpu) throws LibvirtException {
+        VMInfo2 vm = new VMInfo2();
+        vm.setName(name);
+        vm.setCpuNum(cpu);
+        vm.setMemory(mem);
+
+         mem = mem * 1024 * 1024;
+        Domain domain= getDomainByName(name);
+        String xmlDesc = domain.getXMLDesc(0);
+        xmlDesc = xmlDesc.replaceAll("<vcpu.*?</vcpu>", "<vcpu placement='static'>" + cpu + "</vcpu>");
+        xmlDesc = xmlDesc.replaceAll("<memory unit='KiB'>.*?</memory>", "<memory unit='KiB'>" + mem + "</memory>");
+        xmlDesc = xmlDesc.replaceAll("<currentMemory unit='KiB'>.*?</currentMemory>", "<currentMemory unit='KiB'>" + mem + "</currentMemory>");
+        domain.undefine();
+        domain=LibvirtUtils.getConnection().domainDefineXML(xmlDesc);
+        initiateDomain(domain);
+
+        vmMapper.updateById(vm);
     }
 
     /**
@@ -505,7 +524,7 @@ public class LibvirtService {
         log.info(vmc.getName() + "虚拟机已创建！");
         Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
-        updateVMtable(vmc.getName(),serverip);
+        updateVMtable(vmc.getName(),serverip,vmc.getCpuNum(),vmc.getMemory());
         Thread.sleep(6000);
             getallVMip(serverip);
             for (int i = 0; i < 5; ++i) {
@@ -522,12 +541,14 @@ public class LibvirtService {
      * 更新数据库的虚拟机信息
      */
     @SneakyThrows
-    private void updateVMtable(String name,String serverip) {
+    private void updateVMtable(String name,String serverip,int cpu,int memory) {
 
         VMInfo2 vmInfo2=VMInfo2.builder()
                 .name(name)
                 .username("root")
                 .passwd("111")
+                .memory(memory)
+                .cpuNum(cpu)
                 .serverip(serverip).build();
         vmMapper.insert(vmInfo2);
     }
