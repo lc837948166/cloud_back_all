@@ -527,7 +527,7 @@ public class LibvirtService {
         updateVMtable(vmc.getName(),serverip,vmc.getCpuNum(),vmc.getMemory());
         Thread.sleep(6000);
             getallVMip(serverip);
-            for (int i = 0; i < 85 ; ++i) {
+            for (int i = 0; i < 30 ; ++i) {
                 if (vmMapper.selectById(vmc.getName()).getIp() == null || vmMapper.selectById(vmc.getName()).getIp().isEmpty()){
                     Thread.sleep(10000);
                     getallVMip(serverip);
