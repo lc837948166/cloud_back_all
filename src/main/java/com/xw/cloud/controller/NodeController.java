@@ -2,6 +2,7 @@ package com.xw.cloud.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.xw.cloud.Utils.CommonResp;
 import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.PodLog;
 import com.xw.cloud.bean.VMLog;
@@ -46,6 +47,16 @@ public class NodeController {
     @Autowired
     private NodeServiceImpl nodeService;
 
+    @ApiOperation(value = "获取可调度节点列表", notes = "获取可调度节点列表")
+    @ResponseBody
+    @OperationLogDesc(module = "节点管理", events = "可调度节点列表查询")
+    @GetMapping("/getNodeListIsSchedulable")
+    public CommonResp getNodeListIsSchedulable() {
+        QueryWrapper qw = new QueryWrapper<>();
+        qw.eq("IsSchedulable",1);
+        List<NodeInfo> nodeList = nodeService.list(qw);
+        return new CommonResp(true, nodeList, "");
+    }
     @ApiOperation(value = "获取节点列表", notes = "列出节点指标")
     @ResponseBody
     @OperationLogDesc(module = "节点管理", events = "节点列表查询")
@@ -55,17 +66,138 @@ public class NodeController {
         System.out.println(nodeList);
         return new CommentResp(true, nodeList, "");
     }
-
     @ApiOperation(value = "添加节点列表", notes = "列出节点指标")
     @ResponseBody
     @OperationLogDesc(module = "节点管理", events = "节点列表添加")
     @PostMapping("/addNodeList1")
-    public ResponseEntity<String> addNode(@RequestBody NodeInfo nodeInfo) {
+    public ResponseEntity<String> addNode(@RequestBody NodeInfo nodeInfo) throws IOException, ApiException, ParseException {
+        if(nodeInfo.getNodeType().equals("端")){
+            boolean ping = ping(nodeInfo.getNodeIp());
+            if(ping) {
+                nodeInfo.setNodeStatus("正常");
+                nodeInfo.setNodeConnectivity(1);
+            }
+            else {
+                nodeInfo.setNodeStatus("异常");
+                nodeInfo.setNodeConnectivity(0);
+            }
+        }else {
+            InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+            // 使用 InputStream 和 InputStreamReader 读取配置文件
+            KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+            ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+            Configuration.setDefaultApiClient(client);
+            CoreV1Api api = new CoreV1Api();
+            V1NodeList nodeList = api.listNode(null, null, null, null, null, null, null, null, null, null);
+            //遍历所有的节点
+            for (V1Node node : nodeList.getItems()) {
+                String nodeName = node.getMetadata().getName();
+                String nodeIP = node.getStatus().getAddresses().get(0).getAddress();
+                // 获取节点状态
+                List<V1NodeCondition> conditions = node.getStatus().getConditions();
+                String nodeStatus = "异常";
+                for (V1NodeCondition condition : conditions) {
+                    String type = condition.getType();
+                    String status = condition.getStatus();
+                    System.out.println(type + " " +status);
+                    if(type.equals("Ready")&& status.equals("True")){
+                        nodeStatus = "正常";
+                        break;
+                    }
+                }
+                Integer nodeConnectivity = (Integer) (ping(nodeInfo.getNodeIp())?1:0);
+
+                String creationTime = String.valueOf(node.getMetadata().getCreationTimestamp());
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+                inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date parsedDate = inputFormat.parse(creationTime);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date formattedDate = outputFormat.parse(outputFormat.format(parsedDate));
+                // 判断节点是不是新加入的节点
+                boolean found = false;
+                if (nodeInfo.getNodeName().equals(nodeName) && nodeInfo.getNodeIp().equals(nodeIP)) {
+                    found = true;
+                }
+                // 如果找到相同的节点
+                if (found) {
+                   nodeInfo.setNodeStatus(nodeStatus);
+                   nodeInfo.setNodeConnectivity(nodeConnectivity);
+                }
+            }
+        }
         boolean success = nodeService.save(nodeInfo);
         if (success) {
             return ResponseEntity.ok("Node added successfully");
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add node");
+        }
+    }
+
+
+    @ApiOperation(value = "节点管理", notes = "更新节点")
+    @ResponseBody
+    @OperationLogDesc(module = "节点管理", events = "更新节点")
+    @PostMapping("/update")
+    public ResponseEntity<String> updateNode(@RequestBody NodeInfo nodeInfo) throws IOException, ApiException, ParseException {
+        if(nodeInfo.getNodeType().equals("端")){
+            boolean ping = ping(nodeInfo.getNodeIp());
+            if(ping) {
+                nodeInfo.setNodeStatus("正常");
+                nodeInfo.setNodeConnectivity(1);
+            }
+            else{
+                nodeInfo.setNodeStatus("异常");
+                nodeInfo.setNodeConnectivity(0);
+            }
+        }else {
+            InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+            // 使用 InputStream 和 InputStreamReader 读取配置文件
+            KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
+            ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+            Configuration.setDefaultApiClient(client);
+            CoreV1Api api = new CoreV1Api();
+            V1NodeList nodeList = api.listNode(null, null, null, null, null, null, null, null, null, null);
+            //遍历所有的节点
+            for (V1Node node : nodeList.getItems()) {
+                String nodeName = node.getMetadata().getName();
+                String nodeIP = node.getStatus().getAddresses().get(0).getAddress();
+                // 获取节点状态
+                List<V1NodeCondition> conditions = node.getStatus().getConditions();
+                String nodeStatus = "异常";
+                for (V1NodeCondition condition : conditions) {
+                    String type = condition.getType();
+                    String status = condition.getStatus();
+                    System.out.println(type + " " +status);
+                    if(type.equals("Ready")&& status.equals("True")){
+                        nodeStatus = "正常";
+                        break;
+                    }
+                }
+                Integer nodeConnectivity = (Integer) (ping(nodeInfo.getNodeIp())?1:0);
+
+                String creationTime = String.valueOf(node.getMetadata().getCreationTimestamp());
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+                inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date parsedDate = inputFormat.parse(creationTime);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date formattedDate = outputFormat.parse(outputFormat.format(parsedDate));
+                // 判断节点是不是新加入的节点
+                boolean found = false;
+                if (nodeInfo.getNodeName().equals(nodeName) && nodeInfo.getNodeIp().equals(nodeIP)) {
+                    found = true;
+                }
+                // 如果找到相同的节点
+                if (found) {
+                    nodeInfo.setNodeStatus(nodeStatus);
+                    nodeInfo.setNodeConnectivity(nodeConnectivity);
+                }
+            }
+        }
+        boolean success = nodeService.updateById(nodeInfo);
+        if (success) {
+            return ResponseEntity.ok("Node added successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update node");
         }
     }
 
@@ -102,7 +234,6 @@ public class NodeController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while performing the ping test: " + e.getMessage());
         }
-
     }
 
     private boolean ping(String ip) {
@@ -249,8 +380,6 @@ public class NodeController {
 
                 String nodeUserName = "root";
                 String nodeUserPasswd = "@wsad1234";
-
-
 
                 String creationTime = String.valueOf(node.getMetadata().getCreationTimestamp());
 

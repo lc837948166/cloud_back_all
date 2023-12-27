@@ -1,8 +1,10 @@
 package com.xw.cloud.service;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xw.cloud.Utils.LibvirtUtils;
 import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.IpaddrMapper;
 import com.xw.cloud.mapper.VmMapper;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -20,6 +22,9 @@ import com.xw.cloud.Utils.SftpUtils;
 public class LibvirtService {
     @Resource
     private VmMapper vmMapper;
+
+    @Resource
+    private IpaddrMapper ipaddrMapper;
 
     String home = System.getenv("HOME");
     /**
@@ -76,7 +81,12 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getVirtualByName(String name) {
         Domain domain = getDomainByName(name);
-        String ip=vmMapper.selectById(domain.getName()).getIp();
+        String ip = null;
+        VMInfo2 vmInfo2 = vmMapper.selectById(domain.getName());
+        if (vmInfo2 != null) {
+            ip = vmInfo2.getIp();
+        }
+//        String ip=vmMapper.selectById(domain.getName()).getIp();
         return Virtual.builder()
                 .id(domain.getID())
                 .name(domain.getName())
@@ -107,21 +117,41 @@ public class LibvirtService {
     public String getVMip(String name) {
 //        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
 //        String ip =SftpUtils.getexecon(command);
-        String ip = vmMapper.selectById(name).getIp();
+        String ip = null;
+        VMInfo2 vmInfo2 = vmMapper.selectById(name);
+        if (vmInfo2 != null) {
+            ip = vmInfo2.getIp();
+        }
         System.out.println(ip);
         return ip;
     }
 
     @SneakyThrows
-    public String getallVMip(String serverip) {
-//        String command = "for mac in `sudo virsh domiflist "+name+" |grep -o -E \"([0-9a-f]{2}:){5}([0-9a-f]{2})\"` ; do arp -e | grep $mac  | grep -o -P \"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\" ; done";
-//        String ip =SftpUtils.getexecon(command);
-        String ip1=findserverip(serverip,'.',3);
+    public void getallVMip(String serverip) {
+        String ip1=findserverip(findRealIP(serverip),'.',3);
         System.out.println(ip1);
         String command="bash /root/VM_place/virsh-ip.sh all "+ip1;
-        String ip =SftpUtils.getexecon(command);
-        return ip;
+        String data =SftpUtils.getexecon(command);
+        StringReader stringReader = new StringReader(data);
+        BufferedReader reader = new BufferedReader(stringReader);
+        String line;
+        int result = 0;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(":");
+            if (parts.length == 2) {
+                String name = parts[0];
+                String ip = parts[1].trim();
+                if (!ip.isEmpty()) {
+                    VMInfo2 virtualMachine = new VMInfo2();
+                    virtualMachine.setName(name);
+                    virtualMachine.setIp(ip);
+                    result+=vmMapper.updateById(virtualMachine);
+                }
+            }
+        }
     }
+
+
 
     public String findserverip(String str, char c, int n) {
         int index = -1;
@@ -165,8 +195,8 @@ public class LibvirtService {
     @SneakyThrows
     public double getMem(Domain domain){
         double useMem = 0;
-        MemoryStatistic[] memoryStatistics = domain.memoryStats(10);
-        Optional<MemoryStatistic> first = Arrays.stream(memoryStatistics).filter(x -> x.getTag() == 8).findFirst();
+        MemoryStatistic[] memoryStatistics = domain.memoryStats(9);
+        Optional<MemoryStatistic> first = Arrays.stream(memoryStatistics).filter(x -> x.getTag() == 5).findFirst();
         if (first.isPresent()) {
             MemoryStatistic memoryStatistic = first.get();
             long unusedMemory = memoryStatistic.getValue();
@@ -306,8 +336,27 @@ public class LibvirtService {
         shutdownDomain(getDomainById(id));
     }
 
-    public void shutdownDomainByName(String name) {
-        shutdownDomain(getDomainByName(name));
+    public void shutdownDomainByName(String name) throws LibvirtException {
+            shutdownDomain(getDomainByName(name));
+    }
+
+    public void changeVMByName(String name,int mem,int cpu) throws LibvirtException {
+        VMInfo2 vm = new VMInfo2();
+        vm.setName(name);
+        vm.setCpuNum(cpu);
+        vm.setMemory(mem);
+
+         mem = mem * 1024 * 1024;
+        Domain domain= getDomainByName(name);
+        String xmlDesc = domain.getXMLDesc(0);
+        xmlDesc = xmlDesc.replaceAll("<vcpu.*?</vcpu>", "<vcpu placement='static'>" + cpu + "</vcpu>");
+        xmlDesc = xmlDesc.replaceAll("<memory unit='KiB'>.*?</memory>", "<memory unit='KiB'>" + mem + "</memory>");
+        xmlDesc = xmlDesc.replaceAll("<currentMemory unit='KiB'>.*?</currentMemory>", "<currentMemory unit='KiB'>" + mem + "</currentMemory>");
+        domain.undefine();
+        domain=LibvirtUtils.getConnection().domainDefineXML(xmlDesc);
+        initiateDomain(domain);
+
+        vmMapper.updateById(vm);
     }
 
     /**
@@ -352,7 +401,7 @@ public class LibvirtService {
      * 添加 虚拟机 xml------>name   1024MB
      */
     @SneakyThrows
-    public int addDomainByName(VM_create vmc,String serverip) {
+    public void addDomainByName(VM_create vmc,String serverip) {
         String xml = "<domain type='kvm'>\n" +
                 "  <name>" + vmc.getName() + "</name>\n" +
                 "  <uuid>" + UUID.randomUUID() + "</uuid>\n" +
@@ -475,25 +524,41 @@ public class LibvirtService {
         log.info(vmc.getName() + "虚拟机已创建！");
         Thread.sleep(1000);
         initiateDomainByName(vmc.getName());
-        int result= updateVMtable(vmc.getName(),serverip);
-        return result;
-    }
+        updateVMtable(vmc.getName(),serverip,vmc.getCpuNum(),vmc.getMemory());
+        Thread.sleep(6000);
+            getallVMip(serverip);
+            for (int i = 0; i < 5; ++i) {
+                if (vmMapper.selectById(vmc.getName()).getIp() == null || vmMapper.selectById(vmc.getName()).getIp().isEmpty()){
+                    Thread.sleep(6000);
+                    getallVMip(serverip);
+                }
+                else break;
+                }
+            }
+
 
     /**
      * 更新数据库的虚拟机信息
      */
     @SneakyThrows
-    private int updateVMtable(String name,String serverip) {
+    private void updateVMtable(String name,String serverip,int cpu,int memory) {
 
         VMInfo2 vmInfo2=VMInfo2.builder()
                 .name(name)
                 .username("root")
                 .passwd("111")
+                .memory(memory)
+                .cpuNum(cpu)
                 .serverip(serverip).build();
-        int result=vmMapper.insert(vmInfo2);
-        return result;
+        vmMapper.insert(vmInfo2);
     }
 
+    public String findRealIP(String serverip){
+        String realip=null;
+        Ipaddr ip= ipaddrMapper.selectById(serverip);
+        if(ip!=null) realip=ip.getRealip();
+        return realip;
+    }
     /**
      * 删除 虚拟机 xml
      */

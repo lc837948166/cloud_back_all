@@ -62,10 +62,12 @@ public class NodeInfo implements Serializable {
 	@TableField(value = "nodeLat")
 	private Double nodeLat;
 
-	public NodeInfo() {
-	}
 
-	public NodeInfo(String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat) {
+	@TableField(value = "IsSchedulable")
+	private Integer IsSchedulable;
+
+	public NodeInfo(Integer id, String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, Integer isSchedulable) {
+		this.id = id;
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
 		this.nodeStatus = nodeStatus;
@@ -77,6 +79,50 @@ public class NodeInfo implements Serializable {
 		this.nodeCreateTime = nodeCreateTime;
 		this.nodeLon = nodeLon;
 		this.nodeLat = nodeLat;
+		IsSchedulable = isSchedulable;
+	}
+	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat) {
+		this.nodeName = nodeName;
+		this.nodeIp = nodeIp;
+		this.nodeStatus = nodeStatus;
+		this.nodeLocation = nodeLocation;
+		this.nodeType = nodeType;
+		this.nodeConnectivity = nodeConnectivity;
+		this.nodeUserName = nodeUserName;
+		this.nodeUserPasswd = nodeUserPasswd;
+		this.nodeCreateTime = nodeCreateTime;
+		this.nodeLon = nodeLon;
+		this.nodeLat = nodeLat;
+	}
+
+	public NodeInfo() {
+	}
+
+	@Override
+	public String toString() {
+		return "NodeInfo{" +
+				"id=" + id +
+				", nodeName='" + nodeName + '\'' +
+				", nodeIp='" + nodeIp + '\'' +
+				", nodeStatus='" + nodeStatus + '\'' +
+				", nodeLocation='" + nodeLocation + '\'' +
+				", nodeType='" + nodeType + '\'' +
+				", nodeConnectivity=" + nodeConnectivity +
+				", nodeUserName='" + nodeUserName + '\'' +
+				", nodeUserPasswd='" + nodeUserPasswd + '\'' +
+				", nodeCreateTime=" + nodeCreateTime +
+				", nodeLon=" + nodeLon +
+				", nodeLat=" + nodeLat +
+				", IsSchedulable=" + IsSchedulable +
+				'}';
+	}
+
+	public Integer getIsSchedulable() {
+		return IsSchedulable;
+	}
+
+	public void setIsSchedulable(Integer isSchedulable) {
+		IsSchedulable = isSchedulable;
 	}
 
 	public Integer getId() {
@@ -175,21 +221,4 @@ public class NodeInfo implements Serializable {
 		this.nodeLat = nodeLat;
 	}
 
-	@Override
-	public String toString() {
-		return "NodeInfo{" +
-				"id=" + id +
-				", nodeName='" + nodeName + '\'' +
-				", nodeIp='" + nodeIp + '\'' +
-				", nodeStatus='" + nodeStatus + '\'' +
-				", nodeLocation='" + nodeLocation + '\'' +
-				", nodeType='" + nodeType + '\'' +
-				", nodeConnectivity=" + nodeConnectivity +
-				", nodeUserName='" + nodeUserName + '\'' +
-				", nodeUserPasswd='" + nodeUserPasswd + '\'' +
-				", nodeCreateTime=" + nodeCreateTime +
-				", nodeLon='" + nodeLon + '\'' +
-				", nodeLat='" + nodeLat + '\'' +
-				'}';
-	}
 }

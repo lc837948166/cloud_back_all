@@ -1,15 +1,17 @@
 package com.xw.cloud.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
+import org.libvirt.Domain;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -21,6 +23,9 @@ public class LibvirtController {
 
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
+
+    @Resource
+    private VmMapper vmMapper;
 
     @ApiOperation(value = "虚拟化主页", notes = "返回虚拟化管理的主页")
     @RequestMapping(value = {"/index"})
@@ -73,6 +78,17 @@ public class LibvirtController {
     public CommentResp initiateVirtual(@PathVariable("name") String name) {
         libvirtService.initiateDomainByName(name);
         return new CommentResp(true, null,"启动成功");
+    }
+
+    @ApiOperation(value = "更改虚拟机配置", notes = "根据虚拟机名称更改虚拟机配置")
+    @SneakyThrows
+    @RequestMapping("/changeVM/{name}")
+    @ResponseBody
+    public CommentResp changeVM(@PathVariable("name") String name,@RequestParam("cpuNum") int cpu,@RequestParam("memory") int mem) {
+        libvirtService.shutdownDomainByName(name);
+        Thread.sleep(5000);
+        libvirtService.changeVMByName(name,cpu,mem);
+        return new CommentResp(true, null,"更改虚拟机配置成功");
     }
 
     @ApiOperation(value = "挂起虚拟机", notes = "根据虚拟机名称挂起虚拟机")
@@ -143,7 +159,7 @@ public class LibvirtController {
         libvirtService.deleteDomainByName(name);
         libvirtService.deleteImgFile(name + ".qcow2");
 
-        return new CommentResp(true, null,name+"qcow2删除成功");
+        return new CommentResp(true, null,name+".qcow2删除成功");
     }
 
     @ApiOperation(value = "跳转至添加虚拟机页面", notes = "返回添加虚拟机的界面")
@@ -161,6 +177,10 @@ public class LibvirtController {
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip) throws InterruptedException {
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("name", name);
+        long count = vmMapper.selectCount(queryWrapper);
+        if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
         VM_create vmc = new VM_create();
         vmc.setName(name);
         vmc.setMemory(memory);
@@ -169,10 +189,8 @@ public class LibvirtController {
         vmc.setImgName(ImgName);
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
-        int result=libvirtService.addDomainByName(vmc,serverip);
-        if(result!=0)return new CommentResp(true, null,"创建虚拟机成功");
-        return new CommentResp(false, null,"创建虚拟机失败");
-
+        libvirtService.addDomainByName(vmc,serverip);
+        return new CommentResp(true, null,"创建虚拟机成功");
     }
 
 

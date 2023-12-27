@@ -42,4 +42,10 @@ public class VMInfo2 {
     @JsonProperty(value = "serverip")
     @ApiModelProperty(value = "虚拟机所在服务器ip")
     private String serverip;
+    @JsonProperty(value = "cpuNum")
+    @ApiModelProperty(value = "虚拟机最大cpu")
+    private Integer cpuNum;
+    @JsonProperty(value = "memory")
+    @ApiModelProperty(value = "虚拟机最大内存")
+    private Integer memory;
 }
