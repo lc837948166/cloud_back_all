@@ -10,7 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.servlet.view.RedirectView;
 
 
 @Api(tags = "用户管理",value = "用户管理", description = "用户控制器，用于处理用户登录、注销等操作")
@@ -43,6 +43,16 @@ public class UserController {
         }
     }
 
+    /**
+     * 登录界面
+     * @return
+     */
+    @GetMapping("/login")
+    public RedirectView login2() {
+        RedirectView redirectView1 = new RedirectView("/login");
+        return redirectView1;
+    }
+
     @PostMapping("/login")
     @ResponseBody
     @ApiOperation(value = "用户登录", notes = "用户登录")
@@ -56,18 +66,22 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/login1")
-//    @ApiOperation(value = "用户登录", notes = "用户登录")
-//    @OperationLogDesc(module = "用户管理", events = "用户登录")
-//    public String login1(@RequestBody UserInfo userInfo) {
-//        boolean loginResult = userService.login(userInfo);
-//        if (loginResult) {
-//            return "redirect:/world";
-//        } else {
-//            return "redirect:/user/login1";
-//        }
-//
-//    }
+    @PostMapping("/login1")
+    @ApiOperation(value = "用户登录", notes = "用户登录")
+    @OperationLogDesc(module = "用户管理", events = "用户登录")
+    public RedirectView  login1(@RequestBody UserInfo userInfo) {
+        RedirectView redirectView1 = new RedirectView("/index");//成功登录界面，跳转到/index
+        RedirectView redirectView2 = new RedirectView("/user/login");//登陆失败,跳转到登录界面
+        boolean loginResult = userService.login(userInfo);
+        if (loginResult) {
+            return redirectView1;
+        } else {
+            return redirectView2;
+        }
+
+    }
+
+
 
     @PostMapping("/register")
     @ResponseBody
@@ -88,24 +102,27 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/register1")
-//    @ApiOperation(value = "用户注册", notes = "用户注册")
-//    @OperationLogDesc(module = "用户管理", events = "用户注册")
-//    public String register1(@RequestBody UserInfo userInfo) {
-//        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
-//        queryWrapper.eq("UserName ", userInfo.getUserName());
-//        queryWrapper.eq("UserGroupId  ", userInfo.getUserGroupId());
-//        if(userService.getOne(queryWrapper)!=null){
-//            return "redirect:/user/register";
-//        }
-//        boolean registerResult = userService.register(userInfo);
-//        if (registerResult) {
-//            return "redirect:/index";
-//        } else {
-//            return "redirect:/user/register";
-//        }
-//
-//    }
+    @PostMapping("/register1")
+    @ApiOperation(value = "用户注册", notes = "用户注册")
+    @OperationLogDesc(module = "用户管理", events = "用户注册")
+    public RedirectView register1(@RequestBody UserInfo userInfo) {
+        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("UserName ", userInfo.getUserName());
+        queryWrapper.eq("UserGroupId  ", userInfo.getUserGroupId());
+
+        RedirectView redirectView1 = new RedirectView("/user/login");//成功注册，跳转到登录界面
+        RedirectView redirectView2 = new RedirectView("/user/login");//注册失败
+        if(userService.getOne(queryWrapper)!=null){
+            throw new RuntimeException("用户已存在");
+        }
+        boolean registerResult = userService.register(userInfo);
+        if (registerResult) {
+            return redirectView1;
+        } else {
+            throw new RuntimeException("用户注册失败");
+        }
+
+    }
 
     @GetMapping("/logout")
     @ResponseBody
@@ -118,13 +135,14 @@ public class UserController {
 
     }
 
-//    @GetMapping("/logout1")
-//    @ApiOperation(value = "用户登出", notes = "用户登出")
-//    @OperationLogDesc(module = "用户管理", events = "用户登出")
-//    public String logout1() {
-//        boolean logoutResult = userService.logout();
-//        return "redirect:/user/login";
-//    }
+    @GetMapping("/logout1")
+    @ApiOperation(value = "用户登出", notes = "用户登出")
+    @OperationLogDesc(module = "用户管理", events = "用户登出")
+    public RedirectView logout1() {
+        boolean logoutResult = userService.logout();
+        RedirectView redirectView = new RedirectView("/user/login");//登录界面
+        return redirectView;
+    }
 
 
 }
