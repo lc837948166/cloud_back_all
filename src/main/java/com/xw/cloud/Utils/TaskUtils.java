@@ -13,15 +13,39 @@ public class TaskUtils {
     private String pm_ip;
     private String vm_image_name;
     private Integer is_all_pm;
-    private Integer cpu_npm;
-    private Integer memory;
+    private String cpu_num;
+    private String memory;
     private String  ports;
-    private Integer disk;
+    private String disk;
     private String docker_image_name;
     private Integer bandwidth;
     private String cmds;
     private String vm_ip;
     private String routing_rules;
+
+    public String getCpu_num() {
+        return cpu_num;
+    }
+
+    public void setCpu_num(String cpu_num) {
+        this.cpu_num = cpu_num;
+    }
+
+    public String getMemory() {
+        return memory;
+    }
+
+    public void setMemory(String memory) {
+        this.memory = memory;
+    }
+
+    public String getDisk() {
+        return disk;
+    }
+
+    public void setDisk(String disk) {
+        this.disk = disk;
+    }
 
     public Integer getTask_type() {
         return task_type;
@@ -95,21 +119,6 @@ public class TaskUtils {
         this.is_all_pm = is_all_pm;
     }
 
-    public Integer getCpu_npm() {
-        return cpu_npm;
-    }
-
-    public void setCpu_npm(Integer cpu_npm) {
-        this.cpu_npm = cpu_npm;
-    }
-
-    public Integer getMemory() {
-        return memory;
-    }
-
-    public void setMemory(Integer memory) {
-        this.memory = memory;
-    }
 
     public String getPorts() {
         return ports;
@@ -119,13 +128,6 @@ public class TaskUtils {
         this.ports = ports;
     }
 
-    public Integer getDisk() {
-        return disk;
-    }
-
-    public void setDisk(Integer disk) {
-        this.disk = disk;
-    }
 
     public String getDocker_image_name() {
         return docker_image_name;
@@ -179,7 +181,7 @@ public class TaskUtils {
                 ", pm_ip='" + pm_ip + '\'' +
                 ", vm_image_name='" + vm_image_name + '\'' +
                 ", is_all_pm=" + is_all_pm +
-                ", cpu_npm=" + cpu_npm +
+                ", cpu_num=" + cpu_num +
                 ", memory=" + memory +
                 ", ports='" + ports + '\'' +
                 ", disk=" + disk +

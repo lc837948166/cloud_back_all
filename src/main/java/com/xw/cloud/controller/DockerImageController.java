@@ -192,28 +192,26 @@ public class DockerImageController {
      * @param sourceIp 云ip
      * @return
      */
-    @PostMapping("/upload")
+    /*@PostMapping("/upload")
     @ApiOperation("上传到虚拟机 Docker 镜像")
     public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
                                          @RequestParam("vmName") String vmName,
                                          @RequestParam("targetPath") String targetPath,
                                          @RequestParam("endIp") String endIp,
                                          @RequestParam("sourceIp") String sourceIp) {
-
+         //省去云到端传镜像的步骤 默认Docker镜像直接保存在 端节点上
         // 发起获取文件路径的请求
-        String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
+*//*        String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
         ResponseEntity<String> dispenseResponse = new RestTemplate().getForEntity(dispenseUrl, String.class);
-        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {
+        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {*//*
             QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
             if (vmName != null && !vmName.equals("")) {
                 qw1.eq("nodeIp", endIp);
             }
             NodeInfo nodeInfo = nodeService.getOne(qw1);
-
             String nodeUserName = nodeInfo.getNodeUserName();
             String nodeUserPassword = nodeInfo.getNodeUserPasswd();
             String nodeHost = nodeInfo.getNodeIp();
-
             QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
             if (vmName != null && !vmName.equals("")) {
                 qw.eq("name", vmName);
@@ -222,15 +220,12 @@ public class DockerImageController {
             String userName = vmInfo2.getUsername();
             String userPassword = vmInfo2.getPasswd();
             String host = vmInfo2.getIp();
-
-            String url = "http://" + sourceIp + sufixUrl;
+            String url = "http://" + sourceIp + sufixUrl;  //sourceIp应该是端节点IP
             String imagePath = "/etc/usr/xwfiles/";
             String filePath = imagePath + fileName;
             String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
-
             System.out.println(imagePath);
             System.out.println(transCommand);
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             // 构建请求体
@@ -242,7 +237,7 @@ public class DockerImageController {
                     transCommand
             );
             requestBody.put("commands", commands);
-            // 发起请求
+            // 发起请求  接口是端节点的executeCommand程序， excute2接口 传入主机信息和需要执行的命令
             ResponseEntity<String> response = new RestTemplate().exchange(
                     url,
                     HttpMethod.POST,
@@ -257,9 +252,82 @@ public class DockerImageController {
                 // 处理请求失败情况
                 return ResponseEntity.ok("fail");
             }
-        }else{
+      *//*  }else{
             return ResponseEntity.ok("fail");
-        }
+        }*//*
+    }*/
+
+
+/*    *
+     * 在云上调用接口，在端上写sshpass命令向虚拟机传
+     * @param fileName 镜像名
+     * @param vmName 虚拟机名
+     * @param targetPath 存放镜像的文件目录
+     * @param endIp 端ip
+     * @param sourceIp 云ip
+     * @return*/
+    @PostMapping("/upload")
+    @ApiOperation("上传到虚拟机 Docker 镜像")
+    public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
+                                         @RequestParam("vmName") String vmName,
+                                         @RequestParam("targetPath") String targetPath,
+                                         @RequestParam("endIp") String endIp) {
+         //省去云到端传镜像的步骤 默认Docker镜像直接保存在 端节点上
+        // 发起获取文件路径的请求
+ /*       String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
+        ResponseEntity<String> dispenseResponse = new RestTemplate().getForEntity(dispenseUrl, String.class);
+        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {*/
+            QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
+            if (vmName != null && !vmName.equals("")) {
+                qw1.eq("nodeIp", endIp);
+            }
+            NodeInfo nodeInfo = nodeService.getOne(qw1);
+            String nodeUserName = nodeInfo.getNodeUserName();
+            String nodeUserPassword = nodeInfo.getNodeUserPasswd();
+            String nodeHost = nodeInfo.getNodeIp();
+            QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
+            if (vmName != null && !vmName.equals("")) {
+                qw.eq("name", vmName);
+            }
+            VMInfo2 vmInfo2 = vmService.getOne(qw);
+            String userName = vmInfo2.getUsername();
+            String userPassword = vmInfo2.getPasswd();
+            String host = vmInfo2.getIp();
+            String url = "http://" + endIp + sufixUrl;  //sourceIp应该是端节点IP
+            String imagePath = "/etc/usr/xwfiles/";
+            String filePath = imagePath + fileName;
+            String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
+            System.out.println(imagePath);
+            System.out.println(transCommand);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            // 构建请求体
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("host", nodeHost);
+            requestBody.put("username", nodeUserName);
+            requestBody.put("password", nodeUserPassword);
+            List<String> commands = Arrays.asList(
+                    transCommand
+            );
+            requestBody.put("commands", commands);
+            // 发起请求  接口是端节点的executeCommand程序， excute2接口 传入主机信息和需要执行的命令
+            ResponseEntity<String> response = new RestTemplate().exchange(
+                    url,
+                    HttpMethod.POST,
+                    new HttpEntity<>(requestBody, headers),
+                    String.class
+            );
+            // 获取响应
+            if (response.getStatusCode().is2xxSuccessful()) {
+                String responseBody = response.getBody();
+                return ResponseEntity.ok(responseBody);
+            } else {
+                // 处理请求失败情况
+                return ResponseEntity.ok("fail");
+            }
+    /*    }else{
+            return ResponseEntity.ok("fail");
+        }*/
     }
 
     /**
@@ -445,12 +513,10 @@ public class DockerImageController {
         try {
             // 将 JSON 字符串解析为一个 Map 对象
             Map<String, Object> resultMap = gson.fromJson(output, Map.class);
-
             // 获取 output 字段的值
             containerId = ((String) resultMap.get("output")).trim();
-
             System.out.println(containerId);
-            System.out.println("11111");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -595,8 +661,6 @@ public class DockerImageController {
         if (response.getStatusCode().is2xxSuccessful()) {
             // 将 JSON 字符串解析为一个 Map 对象
             Map<String, Object> resultMap = gson.fromJson(response.getBody(), Map.class);
-
-
 
             String responseBody;
 

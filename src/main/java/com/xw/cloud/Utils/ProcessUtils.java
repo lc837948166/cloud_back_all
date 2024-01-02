@@ -1,6 +1,10 @@
 package com.xw.cloud.Utils;
 
 import io.swagger.models.auth.In;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -41,7 +45,6 @@ public class ProcessUtils {
             return "调用API失败，响应码：" + responseCode;
         }
     }
-
     public String importImage(String imageFileName, String vmName, String endIp) throws Exception {
         HttpURLConnection conn = null;
         BufferedReader reader = null;
@@ -60,6 +63,8 @@ public class ProcessUtils {
         // 创建HTTP连接
         conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
+        conn.setConnectTimeout(60000*10);
+        conn.setReadTimeout(60000*10);
         // 发送请求并获取响应
         int responseCode = conn.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -77,7 +82,7 @@ public class ProcessUtils {
         }
     }
 
-    public  String uploadDockerToVM(String fileName,String vmName,String endIp,String sourceIp) throws Exception{
+    public  String uploadDockerToVM(String fileName,String vmName,String endIp) throws Exception{
         HttpURLConnection conn = null;
         BufferedReader reader = null;
             /**
@@ -90,15 +95,15 @@ public class ProcessUtils {
              * 端节点 需要安装sshpash   https://blog.csdn.net/michaelwoshi/article/details/108902192
              */
             String apiUrl = "http://39.98.124.97:8080/docker/upload";
-            String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp+"&sourceIp="+sourceIp; // 要传递的参数
+            String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp; // 要传递的参数
             // 构建URL对象
-        System.out.println(params);
+            System.out.println(params);
             URL url = new URL(apiUrl + "?" + params);
             // 创建HTTP连接
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
-            conn.setConnectTimeout(100000);
-            conn.setReadTimeout(100000);
+            conn.setConnectTimeout(10*60000);
+            conn.setReadTimeout(10*60000);
             // 发送请求并获取响应
             int responseCode = conn.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -150,6 +155,7 @@ public class ProcessUtils {
                 // 处理响应
                 return  responseCode+response.toString();
             } else {
+                System.out.println("镜像下发失败");
                 return  ""+responseCode;
             }
     }
@@ -167,7 +173,11 @@ public class ProcessUtils {
          * nettype: 在云上创用nat，在端上用桥接
          * serverip: 端节点的IP，虚拟机的宿主机的IP
          */
-        String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + serverip; // 要传递的参数
+        String newServerIp = serverip;
+        if(serverip.equals("39.98.124.97")){
+            newServerIp = "192.168.194.178";
+        }
+        String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + newServerIp; // 要传递的参数
         System.out.println(params);
         // 构建URL对象
         URL url = new URL(apiUrl + "?" + params);
@@ -175,8 +185,40 @@ public class ProcessUtils {
         // 创建HTTP连接
         conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setConnectTimeout(100000);
+        conn.setConnectTimeout(30*60000);
+        conn.setReadTimeout(30*60000);
+        // 发送请求并获取响应
+        int responseCode = conn.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            // 读取响应
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            // 处理响应
+            return  responseCode+response.toString();
+        } else {
+            return  ""+responseCode;
+        }
+    }
 
+    public  String deleteVM(String vmName,String serverip) throws Exception {
+        HttpURLConnection conn = null;
+        BufferedReader reader = null;
+//            http://39.98.124.97:8080/addVirtual?ImgName=TinyCore-current.iso&name=Tiny&memory=2&cpuNum=1&OStype=X86&nettype=bridge&serverip=undefined
+        String apiUrl = "http://"+serverip+":8080/delete"+"/"+vmName;
+
+        String params = "name=" + vmName; // 要传递的参数
+        System.out.println(params);
+        // 构建URL对象
+        URL url = new URL(apiUrl);
+        System.out.println(url);
+        // 创建HTTP连接
+        conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("DELETE");
+        conn.setConnectTimeout(100000);
         conn.setReadTimeout(100000);
         // 发送请求并获取响应
         int responseCode = conn.getResponseCode();
@@ -194,4 +236,37 @@ public class ProcessUtils {
             return  ""+responseCode;
         }
     }
+
+    public String changeVM(String serverip, String vmName,int cpu, int memory) throws Exception {
+        HttpURLConnection conn = null;
+        BufferedReader reader = null;
+//            http://39.98.124.97:8080/addVirtual?ImgName=TinyCore-current.iso&name=Tiny&memory=2&cpuNum=1&OStype=X86&nettype=bridge&serverip=undefined
+        String apiUrl = "http://"+serverip+":8080/changeVM"+"/"+vmName;
+
+        String params = "memory=" + memory+"&"+"cpuNum="+cpu; // 要传递的参数
+        // 构建URL对象
+        URL url = new URL(apiUrl + "?" + params);
+        System.out.println(url);
+        // 创建HTTP连接
+        conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setConnectTimeout(5*60000);
+        conn.setReadTimeout(5*60000);
+        // 发送请求并获取响应
+        int responseCode = conn.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            // 读取响应
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            // 处理响应
+            return  responseCode+response.toString();
+        } else {
+            return  ""+responseCode;
+        }
+    }
+
 }

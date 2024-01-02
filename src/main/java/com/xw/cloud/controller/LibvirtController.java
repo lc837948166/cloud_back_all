@@ -271,5 +271,4 @@ public class LibvirtController {
         Thread.sleep(1000);
         return "redirect:/storagePoolList";
     }
-
 }
