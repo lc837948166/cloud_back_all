@@ -1093,20 +1093,31 @@ public class TaskJob {
                 //上传文件到虚拟机
                 bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机\n");
                 System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机");
-                try {
-                    ans = processUtils.uploadDockerToVM(docker_image_name, vmi_name, taskUtils.getPm_ip());
-                } catch (Exception e) {
-                    task.setSTATUS(5);
-                    taskUtils.setTask_status(5);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
-                    bw.close();
-                    return;
-                }
-                System.out.println(ans);
-                if (ans.contains("200")) {
-                    if (ans.contains("-1") && !ans.contains("Warning")) {
+                String[] docker_images = docker_image_name.split(",");
+                for(String docker_image: docker_images) {
+                    try {
+                        ans = processUtils.uploadDockerToVM(docker_image, vmi_name, taskUtils.getPm_ip());
+                    } catch (Exception e) {
+                        task.setSTATUS(5);
+                        taskUtils.setTask_status(5);
+                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                        taskService.updateById(task);
+                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
+                        bw.close();
+                        return;
+                    }
+                    System.out.println(ans);
+                    if (ans.contains("200")) {
+                        if (ans.contains("-1") && !ans.contains("Warning")) {
+                            task.setSTATUS(5);
+                            taskUtils.setTask_status(5);
+                            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
+                            taskService.updateById(task);
+                            bw.close();
+                            return;
+                        }
+                    } else {
                         task.setSTATUS(5);
                         taskUtils.setTask_status(5);
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -1115,32 +1126,35 @@ public class TaskJob {
                         bw.close();
                         return;
                     }
-                } else {
-                    task.setSTATUS(5);
-                    taskUtils.setTask_status(5);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
-                    taskService.updateById(task);
-                    bw.close();
-                    return ;
                 }
                 bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像\n");
                 System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像");
-                //导入镜像
-                try {
-                    ans = processUtils.importImage(docker_image_name, vmi_name, Pmip);
-                } catch (Exception e) {
-                    task.setSTATUS(5);
-                    taskUtils.setTask_status(5);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
-                    bw.close();
-                    return;
-                }
-                System.out.println(ans);
-                if (ans.contains("200")) {
-                    if (ans.contains("-1") && !ans.contains("Command execution timed")) {
+
+                for(String docker_image: docker_images) {
+                    //导入镜像
+                    try {
+                        ans = processUtils.importImage(docker_image, vmi_name, Pmip);
+                    } catch (Exception e) {
+                        task.setSTATUS(5);
+                        taskUtils.setTask_status(5);
+                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                        taskService.updateById(task);
+                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
+                        bw.close();
+                        return;
+                    }
+                    System.out.println(ans);
+                    if (ans.contains("200")) {
+                        if (ans.contains("-1") && !ans.contains("Command execution timed")) {
+                            task.setSTATUS(5);
+                            taskUtils.setTask_status(5);
+                            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
+                            taskService.updateById(task);
+                            bw.close();
+                            return;
+                        }
+                    } else {
                         task.setSTATUS(5);
                         taskUtils.setTask_status(5);
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -1149,20 +1163,12 @@ public class TaskJob {
                         bw.close();
                         return;
                     }
-                } else {
-                    task.setSTATUS(5);
-                    taskUtils.setTask_status(5);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
-                    taskService.updateById(task);
-                    bw.close();
-                    return;
                 }
                 List<String> c2 = new ArrayList<>();
                 List<String> c1 = new ArrayList<>();
                 for (String s : com) {
                     if (s.contains("sshpass")) {
-                        s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Flower_XW root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@"+vmIp+":/home/pro/";
+                        s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Cancer_Predict root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/News_Class root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Flower_XW root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@"+vmIp+":/home/pro/";
                         c2.add(s);
                     } else {
                         c1.add(s);

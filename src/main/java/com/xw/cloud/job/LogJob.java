@@ -71,7 +71,7 @@ public class LogJob {
 
     private static  Integer saveDays = 1;
     @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
-//    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void deleteLog(){
         Date now = new Date();
         String deleteDate= getDeleteDate(now,saveDays);
@@ -81,11 +81,10 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时删除")
-//    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void deletePodLog(){  // 一天执行一次删容器日志 删除30天之前的
         //容器日志删除
         Date now = new Date();
-        System.out.println("容器日志删除");
         String deleteDate= getDeleteDate(now,saveDays);
         try{
             podLogService.remove(new QueryWrapper<PodLog>().lt("AddTime",deleteDate));
@@ -103,7 +102,7 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时添加")
-//    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void addPodLog() throws IOException, ApiException, ParseException {
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
 // 使用 InputStream 和 InputStreamReader 读取配置文件
@@ -175,7 +174,6 @@ public class LogJob {
     @Scheduled(cron = "0 */1 * * * ?")
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         Session session = null;
-        System.out.println("虚拟机日志添加");
         List<NodeInfo> nodes = nodeService.list();
 
         for (int k = 0; k < nodes.size(); k++) {
@@ -255,8 +253,6 @@ public class LogJob {
                             String deleteDate = getDeleteDate(new Date(), saveDays);
                             Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                             if(da.compareTo(before30) > 0) {
-                                System.out.println("da;"+da);
-                                System.out.println("before:"+before30);
                                 List list = vmLogService.list(qw);
                                 if (list.size() <= 0) {
                                     VMLog vmLog = new VMLog();
@@ -290,8 +286,6 @@ public class LogJob {
                     String deleteDate = getDeleteDate(new Date(), saveDays);
                     Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                     if (da.compareTo(before30) > 0) {
-                        System.out.println("da;"+da);
-                        System.out.println("before:"+before30);
                         QueryWrapper qw = new QueryWrapper<>();
                         qw.eq("VmName", vname);
                         qw.eq("AddTime", t);
