@@ -826,8 +826,13 @@ public class TaskJob {
         }
         if(tasks2.size()>0){
             task = tasks2.get(0);
+            for(Task t : tasks2){
+                if(t.getSTATUS() != null && t.getSTATUS() == 2){
+                    return ;
+                }
+            }
         }else {
-            return;
+            return ;
         }
         TaskUtils taskUtils = null;
         String task_attributes_values = task.getTASK_ATTRIBUTES_VALUES();
@@ -841,12 +846,15 @@ public class TaskJob {
             taskService.updateById(task);
             return;
         }
+
         try {
-            bw = new BufferedWriter(new FileWriter(filePath));
+            bw = new BufferedWriter(new FileWriter(filePath,true));
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.out.println("==============================================");
         System.out.println("开始执行任务" + task.getTASK_NAME());
+        bw.write("==============================================\n");
         bw.write("开始执行任务" + task.getTASK_NAME() + "，任务ID为" + task.getTASK_ID() + "\n");
         task.setSTATUS(2);
         taskService.updateById(task);
@@ -1219,7 +1227,7 @@ public class TaskJob {
         }
         task.setSTATUS(4);
         bw.write("任务" + task.getTASK_NAME() + "成功结束\n");
-        bw.write("=====================================\n");
+        bw.write("\"==============================================\n");
         bw.close();
         taskUtils.setVm_ip(ips);
         taskUtils.setTask_status(4);

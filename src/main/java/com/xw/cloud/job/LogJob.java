@@ -68,10 +68,10 @@ public class LogJob {
 
     @Autowired
     private NodeServiceImpl nodeService;
-    @Value("${log.day}")
-    private Integer saveDays;
+
+    private static  Integer saveDays = 1;
     @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
-    @Scheduled(cron = "${log.deleteRate}")
+//    @Scheduled(cron = "0 */1 * * * ?")
     public void deleteLog(){
         Date now = new Date();
         String deleteDate= getDeleteDate(now,saveDays);
@@ -81,9 +81,11 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时删除")
-    @Scheduled(cron = "${log.deleteRate}")
+//    @Scheduled(cron = "0 */1 * * * ?")
     public void deletePodLog(){  // 一天执行一次删容器日志 删除30天之前的
+        //容器日志删除
         Date now = new Date();
+        System.out.println("容器日志删除");
         String deleteDate= getDeleteDate(now,saveDays);
         try{
             podLogService.remove(new QueryWrapper<PodLog>().lt("AddTime",deleteDate));
@@ -91,7 +93,7 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时删除")
-    @Scheduled(cron = "${log.deleteRate}")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void deleteVMLog(){ // 一天执行一次虚拟机日志 删除30天之前的
         Date now = new Date();
         String deleteDate= getDeleteDate(now,saveDays);
@@ -101,7 +103,7 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时添加")
-    @Scheduled(cron = "${log.insertRate}")
+//    @Scheduled(cron = "0 */1 * * * ?")
     public void addPodLog() throws IOException, ApiException, ParseException {
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
 // 使用 InputStream 和 InputStreamReader 读取配置文件
@@ -140,6 +142,15 @@ public class LogJob {
                             SimpleDateFormat dateFormat_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             Date da = dateFormat_.parse(t);
                             if (list.size() <= 0) {
+                                QueryWrapper qw1 = new QueryWrapper<>();
+                                qw1.eq("PodName", name);
+                                qw1.eq("Spaces", namesapceName);
+                                qw1.like("PODCONTENT", "[WARNING] No files matching import glob pattern: /etc/coredns/custom/*.override");
+                                qw1.gt("ADDTIME",getDeleteDateSec(da,60*10));
+                                List list1 = podLogService.list(qw1);
+                                if(list1.size()>0){
+                                    continue;
+                                }
                                 PodLog l = new PodLog();
                                 l.setPodNames(name);
                                 l.setSpaces(namesapceName);
@@ -161,15 +172,15 @@ public class LogJob {
     }
 
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时添加")
-    @Scheduled(cron = "${log.insertRate}")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         Session session = null;
-
+        System.out.println("虚拟机日志添加");
         List<NodeInfo> nodes = nodeService.list();
 
         for (int k = 0; k < nodes.size(); k++) {
             NodeInfo nodeInfo = nodes.get(k);
-            if(nodeInfo.getNodeType().equals("边")){
+            if(nodeInfo.getIsSchedulable() != 1){
                 continue;
             }
             StringBuilder result = new StringBuilder();
@@ -244,6 +255,8 @@ public class LogJob {
                             String deleteDate = getDeleteDate(new Date(), saveDays);
                             Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                             if(da.compareTo(before30) > 0) {
+                                System.out.println("da;"+da);
+                                System.out.println("before:"+before30);
                                 List list = vmLogService.list(qw);
                                 if (list.size() <= 0) {
                                     VMLog vmLog = new VMLog();
@@ -257,7 +270,6 @@ public class LogJob {
                                     }
                                     vmLog.setNodeIp(nodeInfo.getNodeIp());
                                     vmLogService.save(vmLog);
-
                                 }
                             }
                             ins = s;
@@ -278,6 +290,8 @@ public class LogJob {
                     String deleteDate = getDeleteDate(new Date(), saveDays);
                     Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                     if (da.compareTo(before30) > 0) {
+                        System.out.println("da;"+da);
+                        System.out.println("before:"+before30);
                         QueryWrapper qw = new QueryWrapper<>();
                         qw.eq("VmName", vname);
                         qw.eq("AddTime", t);
@@ -312,4 +326,14 @@ public class LogJob {
         String dateString=sdf.format(delete);
         return dateString;
     }
+    public static String getDeleteDateSec(Date now,int seconds){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(calendar.SECOND, -seconds);
+        Date delete=calendar.getTime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString=sdf.format(delete);
+        return dateString;
+    }
+
 }

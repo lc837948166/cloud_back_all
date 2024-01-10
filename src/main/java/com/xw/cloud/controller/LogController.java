@@ -28,6 +28,7 @@ import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -59,8 +60,7 @@ public class LogController {
     @Value("${VM.password}")
     private String password;
 
-    @Value("${log.day}")
-    private String saveDay;
+    private static Integer saveDay = 1;
 
     @Autowired
     private OperationLogServiceImpl operationLogService;
