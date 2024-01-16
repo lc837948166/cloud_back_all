@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.swing.*;
 import java.io.*;
+import java.net.ServerSocket;
 import java.util.*;
 import com.xw.cloud.Utils.SftpUtils;
 @Log
@@ -22,6 +23,8 @@ import com.xw.cloud.Utils.SftpUtils;
 public class LibvirtService {
     @Resource
     private VmMapper vmMapper;
+
+    static int[] arrayPort = {8000, 8085, 7051, 7052, 7053};
 
     @Resource
     private IpaddrMapper ipaddrMapper;
@@ -163,6 +166,7 @@ public class LibvirtService {
         }
         return str.substring(0, index);
     }
+
 
     /**
      * 虚拟机指标列表
@@ -559,6 +563,64 @@ public class LibvirtService {
         if(ip!=null) realip=ip.getRealip();
         return realip;
     }
+
+
+    //添加端口映射
+    public void addport(String name){
+        String ip=vmMapper.selectById(name).getIp();
+        List<Integer> availablePorts = findAvailablePortSequence(12345,5);
+
+        VMInfo2 vm = new VMInfo2();
+        vm.setName(name);
+        vm.setHostport(availablePorts.get(0));
+        System.out.println(vm.getHostport());
+        int result=vmMapper.updateById(vm);
+        System.out.println("Update result: " + result);
+
+        System.out.println("Available first Port: " + availablePorts.get(0).toString());
+        String endCommand="pkill rinetd";
+        SftpUtils.getexecon(endCommand);
+        SftpUtils.getexecon(endCommand);
+        SftpUtils.getexecon(endCommand);
+
+        StringBuilder addCommands = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            addCommands.append(String.format("echo '0.0.0.0 %d %s %d' >> /etc/rinetd.conf && ", availablePorts.get(i), ip, arrayPort[i]));
+        }
+        String combinedCommand = addCommands.toString();
+        combinedCommand = combinedCommand.substring(0, combinedCommand.length() - 4);
+        SftpUtils.getexecon(combinedCommand);
+
+        String startCommand="rinetd -c /etc/rinetd.conf";
+        SftpUtils.getexecon(startCommand);
+
+    }
+
+    private static List<Integer> findAvailablePortSequence(int startingPort, int sequenceLength) {
+        List<Integer> availablePorts = new ArrayList<>();
+        int port = startingPort;
+
+        while (availablePorts.size() < sequenceLength) {
+            if (isPortAvailable(port)) {
+                availablePorts.add(port);
+                port++;
+            } else {
+                availablePorts.clear();
+                port += sequenceLength;
+            }
+        }
+
+        return availablePorts;
+    }
+
+    private static boolean isPortAvailable(int port) {
+        try (ServerSocket ignored = new ServerSocket(port)) {
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     /**
      * 删除 虚拟机 xml
      */

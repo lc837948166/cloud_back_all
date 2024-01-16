@@ -48,4 +48,10 @@ public class VMInfo2 {
     @JsonProperty(value = "memory")
     @ApiModelProperty(value = "虚拟机最大内存")
     private Integer memory;
+    @JsonProperty(value = "hostport")
+    @ApiModelProperty(value = "宿主机起始映射端口")
+    private Integer hostport;
+    @JsonProperty(value = "status")
+    @ApiModelProperty(value = "状态")
+    private Integer status;
 }

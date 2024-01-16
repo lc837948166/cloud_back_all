@@ -1,6 +1,7 @@
 package com.xw.cloud.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.mapper.VmMapper;
@@ -14,7 +15,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "虚拟化资源管理", description = "管理虚拟机、快照和存储池等虚拟化资源")
 @CrossOrigin
@@ -190,10 +194,10 @@ public class LibvirtController {
         vmc.setNetType(NetType);
         libvirtService.addImgFile(vmc.getName(),ImgName);
         libvirtService.addDomainByName(vmc,serverip);
+        libvirtService.addport(vmc.getName());
+
         return new CommentResp(true, null,"创建虚拟机"+name+"成功");
     }
-
-
 
     @ApiOperation(value = "获取快照列表", notes = "根据虚拟机名称获取其快照列表")
     @RequestMapping("/getSnapshotList")

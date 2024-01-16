@@ -1,11 +1,15 @@
 package com.xw.cloud.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xw.cloud.Utils.CommentResp;
+import com.xw.cloud.bean.Ipaddr;
 import com.xw.cloud.bean.VMInfo2;
 import com.xw.cloud.inter.OperationLogDesc;
+import com.xw.cloud.mapper.IpaddrMapper;
 import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +17,10 @@ import javax.annotation.Resource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "虚拟机信息", description = "提供虚拟机信息")
 @CrossOrigin
@@ -24,8 +31,53 @@ public class VMInfoController {
     @Resource
     private VmMapper vmMapper;
 
+    @Resource
+    private IpaddrMapper ipaddrMapper;
+
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
+
+    @ApiOperation(value = "修改status", notes = "根据ip修改status")
+    @ResponseBody
+    @RequestMapping("/updateStatus")
+    public CommentResp updateStatus(@RequestParam("vmip") String ip,@RequestParam("status") int status) {
+        VMInfo2 vmInfo2 = new VMInfo2();
+        vmInfo2.setStatus(status);
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ip", ip);
+        vmMapper.update(vmInfo2,queryWrapper);
+        return new CommentResp(true, null,"修改成功");
+    }
+
+    @ApiOperation(value = "获取物理机映射端口", notes = "通过指定的虚拟机ip和端口获取物理机映射端口")
+    @ResponseBody
+    @RequestMapping("/getHostPort")
+    public CommentResp getPort(@RequestParam("vmip") String ip,@RequestParam("vmport") int vmport) {
+        int[] arrayPort = {8000, 8085, 7051, 7052, 7053};
+        int index = -1;
+        for (int i = 0; i < 5; i++) {
+            if (arrayPort[i] == vmport) {
+                index = i;
+                break;
+            }
+        }
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ip", ip);
+        VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
+
+//        Ipaddr ipaddr = ipaddrMapper.selectById(vminfo.getServerip());
+
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("serverip", vminfo.getServerip());
+//        entry.put("realip", ipaddr.getRealip());
+        entry.put("hostport", vminfo.getHostport()+index);
+
+        System.out.println(entry);
+
+        return new CommentResp(true, entry,"");
+    }
+
+
     //通过id得到用户信息
     @RequestMapping(value = "/getVMInfo/{name}", method = RequestMethod.GET)
     public String getUser(@PathVariable String name){
@@ -65,12 +117,61 @@ public class VMInfoController {
         }
     }
 
-    //查询所有用户的信息
+    @ApiOperation(value = "获取虚拟机信息列表", notes = "获取虚拟机信息列表")
     @RequestMapping(value = "/selectAll")
-    @ResponseBody   //理解为：单独作为响应体，这里不调用实体类的toString方法
-    public CommentResp  listUser(){
+    @ResponseBody
+    public CommentResp  listVMInfo(){
         List<VMInfo2> tempList = vmMapper.selectList(null);
-        return new CommentResp(true, tempList,"");
+//        return new CommentResp(true, tempList,"");
+        List<Map<String, Object>> modifiedList = new ArrayList<>();
+        List<Integer> fixedNumbers = new ArrayList<>();
+        fixedNumbers.add(8000);
+        fixedNumbers.add(8050);
+        fixedNumbers.add(7051);
+        fixedNumbers.add(7052);
+        fixedNumbers.add(7053);
+
+        for (VMInfo2 item : tempList) {
+            if (item.getHostport() == null) {
+                Map<String, Object> modifiedEntry = new HashMap<>();
+                modifiedEntry.put("name", item.getName());
+                modifiedEntry.put("ip", item.getIp());
+                modifiedEntry.put("username", item.getUsername());
+                modifiedEntry.put("passwd", item.getPasswd());
+                modifiedEntry.put("serverip", item.getServerip());
+                modifiedEntry.put("cpuNum", item.getCpuNum());
+                modifiedEntry.put("memory", item.getMemory());
+                modifiedEntry.put("hostport", null);
+                modifiedEntry.put("status", item.getStatus());
+
+                modifiedList.add(modifiedEntry);
+
+            } else {
+                int hostport = item.getHostport();
+                StringBuilder modifiedHostport = new StringBuilder(String.valueOf(hostport));
+                    modifiedHostport.append(":8000,")
+                            .append(hostport+1).append(":8050,")
+                            .append(hostport+2).append(":7051,")
+                            .append(hostport+3).append(":7052,")
+                            .append(hostport+4).append(":7053");
+
+
+                Map<String, Object> modifiedEntry = new HashMap<>();
+                modifiedEntry.put("name", item.getName());
+                modifiedEntry.put("ip", item.getIp());
+                modifiedEntry.put("username", item.getUsername());
+                modifiedEntry.put("passwd", item.getPasswd());
+                modifiedEntry.put("serverip", item.getServerip());
+                modifiedEntry.put("cpuNum", item.getCpuNum());
+                modifiedEntry.put("memory", item.getMemory());
+                modifiedEntry.put("hostport", modifiedHostport.toString());
+                modifiedEntry.put("status", item.getStatus());
+
+                modifiedList.add(modifiedEntry);
+            }
+        }
+
+        return new CommentResp(true, modifiedList, "");
     }
 
 
