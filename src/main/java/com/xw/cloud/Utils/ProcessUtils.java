@@ -82,7 +82,7 @@ public class ProcessUtils {
         }
     }
 
-    public  String uploadDockerToVM(String fileName,String vmName,String endIp) throws Exception{
+    public  String uploadDockerToVM(String fileName,String vmName,String endIp,boolean flag) throws Exception{
         HttpURLConnection conn = null;
         BufferedReader reader = null;
             /**
@@ -95,7 +95,7 @@ public class ProcessUtils {
              * 端节点 需要安装sshpash   https://blog.csdn.net/michaelwoshi/article/details/108902192
              */
             String apiUrl = "http://39.98.124.97:8080/docker/upload";
-            String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp; // 要传递的参数
+            String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp+"&&flag="+flag; // 要传递的参数
             // 构建URL对象
             System.out.println(params);
             URL url = new URL(apiUrl + "?" + params);

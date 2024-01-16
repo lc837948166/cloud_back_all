@@ -1,5 +1,6 @@
 package com.xw.cloud.job;
 
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import oshi.driver.unix.aix.Ls;
+
 
 import java.io.*;
 import java.util.*;
@@ -49,7 +50,7 @@ public class TaskJob {
         List<Task> tasks = taskService.list(new QueryWrapper<Task>().eq("TYPE_ID", 23));
         String ans = null;
         for(Task task: tasks){
-            if(task.getTYPE_ID() != 23 ){
+            if(task.getTYPE_ID() != 23){
                 continue;
             }
             String task_attributes_values = task.getTASK_ATTRIBUTES_VALUES();
@@ -60,7 +61,8 @@ public class TaskJob {
             } catch (IOException e) {
                 continue;
             }
-            if(taskUtils.getTask_status() != 3){
+            //有一个任务状态是3就认为是程序停止
+            if((taskUtils.getTask_status() != 3 && task.getSTATUS()!=3)){
                 continue;
             }
             if(taskUtils.getVm_ip() == null || taskUtils.getVm_ip().equals(""))
@@ -72,6 +74,9 @@ public class TaskJob {
             }
             String anIps = "";//记录删除成功的IP
             System.out.println("task_attr:"+task_attributes_values);
+            taskUtils.setTask_status(6);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
             for(String ip: ips){
                 VMInfo2 vm = vmService.getOne(new QueryWrapper<VMInfo2>().eq("IP", ip));
                 if(vm == null || vm.getName() == null || vm.getName().equals("")){
@@ -79,7 +84,7 @@ public class TaskJob {
                 }
                 try {
                     ans = processUtils.deleteVM(vm.getName(), pm_ip);
-                } catch (Exception e) {
+                }catch(Exception e) {
                     continue;
                 }
                 System.out.println("ans:"+ans);
@@ -95,13 +100,15 @@ public class TaskJob {
                 }
             }
             taskUtils.setVm_ip(setIp.substring(1));
+            if(!taskUtils.getVm_ip().equals("")){
+                taskUtils.setTask_status(5);
+            }else {
+                taskUtils.setTask_status(3);
+            }
             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
             taskService.updateById(task);
-
         }
     }
-
-
     @Scheduled(cron = "0 */1 * * * ?")
     public void changeVM() throws JsonProcessingException {
         ProcessUtils processUtils = new ProcessUtils();
@@ -111,14 +118,18 @@ public class TaskJob {
         for(Integer t : taskList){
             qw.or().eq("TYPE_ID",t);
         }
-        qw.isNull("STATUS");
         List<Task> tasks = taskService.list(qw);
         String ans;
         Task task;
         List<Task> tasks2 = new ArrayList<>();
         for(Task taskf : tasks){
             String task_attr = taskf.getTASK_ATTRIBUTES_VALUES();
-            if(task_attr.contains("\"task_type\":2")&&task_attr.contains("\"task_status\":2")&&(task_attr.contains("\"task_executor\":1")||task_attr.contains("\"task_executor\":3"))){
+            //有正在执行的任务
+            if(task_attr.contains("\"task_status\":6")){
+                return;
+            }
+            //任务类型 任务状态  执行方
+            if(taskf.getSTATUS() == 2 && task_attr.contains("\"task_type\":2")&&task_attr.contains("\"task_status\":2")&&(task_attr.contains("\"task_executor\":1")||task_attr.contains("\"task_executor\":3"))){
                 tasks2.add(taskf);
             }
         }
@@ -127,6 +138,7 @@ public class TaskJob {
         }else {
             return;
         }
+        //获取创建虚拟机成功的任务
         List<Task> tasks1 = taskService.list(new QueryWrapper<Task>().eq("TYPE_ID", 23).eq("STATUS", 4));
         if(task.getTYPE_ID() == 35){
             TaskUtils35 taskUtils = null;
@@ -140,7 +152,9 @@ public class TaskJob {
                 return;
             }
             System.out.println("开始执行任务" + task.getTASK_NAME());
-            task.setSTATUS(2);
+            //任务正在执行
+            taskUtils.setTask_status(6);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
             taskService.updateById(task);
             String[] vmIps = taskUtils.getVm_ip().split(",");
             String cpu_nums = taskUtils.getCpu_num();
@@ -204,6 +218,7 @@ public class TaskJob {
                     }
                 }
             }
+            //修改每一个虚拟机
             for(int i = 0; i < vmIps.length; i++){
                 String ip = vmIps[i];
                 VMInfo2 vmInfo2 = vmService.getOne(new QueryWrapper<VMInfo2>().eq("IP", ip));
@@ -217,7 +232,9 @@ public class TaskJob {
                     taskService.updateById(task);
                     return;
                 }
+                //调用接口成功
                 if (ans.contains("200")) {
+                    //修改虚拟机失败
                     if (ans.contains("-1")) {
                         task.setSTATUS(5);
                         taskUtils.setTask_status(5);
@@ -225,6 +242,7 @@ public class TaskJob {
                         taskService.updateById(task);
                         return;
                     }
+                    //查找任务类型为23的任务 ，看那个虚任务包含这个IP
                     for(Task task1: tasks1){
                         if(!task1.getTASK_ATTRIBUTES_VALUES().contains(ip))
                             continue;
@@ -244,6 +262,7 @@ public class TaskJob {
                                 String[] s1 = s.split(" ");
                                 String containerName = "";
                                 for(int k = 0; k < s1.length; k++){
+                                    //获取name
                                     if(s1[k].contains("name")){
                                         containerName = s1[k+1];
                                         break;
@@ -278,14 +297,12 @@ public class TaskJob {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 taskService.updateById(task);
                                 return;
+                            }else {
+                                //找到这个IP，并执行成功 ，不在查找后面的IP
+                                break;
                             }
                         }
                     }
-                    task.setSTATUS(4);
-                    taskUtils.setTask_status(4);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    return;
                 } else {
                     task.setSTATUS(5);
                     taskUtils.setTask_status(5);
@@ -294,6 +311,12 @@ public class TaskJob {
                     return;
                 }
             }
+            //每个虚拟机都修改成功 任务才算完成
+            task.setSTATUS(4);
+            taskUtils.setTask_status(4);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
+            return ;
         }
         if(task.getTYPE_ID() == 33 || task.getTYPE_ID() == 44){
             TaskUtils3344 taskUtils = null;
@@ -307,7 +330,8 @@ public class TaskJob {
                 return;
             }
             System.out.println("开始执行任务" + task.getTASK_NAME());
-            task.setSTATUS(2);
+            taskUtils.setTask_status(6);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
             taskService.updateById(task);
             String[] vmIps = taskUtils.getVm_ip().split(",");
             String cpu_nums = taskUtils.getCpu_num();
@@ -371,10 +395,11 @@ public class TaskJob {
                     }
                 }
             }
+            //修改每一个虚拟机
             for(int i = 0; i < vmIps.length; i++){
                 String ip = vmIps[i];
                 VMInfo2 vmInfo2 = vmService.getOne(new QueryWrapper<VMInfo2>().eq("IP", ip));
-
+                //修改虚拟机信息
                 try {
                     ans = processUtils.changeVM(vmInfo2.getServerip(),vmInfo2.getName(),memory[i],cpu[i]);
                 } catch (Exception e) {
@@ -384,7 +409,9 @@ public class TaskJob {
                     taskService.updateById(task);
                     return ;
                 }
+                //调用接口成功
                 if (ans.contains("200")) {
+                    //信息修改失败
                     if (ans.contains("-1")) {
                         task.setSTATUS(5);
                         taskUtils.setTask_status(5);
@@ -448,14 +475,11 @@ public class TaskJob {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 taskService.updateById(task);
                                 return;
+                            }else {
+                                break;
                             }
                         }
                     }
-                    task.setSTATUS(4);
-                    taskUtils.setTask_status(4);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    return;
                 } else {
                     task.setSTATUS(5);
                     taskUtils.setTask_status(5);
@@ -464,6 +488,11 @@ public class TaskJob {
                     return;
                 }
             }
+            task.setSTATUS(4);
+            taskUtils.setTask_status(4);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
+            return;
         }
         if(task.getTYPE_ID() == 34 || task.getTYPE_ID() == 42 || task.getTYPE_ID() == 41){
             TaskUtils344142 taskUtils = null;
@@ -476,6 +505,10 @@ public class TaskJob {
                 taskService.updateById(task);
                 return;
             }
+            System.out.println("开始执行任务" + task.getTASK_NAME());
+            taskUtils.setTask_status(6);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
             String[] vmIps = taskUtils.getVm_ip().split(",");
             String cpu_nums = taskUtils.getCpu_num();
             String memorys = taskUtils.getMemory();
@@ -609,21 +642,17 @@ public class TaskJob {
                             );
                             System.out.println(response1.toString());
                             if (!response1.toString().contains("\"exitStatus\":0")) {
-
                                 task.setSTATUS(5);
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 taskService.updateById(task);
                                 return;
+                            }else {
+                                break;
                             }
                         }
                     }
 
-                    task.setSTATUS(4);
-                    taskUtils.setTask_status(4);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    return;
                 } else {
                     task.setSTATUS(5);
                     taskUtils.setTask_status(5);
@@ -632,6 +661,11 @@ public class TaskJob {
                     return;
                 }
             }
+            task.setSTATUS(4);
+            taskUtils.setTask_status(4);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
+            return;
         }
         if(task.getTYPE_ID() == 39 || task.getTYPE_ID() == 43|| task.getTYPE_ID() == 45){
             TaskUtils394345 taskUtils = null;
@@ -645,7 +679,8 @@ public class TaskJob {
                 return;
             }
             System.out.println("开始执行任务" + task.getTASK_NAME());
-            task.setSTATUS(2);
+            taskUtils.setTask_status(6);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
             taskService.updateById(task);
             String[] vmIps = taskUtils.getVm_ip().split(",");
             String cpu_nums = taskUtils.getCpu_num();
@@ -784,14 +819,11 @@ public class TaskJob {
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 taskService.updateById(task);
                                 return;
+                            }else {
+                                break;
                             }
                         }
                     }
-                    task.setSTATUS(4);
-                    taskUtils.setTask_status(4);
-                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                    taskService.updateById(task);
-                    return;
                 } else {
                     task.setSTATUS(5);
                     taskUtils.setTask_status(5);
@@ -800,6 +832,10 @@ public class TaskJob {
                     return ;
                 }
             }
+            task.setSTATUS(4);
+            taskUtils.setTask_status(4);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
         }
     }
     @Scheduled(cron = "0 */1 * * * ?")
@@ -814,23 +850,25 @@ public class TaskJob {
         Task task;
         ObjectMapper mapper = new ObjectMapper();
         QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
+        //创建虚拟机任务  状态为2的任务
         queryWrapper.eq("TYPE_ID", 23);
-        queryWrapper.isNull("STATUS");
+        queryWrapper.eq("STATUS",2);
         List<Task> tasks = taskService.list(queryWrapper);
         List<Task> tasks2 = new ArrayList<>();
         for(Task taskf : tasks){
             String task_attr = taskf.getTASK_ATTRIBUTES_VALUES();
+            //有任务正在执行  直接返回
+            if(task_attr.contains("\"task_status\":6")){
+                return;
+            }
+            //如果任务类型 为1  状态为2   执行方为1 或 3 加入任务列表
             if(task_attr.contains("\"task_type\":1")&&task_attr.contains("\"task_status\":2")&&(task_attr.contains("\"task_executor\":1")||task_attr.contains("\"task_executor\":3"))){
                 tasks2.add(taskf);
             }
         }
         if(tasks2.size()>0){
+            //获取第一个任务
             task = tasks2.get(0);
-            for(Task t : tasks2){
-                if(t.getSTATUS() != null && t.getSTATUS() == 2){
-                    return ;
-                }
-            }
         }else {
             return ;
         }
@@ -856,7 +894,8 @@ public class TaskJob {
         System.out.println("开始执行任务" + task.getTASK_NAME());
         bw.write("==============================================\n");
         bw.write("开始执行任务" + task.getTASK_NAME() + "，任务ID为" + task.getTASK_ID() + "\n");
-        task.setSTATUS(2);
+        taskUtils.setTask_status(6);
+        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
         taskService.updateById(task);
         int vmNum = taskUtils.getVm_num();
         String vm_image_name = taskUtils.getVm_image_name();
@@ -877,15 +916,15 @@ public class TaskJob {
             return;
         }
         vm_image_name = "centos.qcow2";
-        if (docker_image_name == null || docker_image_name.equals("")) {
-            task.setSTATUS(5);
-            taskUtils.setTask_status(5);
-            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-            taskService.updateById(task);
-            bw.write("缺少Docker镜像名\n");
-            bw.close();
-            return;
-        }
+//        if (docker_image_name == null || docker_image_name.equals("")) {
+//            task.setSTATUS(5);
+//            taskUtils.setTask_status(5);
+//            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+//            taskService.updateById(task);
+//            bw.write("缺少Docker镜像名\n");
+//            bw.close();
+//            return;
+//        }
         if (com == null || com.equals("")) {
             task.setSTATUS(5);
             taskUtils.setTask_status(5);
@@ -1090,25 +1129,38 @@ public class TaskJob {
                 QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
                 qw1.eq("name", vmi_name);
                 VMInfo2 vm = vmService.getOne(qw1);
-                //上传文件到虚拟机
-                bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机\n");
-                System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机");
-                String[] docker_images = docker_image_name.split(",");
-                for(String docker_image: docker_images) {
-                    try {
-                        ans = processUtils.uploadDockerToVM(docker_image, vmi_name, taskUtils.getPm_ip());
-                    } catch (Exception e) {
-                        task.setSTATUS(5);
-                        taskUtils.setTask_status(5);
-                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                        taskService.updateById(task);
-                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
-                        bw.close();
-                        return;
-                    }
-                    System.out.println(ans);
-                    if (ans.contains("200")) {
-                        if (ans.contains("-1") && !ans.contains("Warning")) {
+                    //上传文件到虚拟机
+                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机\n");
+                    System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机");
+                    String[] docker_images = docker_image_name.split(",");
+                    for (String docker_image : docker_images) {
+                        boolean flag = true;
+                        if(docker_image.contains("tar")){
+                            flag = false;
+                        }
+                        try {
+                            ans = processUtils.uploadDockerToVM(docker_image, vmi_name, taskUtils.getPm_ip(),flag);
+                        } catch (Exception e) {
+                            task.setSTATUS(5);
+                            taskUtils.setTask_status(5);
+                            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            taskService.updateById(task);
+                            bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
+                            bw.close();
+                            return;
+                        }
+                        System.out.println(ans);
+                        if (ans.contains("200")) {
+                            if (ans.contains("-1") && !ans.contains("Warning")) {
+                                task.setSTATUS(5);
+                                taskUtils.setTask_status(5);
+                                task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                                bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
+                                taskService.updateById(task);
+                                bw.close();
+                                return;
+                            }
+                        } else {
                             task.setSTATUS(5);
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -1117,35 +1169,36 @@ public class TaskJob {
                             bw.close();
                             return;
                         }
-                    } else {
-                        task.setSTATUS(5);
-                        taskUtils.setTask_status(5);
-                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机失败\n");
-                        taskService.updateById(task);
-                        bw.close();
-                        return;
                     }
-                }
-                bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像\n");
-                System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像");
+                if(docker_image_name!=null && !docker_image_name.equals("") && docker_image_name.contains("tar")) {
+                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像\n");
+                    System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像");
 
-                for(String docker_image: docker_images) {
-                    //导入镜像
-                    try {
-                        ans = processUtils.importImage(docker_image, vmi_name, Pmip);
-                    } catch (Exception e) {
-                        task.setSTATUS(5);
-                        taskUtils.setTask_status(5);
-                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                        taskService.updateById(task);
-                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
-                        bw.close();
-                        return;
-                    }
-                    System.out.println(ans);
-                    if (ans.contains("200")) {
-                        if (ans.contains("-1") && !ans.contains("Command execution timed")) {
+                    for (String docker_image : docker_images) {
+                        //导入镜像
+                        try {
+                            ans = processUtils.importImage(docker_image, vmi_name, Pmip);
+                        } catch (Exception e) {
+                            task.setSTATUS(5);
+                            taskUtils.setTask_status(5);
+                            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                            taskService.updateById(task);
+                            bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
+                            bw.close();
+                            return;
+                        }
+                        System.out.println(ans);
+                        if (ans.contains("200")) {
+                            if (ans.contains("-1") && !ans.contains("Command execution timed")) {
+                                task.setSTATUS(5);
+                                taskUtils.setTask_status(5);
+                                task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                                bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
+                                taskService.updateById(task);
+                                bw.close();
+                                return;
+                            }
+                        } else {
                             task.setSTATUS(5);
                             taskUtils.setTask_status(5);
                             task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
@@ -1154,21 +1207,16 @@ public class TaskJob {
                             bw.close();
                             return;
                         }
-                    } else {
-                        task.setSTATUS(5);
-                        taskUtils.setTask_status(5);
-                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
-                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机导入镜像失败\n");
-                        taskService.updateById(task);
-                        bw.close();
-                        return;
                     }
                 }
                 List<String> c2 = new ArrayList<>();
                 List<String> c1 = new ArrayList<>();
                 for (String s : com) {
                     if (s.contains("sshpass")) {
-                        s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Cancer_Predict root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/News_Class root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Flower_XW root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@"+vmIp+":/home/pro/";
+                        int p = (cnt+1)%20;
+                        if(p == 0)
+                            p = 20;
+                        s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/Cancer_Predict root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/News_Class root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/Flower_XW root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@"+vmIp+":/home/pro/";
                         c2.add(s);
                     } else {
                         c1.add(s);
@@ -1233,7 +1281,7 @@ public class TaskJob {
         }
         task.setSTATUS(4);
         bw.write("任务" + task.getTASK_NAME() + "成功结束\n");
-        bw.write("\"==============================================\n");
+        bw.write("==============================================\n");
         bw.close();
         taskUtils.setVm_ip(ips);
         taskUtils.setTask_status(4);

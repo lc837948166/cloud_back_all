@@ -189,7 +189,6 @@ public class DockerImageController {
      * @param vmName 虚拟机名
      * @param targetPath 存放镜像的文件目录
      * @param endIp 端ip
-     * @param sourceIp 云ip
      * @return
      */
     /*@PostMapping("/upload")
@@ -265,13 +264,14 @@ public class DockerImageController {
      * @param targetPath 存放镜像的文件目录
      * @param endIp 端ip
      * @param sourceIp 云ip
+     * @param flag 是否为程序包
      * @return*/
     @PostMapping("/upload")
     @ApiOperation("上传到虚拟机 Docker 镜像")
     public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
                                          @RequestParam("vmName") String vmName,
                                          @RequestParam("targetPath") String targetPath,
-                                         @RequestParam("endIp") String endIp) {
+                                         @RequestParam("endIp") String endIp,@RequestParam("flag") boolean flag) {
          //省去云到端传镜像的步骤 默认Docker镜像直接保存在 端节点上
         // 发起获取文件路径的请求
  /*       String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
@@ -296,7 +296,11 @@ public class DockerImageController {
             String url = "http://" + endIp + sufixUrl;  //sourceIp应该是端节点IP
             String imagePath = "/etc/usr/xwfiles/";
             String filePath = imagePath + fileName;
-            String transCommand = "sshpass -p " + userPassword + " scp -o ConnectTimeout=3 -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
+            String transCommand;
+            if(flag)
+              transCommand = "sshpass -p " + userPassword + " scp -o StrictHostKeyChecking=no -r " + filePath + " " + userName + "@" + host + ":" + targetPath;
+            else
+                transCommand = "sshpass -p " + userPassword + " scp -o StrictHostKeyChecking=no " + filePath + " " + userName + "@" + host + ":" + targetPath;
             System.out.println(imagePath);
             System.out.println(transCommand);
             HttpHeaders headers = new HttpHeaders();

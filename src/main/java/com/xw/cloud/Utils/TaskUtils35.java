@@ -14,9 +14,11 @@ public class TaskUtils35 {
     private String package_loss;
     private String vm_ip;
 
+
     public Integer getTask_type() {
         return task_type;
     }
+
 
     public void setTask_type(Integer task_type) {
         this.task_type = task_type;
@@ -104,18 +106,19 @@ public class TaskUtils35 {
 
     @Override
     public String toString() {
-        return "TaskUtils3442{" +
-                "task_type=" + task_type +
-                ", task_executor=" + task_executor +
-                ", task_status=" + task_status +
-                ", is_all_vm=" + is_all_vm +
-                ", cpu_num='" + cpu_num + '\'' +
-                ", memory='" + memory + '\'' +
-                ", gpu='" + gpu + '\'' +
-                ", bandwidth='" + bandwidth + '\'' +
-                ", latency='" + latency + '\'' +
-                ", package_loss='" + package_loss + '\'' +
-                ", vm_ip='" + vm_ip + '\'' +
-                '}';
+        final StringBuffer sb = new StringBuffer("TaskUtils35{");
+        sb.append("task_type=").append(task_type);
+        sb.append(", task_executor=").append(task_executor);
+        sb.append(", task_status=").append(task_status);
+        sb.append(", is_all_vm=").append(is_all_vm);
+        sb.append(", cpu_num='").append(cpu_num).append('\'');
+        sb.append(", memory='").append(memory).append('\'');
+        sb.append(", gpu='").append(gpu).append('\'');
+        sb.append(", bandwidth='").append(bandwidth).append('\'');
+        sb.append(", latency='").append(latency).append('\'');
+        sb.append(", package_loss='").append(package_loss).append('\'');
+        sb.append(", vm_ip='").append(vm_ip).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }
