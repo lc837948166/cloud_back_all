@@ -568,6 +568,7 @@ public class LibvirtService {
 
 
     //添加端口映射
+    @SneakyThrows
     public void addport(String name){
         String ip=vmMapper.selectById(name).getIp();
         List<Integer> availablePorts = findAvailablePortSequence(12345,5);
@@ -587,15 +588,52 @@ public class LibvirtService {
 
         StringBuilder addCommands = new StringBuilder();
         for (int i = 0; i < 5; i++) {
-            addCommands.append(String.format("echo '0.0.0.0 %d %s %d' >> /etc/rinetd.conf && ", availablePorts.get(i), ip, arrayPort[i]));
+            addCommands.append(String.format("echo '0.0.0.0 %d  %s %d' >> /etc/rinetd.conf && ", availablePorts.get(i), ip, arrayPort[i]));
         }
         String combinedCommand = addCommands.toString();
         combinedCommand = combinedCommand.substring(0, combinedCommand.length() - 4);
         SftpUtils.getexecon(combinedCommand);
 
-        String startCommand="rinetd -c /etc/rinetd.conf";
-        SftpUtils.getexecon(startCommand);
+        String startCommand="rinetd";
+        ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", startCommand);
+        Process process = processBuilder.start();
 
+        // 读取命令输出
+        InputStream inputStream = process.getInputStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+        // 读取输出的线程
+        Thread outputThread = new Thread(() -> {
+            try {
+                StringBuilder commandOutput = new StringBuilder();
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    commandOutput.append(line).append("\n");
+                }
+                System.out.println(commandOutput.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        // 启动读取输出的线程
+        outputThread.start();
+
+        // 等待命令执行完成，设置超时时间为3秒
+        boolean processExited = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
+
+        // 等待输出线程执行完成
+        outputThread.join();
+
+        if (processExited) {
+            int exitCode = process.exitValue();
+            System.out.println("命令执行完成，退出码：" + exitCode);
+        } else {
+            // 超时处理
+            process.destroy();
+            System.out.println("命令执行超时");
+        }
     }
 
     private static List<Integer> findAvailablePortSequence(int startingPort, int sequenceLength) {
