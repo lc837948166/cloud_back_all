@@ -160,6 +160,7 @@ public class LibvirtController {
     @RequestMapping(value = "/delete/{name}",method = RequestMethod.DELETE)
     @ResponseBody
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
+        libvirtService.deletePort(name);
         libvirtService.deleteDomainByName(name);
         libvirtService.deleteImgFile(name + ".qcow2");
 

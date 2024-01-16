@@ -16,6 +16,8 @@ import javax.annotation.Resource;
 import javax.swing.*;
 import java.io.*;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import com.xw.cloud.Utils.SftpUtils;
 @Log
@@ -620,6 +622,42 @@ public class LibvirtService {
             return false;
         }
     }
+
+    @SneakyThrows
+    public void deletePort(String name) {
+        String targetIpAddress =vmMapper.selectById(name).getIp();
+        String filePath = "/etc/rinetd.conf";
+        int linesToRemove = 5;
+
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        StringBuilder contentBuilder = new StringBuilder();
+        String line;
+        int linesRemoved = 1;
+
+        while ((line = reader.readLine()) != null && linesRemoved < linesToRemove) {
+            if (line.contains(targetIpAddress)) {
+                linesRemoved++;
+            } else {
+                contentBuilder.append(line).append(System.lineSeparator());
+            }
+        }
+
+        String remainingLines;
+        while ((remainingLines = reader.readLine()) != null) {
+            contentBuilder.append(remainingLines).append(System.lineSeparator());
+        }
+
+        reader.close();
+        String content = contentBuilder.toString();
+
+        // 将修改后的内容写回文件
+        BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+        writer.write(content);
+        writer.close();
+
+    }
+
+
 
     /**
      * 删除 虚拟机 xml
