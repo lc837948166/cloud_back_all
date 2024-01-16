@@ -53,7 +53,7 @@ public class VMInfoController {
     @ResponseBody
     @RequestMapping("/getHostPort")
     public CommentResp getPort(@RequestParam("vmip") String ip,@RequestParam("vmport") int vmport) {
-        int[] arrayPort = {8000, 8085, 7051, 7052, 7053};
+        int[] arrayPort = {8000, 8050, 7051, 7052, 7053};
         int index = -1;
         for (int i = 0; i < 5; i++) {
             if (arrayPort[i] == vmport) {

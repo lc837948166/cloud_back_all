@@ -24,7 +24,7 @@ public class LibvirtService {
     @Resource
     private VmMapper vmMapper;
 
-    static int[] arrayPort = {8000, 8085, 7051, 7052, 7053};
+    static int[] arrayPort = {8000, 8050, 7051, 7052, 7053};
 
     @Resource
     private IpaddrMapper ipaddrMapper;
