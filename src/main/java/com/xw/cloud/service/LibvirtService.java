@@ -182,6 +182,35 @@ public class LibvirtService {
         return virtualList;
     }
     @SneakyThrows
+    public Virtual getIndex(String ip) {
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ip", ip);
+        VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
+        return getIndexByName(vminfo.getName());
+    }
+
+    @SneakyThrows
+    public Virtual getIndexByName(String name) {
+        Domain domain = getDomainByName(name);
+        DomainInterfaceStats stats1 = domain.interfaceStats("vnet0");
+        Thread.sleep(1000);
+        DomainInterfaceStats stats2 = domain.interfaceStats("vnet0");
+        long bandwidth = (stats2.rx_bytes - stats1.rx_bytes + stats2.tx_bytes-stats1.tx_bytes) / 125;
+        System.out.printf("当前带宽大小为：%d KB/s", bandwidth);
+        return Virtual.builder()
+                .id(domain.getID())
+                .name(name)
+                .state(domain.getInfo().state.toString())
+                .maxMem(domain.getMaxMemory()  >>20)
+                .useMem(getMem(domain))
+                .cpuNum(domain.getMaxVcpus())
+                .usecpu(getCpu(domain))
+                .bandwidth(bandwidth)
+                .ipaddr(getVMip(domain.getName()))
+                .build();
+    }
+
+    @SneakyThrows
     public Virtual getVirtualByLive(int id) {
         Domain domain = getDomainById(id);
 //        DomainBlockInfo blockInfo = domain.blockInfo(home+"/VM_place/"+domain.getName()+".img");
@@ -607,8 +636,6 @@ public class LibvirtService {
             process.destroy();
             System.out.println("命令执行超时");
         }
-
-        System.out.println("shabi123123");
     }
 
     private static List<Integer> findAvailablePortSequence(int startingPort, int sequenceLength) {

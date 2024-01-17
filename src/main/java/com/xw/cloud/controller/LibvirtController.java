@@ -67,6 +67,13 @@ public class LibvirtController {
         return libvirtService.getIndexList();
     }
 
+    @ApiOperation(value = "获取虚拟机指标列表", notes = "列出虚拟机指标")
+    @ResponseBody
+    @GetMapping("/getVMIndex/{ip:.*}")
+    public Virtual getVMIndex(@PathVariable("ip") String ip) {
+        return libvirtService.getIndex(ip);
+    }
+
     @ApiOperation(value = "开启/关闭网络", notes = "根据提供的网络状态开启或关闭网络")
     @RequestMapping("/openOrCloseNetWork")
     public String openOrCloseNetWork(@RequestParam("netState") String netState) {

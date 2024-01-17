@@ -22,7 +22,8 @@ public class Virtual {
     private Double useMem;
     @JsonProperty(value = "usecpu")
     private Double usecpu;
-
+    @JsonProperty(value = "bandwidth")
+    private long bandwidth;
     @JsonProperty(value = "ipaddr")
     private String ipaddr;
 

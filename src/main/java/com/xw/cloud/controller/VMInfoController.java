@@ -148,12 +148,12 @@ public class VMInfoController {
 
             } else {
                 int hostport = item.getHostport();
-                StringBuilder modifiedHostport = new StringBuilder(String.valueOf(hostport));
-                    modifiedHostport.append(":8000,")
-                            .append(hostport+1).append(":8050,")
-                            .append(hostport+2).append(":7051,")
-                            .append(hostport+3).append(":7052,")
-                            .append(hostport+4).append(":7053");
+//                StringBuilder modifiedHostport = new StringBuilder(String.valueOf(hostport));
+//                    modifiedHostport.append(":8000,")
+//                            .append(hostport+1).append(":8050,")
+//                            .append(hostport+2).append(":7051,")
+//                            .append(hostport+3).append(":7052,")
+//                            .append(hostport+4).append(":7053");
 
 
                 Map<String, Object> modifiedEntry = new HashMap<>();
@@ -164,13 +164,20 @@ public class VMInfoController {
                 modifiedEntry.put("serverip", item.getServerip());
                 modifiedEntry.put("cpuNum", item.getCpuNum());
                 modifiedEntry.put("memory", item.getMemory());
-                modifiedEntry.put("hostport", modifiedHostport.toString());
+//                modifiedEntry.put("hostport", modifiedHostport.toString());
                 modifiedEntry.put("status", item.getStatus());
 
+//                modifiedList.add(modifiedEntry);
+                List<Map<String, Object>> hostportList = new ArrayList<>();
+                for (int i = 0; i < fixedNumbers.size(); i++) {
+                    Map<String, Object> hostportEntry = new HashMap<>();
+                    hostportEntry.put(String.valueOf(fixedNumbers.get(i)), String.valueOf(hostport + i));
+                    hostportList.add(hostportEntry);
+                }
+                modifiedEntry.put("hostport", hostportList);
                 modifiedList.add(modifiedEntry);
             }
         }
-
         return new CommentResp(true, modifiedList, "");
     }
 
