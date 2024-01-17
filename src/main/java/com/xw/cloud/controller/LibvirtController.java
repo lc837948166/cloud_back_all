@@ -196,7 +196,6 @@ public class LibvirtController {
         libvirtService.addImgFile(vmc.getName(),ImgName);
         libvirtService.addDomainByName(vmc,serverip);
         libvirtService.addport(name);
-        System.out.println("yidalipao");
 
         return new CommentResp(true, null,"创建虚拟机"+name+"成功");
     }

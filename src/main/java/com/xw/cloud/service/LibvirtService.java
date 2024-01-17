@@ -595,7 +595,6 @@ public class LibvirtService {
         String startCommand = "rinetd -c /etc/rinetd.conf";
         ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", startCommand);
         Process process = processBuilder.start();
-        System.out.println("shabi456456");
 
 // 等待命令执行完成，设置超时时间为3秒
         boolean processExited = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
