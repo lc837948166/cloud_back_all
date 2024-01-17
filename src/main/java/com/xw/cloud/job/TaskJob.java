@@ -1176,6 +1176,9 @@ public class TaskJob {
 
                     for (String docker_image : docker_images) {
                         //导入镜像
+                        if(!docker_image.contains(".tar")){
+                            continue;
+                        }
                         try {
                             ans = processUtils.importImage(docker_image, vmi_name, Pmip);
                         } catch (Exception e) {

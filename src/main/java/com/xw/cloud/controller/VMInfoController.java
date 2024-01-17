@@ -8,8 +8,10 @@ import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.mapper.IpaddrMapper;
 import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
+import com.xw.cloud.service.VmService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,9 @@ import java.util.Map;
 @RequestMapping("/VMInfo")
 public class VMInfoController {
 
+    @Autowired
+    private VmService vmService;
+
     @Resource
     private VmMapper vmMapper;
 
@@ -36,6 +41,14 @@ public class VMInfoController {
 
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
+
+    @ApiOperation(value = "获取经纬度", notes = "根据虚拟机ip获取经纬度")
+    @ResponseBody
+    @RequestMapping("/queryLatAndLon")
+    public CommentResp queryLatAndLon(@RequestParam("vmip") String ip) {
+        List<Double> coordinate = vmService.queryLatAndLon(ip);
+        return new CommentResp(true, coordinate,"查询成功");
+    }
 
     @ApiOperation(value = "修改status", notes = "根据ip修改status")
     @ResponseBody
