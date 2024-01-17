@@ -583,8 +583,6 @@ public class LibvirtService {
         System.out.println("Available first Port: " + availablePorts.get(0).toString());
         String endCommand="pkill rinetd";
         SftpUtils.getexecon(endCommand);
-        SftpUtils.getexecon(endCommand);
-        SftpUtils.getexecon(endCommand);
 
         StringBuilder addCommands = new StringBuilder();
         for (int i = 0; i < 5; i++) {
@@ -594,37 +592,13 @@ public class LibvirtService {
         combinedCommand = combinedCommand.substring(0, combinedCommand.length() - 4);
         SftpUtils.getexecon(combinedCommand);
 
-        String startCommand="rinetd";
+        String startCommand = "rinetd -c /etc/rinetd.conf";
         ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", startCommand);
         Process process = processBuilder.start();
+        System.out.println("shabi456456");
 
-        // 读取命令输出
-        InputStream inputStream = process.getInputStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-        // 读取输出的线程
-        Thread outputThread = new Thread(() -> {
-            try {
-                StringBuilder commandOutput = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    commandOutput.append(line).append("\n");
-                }
-                System.out.println(commandOutput.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
-        // 启动读取输出的线程
-        outputThread.start();
-
-        // 等待命令执行完成，设置超时时间为3秒
+// 等待命令执行完成，设置超时时间为3秒
         boolean processExited = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
-
-        // 等待输出线程执行完成
-        outputThread.join();
 
         if (processExited) {
             int exitCode = process.exitValue();
@@ -634,6 +608,8 @@ public class LibvirtService {
             process.destroy();
             System.out.println("命令执行超时");
         }
+
+        System.out.println("shabi123123");
     }
 
     private static List<Integer> findAvailablePortSequence(int startingPort, int sequenceLength) {
@@ -692,6 +668,13 @@ public class LibvirtService {
         BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
         writer.write(content);
         writer.close();
+
+        String endCommand="pkill rinetd";
+        SftpUtils.getexecon(endCommand);
+        String startCommand = "rinetd -c /etc/rinetd.conf";
+        ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", startCommand);
+        Process process = processBuilder.start();
+
 
     }
 
