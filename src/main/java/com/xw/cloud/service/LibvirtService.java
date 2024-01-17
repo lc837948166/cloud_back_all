@@ -607,8 +607,6 @@ public class LibvirtService {
             process.destroy();
             System.out.println("命令执行超时");
         }
-
-        System.out.println("shabi123123");
     }
 
     private static List<Integer> findAvailablePortSequence(int startingPort, int sequenceLength) {
