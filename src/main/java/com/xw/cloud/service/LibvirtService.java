@@ -134,10 +134,38 @@ public class LibvirtService {
     @SneakyThrows
     public void getallVMip(String serverip) {
         String ip1=findserverip(findRealIP(serverip),'.',3);
-        System.out.println(ip1);
+
         String command="bash /root/VM_place/virsh-ip.sh all "+ip1;
-        String data =SftpUtils.getexecon(command);
-        StringReader stringReader = new StringReader(data);
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command("bash", "-c", command);
+
+        Process process = processBuilder.start();
+
+        InputStream inputStream = process.getInputStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+        StringBuilder commandOutput = new StringBuilder();
+        String line2;
+        while ((line2 = bufferedReader.readLine()) != null) {
+            commandOutput.append(line2).append("\n");
+        }
+
+        bufferedReader.close();
+        inputStreamReader.close();
+        inputStream.close();
+        boolean processExited = process.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
+
+        if (processExited) {
+            int exitCode = process.exitValue();
+            System.out.println("命令执行完成，退出码：" + exitCode);
+        } else {
+            // 超时处理
+            process.destroy();
+            System.out.println("命令执行超时");
+        }
+
+        StringReader stringReader = new StringReader(commandOutput.toString());
         BufferedReader reader = new BufferedReader(stringReader);
         String line;
         int result = 0;
@@ -192,9 +220,41 @@ public class LibvirtService {
     @SneakyThrows
     public Virtual getIndexByName(String name) {
         Domain domain = getDomainByName(name);
-        DomainInterfaceStats stats1 = domain.interfaceStats("vnet0");
+        String data =SftpUtils.getexecon("virsh domiflist "+name);
+        StringReader stringReader = new StringReader(data);
+        BufferedReader reader = new BufferedReader(stringReader);
+        String line;
+        boolean headerFound = false;
+        String interfaceValue = null;
+
+        // 解析输出
+        while ((line = reader.readLine()) != null) {
+            if (!headerFound) {
+                if (line.contains("Interface")) {
+                    headerFound = true;
+                }
+                continue;
+            }
+
+            if (!line.trim().isEmpty()) {
+                // 提取Interface列的信息
+                String[] columns = line.split("\\s+");
+                if (columns.length > 1) {
+                    interfaceValue = columns[0];
+                    break;
+                }
+            }
+        }
+        // 关闭流和进程
+        reader.close();
+        // 输出Interface的值
+        if (interfaceValue != null) {
+            System.out.println("Interface: " + interfaceValue);
+        }
+
+        DomainInterfaceStats stats1 = domain.interfaceStats(interfaceValue);
         Thread.sleep(1000);
-        DomainInterfaceStats stats2 = domain.interfaceStats("vnet0");
+        DomainInterfaceStats stats2 = domain.interfaceStats(interfaceValue);
         long bandwidth = (stats2.rx_bytes - stats1.rx_bytes + stats2.tx_bytes-stats1.tx_bytes) / 125;
         System.out.printf("当前带宽大小为：%d KB/s", bandwidth);
         return Virtual.builder()
