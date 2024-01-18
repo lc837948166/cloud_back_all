@@ -54,4 +54,7 @@ public class VMInfo2 {
     @JsonProperty(value = "status")
     @ApiModelProperty(value = "状态")
     private Integer status;
+    @JsonProperty(value = "usetype")
+    @ApiModelProperty(value = "federal or null")
+    private String usetype;
 }

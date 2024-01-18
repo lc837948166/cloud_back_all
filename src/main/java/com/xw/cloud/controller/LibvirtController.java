@@ -187,8 +187,10 @@ public class LibvirtController {
     @RequestMapping("/addVirtual")
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
-                             @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
-                                  @RequestParam("serverip") String serverip) throws InterruptedException {
+                             @RequestParam(value = "OStype", defaultValue = "X86") String OStype,
+                                  @RequestParam("nettype") String NetType,
+                                  @RequestParam("serverip") String serverip,
+                                  @RequestParam(value = "usetype", required = false) String usetype) throws InterruptedException {
         QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
         long count = vmMapper.selectCount(queryWrapper);
@@ -203,6 +205,13 @@ public class LibvirtController {
         libvirtService.addImgFile(vmc.getName(),ImgName);
         libvirtService.addDomainByName(vmc,serverip);
         libvirtService.addport(name);
+        if(usetype!=null&&!usetype.isEmpty())
+        {
+            VMInfo2 vm = new VMInfo2();
+            vm.setName(name);
+            vm.setUsetype(usetype);
+            vmMapper.updateById(vm);
+        }
 
         return new CommentResp(true, null,"创建虚拟机"+name+"成功");
     }

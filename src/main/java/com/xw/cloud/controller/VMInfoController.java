@@ -131,10 +131,12 @@ public class VMInfoController {
     }
 
     @ApiOperation(value = "获取虚拟机信息列表", notes = "获取虚拟机信息列表")
-    @RequestMapping(value = "/selectAll")
+    @RequestMapping(value = "/selectAll/{usetype}")
     @ResponseBody
-    public CommentResp  listVMInfo(){
-        List<VMInfo2> tempList = vmMapper.selectList(null);
+    public CommentResp  listVMInfo(@PathVariable("usetype") String usetype){
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.eq("usetype",usetype);
+        List<VMInfo2> tempList = vmMapper.selectList(queryWrapper);
 //        return new CommentResp(true, tempList,"");
         List<Map<String, Object>> modifiedList = new ArrayList<>();
         List<Integer> fixedNumbers = new ArrayList<>();
@@ -161,14 +163,6 @@ public class VMInfoController {
 
             } else {
                 int hostport = item.getHostport();
-//                StringBuilder modifiedHostport = new StringBuilder(String.valueOf(hostport));
-//                    modifiedHostport.append(":8000,")
-//                            .append(hostport+1).append(":8050,")
-//                            .append(hostport+2).append(":7051,")
-//                            .append(hostport+3).append(":7052,")
-//                            .append(hostport+4).append(":7053");
-
-
                 Map<String, Object> modifiedEntry = new HashMap<>();
                 modifiedEntry.put("name", item.getName());
                 modifiedEntry.put("ip", item.getIp());
@@ -177,10 +171,7 @@ public class VMInfoController {
                 modifiedEntry.put("serverip", item.getServerip());
                 modifiedEntry.put("cpuNum", item.getCpuNum());
                 modifiedEntry.put("memory", item.getMemory());
-//                modifiedEntry.put("hostport", modifiedHostport.toString());
                 modifiedEntry.put("status", item.getStatus());
-
-//                modifiedList.add(modifiedEntry);
                 List<Map<String, Object>> hostportList = new ArrayList<>();
                 for (int i = 0; i < fixedNumbers.size(); i++) {
                     Map<String, Object> hostportEntry = new HashMap<>();
