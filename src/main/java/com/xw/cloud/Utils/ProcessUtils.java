@@ -159,7 +159,7 @@ public class ProcessUtils {
                 return  ""+responseCode;
             }
     }
-    public  String createVM(String ImgName, String name, Integer memory,Integer cpuNum,String OStype,String  nettype,String serverip) throws Exception {
+    public  String createVM(String ImgName, String name, Integer memory,Integer cpuNum,String OStype,String  nettype,String serverip,String usetype) throws Exception {
         HttpURLConnection conn = null;
         BufferedReader reader = null;
 //            http://39.98.124.97:8080/addVirtual?ImgName=TinyCore-current.iso&name=Tiny&memory=2&cpuNum=1&OStype=X86&nettype=bridge&serverip=undefined
@@ -177,7 +177,7 @@ public class ProcessUtils {
         if(serverip.equals("39.98.124.97")){
             newServerIp = "192.168.194.178";
         }
-        String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + newServerIp; // 要传递的参数
+        String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + newServerIp+"&usetype="+usetype; // 要传递的参数
         System.out.println(params);
         // 构建URL对象
         URL url = new URL(apiUrl + "?" + params);

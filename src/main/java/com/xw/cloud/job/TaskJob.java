@@ -906,6 +906,8 @@ public class TaskJob {
         String docker_image_name = taskUtils.getDocker_image_name();
         String[] com = taskUtils.getCmds().split(",");
         String[] ipip = taskUtils.getPm_ip().split(",");
+        String execution_method = taskUtils.getExecution_method();
+        String usetype = "other";
         if (vm_image_name == null || vm_name.equals("")) {
             task.setSTATUS(5);
             taskUtils.setTask_status(5);
@@ -914,6 +916,25 @@ public class TaskJob {
             bw.write("缺少虚拟机镜像名\n");
             bw.close();
             return;
+        }
+        if(execution_method == null || execution_method.equals("")){
+            task.setSTATUS(5);
+            taskUtils.setTask_status(5);
+            task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+            taskService.updateById(task);
+            bw.write("缺少执行方法\n");
+            bw.close();
+            return;
+        }
+        if(execution_method.contains("fl")
+                || execution_method.contains("FL")
+                || task.getTASK_NAME().contains("联邦")
+                || task.getTASK_NAME().contains("fl")
+                || task.getTASK_NAME().contains("FL")
+                || task.getTASK_DESCRIPTION().contains("fl")
+                || task.getTASK_DESCRIPTION().contains("FL")
+                || task.getTASK_DESCRIPTION().contains("联邦")){
+            usetype = "federal";
         }
         vm_image_name = "centos.qcow2";
 //        if (docker_image_name == null || docker_image_name.equals("")) {
@@ -1075,7 +1096,7 @@ public class TaskJob {
                 bw.write("节点" + node.getNodeName() + "创建第" + (cnt + 1) + "个虚拟机" + vmi_name + "\n");
                 //创建虚拟机
                 try {
-                    ans = processUtils.createVM(vm_image_name, vmi_name, memory[cnt], cpu[cnt], OStype, nettype, Pmip);
+                    ans = processUtils.createVM(vm_image_name, vmi_name, memory[cnt], cpu[cnt], OStype, nettype, Pmip,usetype);
                     if (ans.contains("200")) {
                         if (ans.contains("重复")) {
                             task.setSTATUS(5);

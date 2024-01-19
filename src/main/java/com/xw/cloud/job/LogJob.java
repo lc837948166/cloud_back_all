@@ -42,8 +42,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-//@Component
-//@EnableScheduling
+@Component
+@EnableScheduling
 public class LogJob {
 
     @Value("${k8s.config}")

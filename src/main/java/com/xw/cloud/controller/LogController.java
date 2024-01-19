@@ -300,7 +300,7 @@ public class LogController {
         List<SelectResp> selectResps = new LinkedList<>();
         for (int k = 0; k < nodes.size(); k++) {
             NodeInfo nodeInfo =nodes.get(k);
-            if(nodeInfo.getNodeType().equals("边")){
+            if(nodeInfo.getIsSchedulable() != 1){
                 continue;
             }
             Session session = null;
