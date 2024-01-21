@@ -1,6 +1,7 @@
 package com.xw.cloud.controller;
 
 
+import com.xw.cloud.inter.OperationLogDesc;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -33,6 +34,7 @@ public class ConfStorageController {
   private String k8sConfig;
   @ApiOperation(value = "获取配置映射视图", notes = "返回配置映射视图的路径")
   @RequestMapping(value = "/configmap", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取配置映射视图")
   public String configmap(){
     return "confstorage/configmap";
   }
@@ -44,6 +46,7 @@ public class ConfStorageController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/configmap/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取配置映射列表")
   public ModelAndView getConfigmapList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -72,6 +75,7 @@ public class ConfStorageController {
 
   @ApiOperation(value = "获取持久化卷申请视图", notes = "返回持久化卷申请视图的路径")
   @RequestMapping(value = "/pvc", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取持久化卷申请视图")
   public String pvc(){
     return "confstorage/pvc";
   }
@@ -83,6 +87,7 @@ public class ConfStorageController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/pvc/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取持久化卷申请列表")
   public ModelAndView getPvcList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -110,6 +115,7 @@ public class ConfStorageController {
 
   @ApiOperation(value = "获取密钥视图", notes = "返回密钥视图的路径")
   @RequestMapping(value = "/secret", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取密钥视图")
   public String secret(){
     return "confstorage/secret";
   }
@@ -121,6 +127,7 @@ public class ConfStorageController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/secret/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "存储管理", events = "获取密钥列表")
   public ModelAndView getSecretList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();

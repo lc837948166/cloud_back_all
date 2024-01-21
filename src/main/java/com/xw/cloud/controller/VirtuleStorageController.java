@@ -43,7 +43,7 @@ public class VirtuleStorageController {
 
     @ApiOperation(value = "获取持久卷路径", notes = "获取 Kubernetes 中所有持久卷的路径")
     @RequestMapping(value = "/pvPath", method = RequestMethod.GET)
-    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
+    @OperationLogDesc(module = "存储管理", events = "获取持久卷列表")
     public ModelAndView getPvPath(@RequestParam("pvName") String pvName) throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
 
@@ -70,7 +70,7 @@ public class VirtuleStorageController {
 
     @ApiOperation(value = "获取持久卷列表", notes = "获取 Kubernetes 中所有持久卷的列表")
     @RequestMapping(value = "/vs/list", method = RequestMethod.GET)
-    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
+    @OperationLogDesc(module = "存储管理", events = "获取持久卷列表")
     public ModelAndView getPvList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -111,7 +111,7 @@ public class VirtuleStorageController {
 
     @ApiOperation(value = "获取持久卷声明列表", notes = "获取 Kubernetes 中所有持久卷声明的列表")
     @RequestMapping(value = "/vs/pvclist", method = RequestMethod.GET)
-    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷声明列表")
+    @OperationLogDesc(module = "存储管理", events = "获取持久卷声明列表")
     public ModelAndView getPvcList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -145,7 +145,7 @@ public class VirtuleStorageController {
     @ApiOperation(value = "创建持久卷", notes = "根据提供的信息创建持久卷并关联持久卷声明")
     @RequestMapping(value = "/createVs", method = RequestMethod.POST)
     @ResponseBody
-    @OperationLogDesc(module = "虚拟存储管理", events = "创建持久卷")
+    @OperationLogDesc(module = "存储管理", events = "创建持久卷")
     public String createVs(@RequestBody RequestInfo requestInfo) throws ApiException {
 //    public String createVs() throws ApiException {
 
@@ -354,7 +354,7 @@ public class VirtuleStorageController {
     @ApiOperation(value = "删除持久卷", notes = "根据提供的持久卷名称删除持久卷")
     @RequestMapping(value = "/deleteVs", method = RequestMethod.POST)
     @ResponseBody
-    @OperationLogDesc(module = "虚拟存储管理", events = "删除持久卷")
+    @OperationLogDesc(module = "存储管理", events = "删除持久卷")
     public String deleteVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
 //    public String deleteVs() throws IOException, ApiException {
 
@@ -416,7 +416,7 @@ public class VirtuleStorageController {
     @ApiOperation(value = "更新持久卷", notes = "根据提供的信息更新持久卷的容量")
     @RequestMapping(value = "/updateVs", method = RequestMethod.POST)
     @ResponseBody
-    @OperationLogDesc(module = "虚拟存储管理", events = "修改持久卷")
+    @OperationLogDesc(module = "存储管理", events = "修改持久卷")
     public String updateVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
 //    public String updateVs() throws IOException, ApiException {
 

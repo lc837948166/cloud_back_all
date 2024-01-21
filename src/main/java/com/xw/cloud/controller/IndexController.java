@@ -29,6 +29,7 @@ public class IndexController {
 
     @ApiOperation(value = "查看 Pod 指标页面", notes = "返回展示 Pod 指标的页面路径")
     @RequestMapping(value = "/podIndex", method = RequestMethod.GET)
+    @OperationLogDesc(module = "指标管理", events = "查看 Pod 指标页面")
     public String pv() {
         return "index/podIndex";
     }

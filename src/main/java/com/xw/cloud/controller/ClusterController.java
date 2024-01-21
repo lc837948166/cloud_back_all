@@ -1,4 +1,5 @@
 package com.xw.cloud.controller;
+import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.openapi.models.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -64,6 +65,7 @@ public class ClusterController {
           @ApiResponse(code = 500, message = "服务器内部错误")
   })
   @RequestMapping(value = "/namespace/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取命名空间列表")
   public ModelAndView getNamespaceList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -89,6 +91,7 @@ public class ClusterController {
 
 
   @ApiOperation(value = "获取节点视图", notes = "返回节点视图的路径")
+  @OperationLogDesc(module = "集群管理", events = "获取节点视图")
   @RequestMapping(value = "/node", method = RequestMethod.GET)
   public String node(){
     return "cluster/node";
@@ -102,6 +105,7 @@ public class ClusterController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/node/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取节点列表")
   public ModelAndView getNodeList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -128,6 +132,7 @@ public class ClusterController {
 
   @ApiOperation(value = "获取持久卷视图", notes = "返回持久卷视图的路径")
   @RequestMapping(value = "/pv", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取持久卷视图")
   public String pv(){
     return "cluster/pv";
   }
@@ -140,6 +145,7 @@ public class ClusterController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/pv/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取持久卷列表")
   public ModelAndView getPvList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -168,6 +174,7 @@ public class ClusterController {
 
   @ApiOperation(value = "获取角色视图", notes = "返回角色视图的路径")
   @RequestMapping(value = "/role", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取角色视图")
   public String role(){
     return "cluster/role";
   }
@@ -179,6 +186,7 @@ public class ClusterController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/role/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取角色列表")
   public ModelAndView getRoleList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();
@@ -208,6 +216,7 @@ public class ClusterController {
 
   @ApiOperation(value = "获取存储类视图", notes = "返回存储类视图的路径")
   @RequestMapping(value = "/storageclass", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取存储类视图")
   public String storageclass(){
     return "cluster/storageclass";
   }
@@ -220,6 +229,7 @@ public class ClusterController {
           @ApiResponse(code = 500, message = "服务器错误")
   })
   @RequestMapping(value = "/storageclass/list", method = RequestMethod.GET)
+  @OperationLogDesc(module = "集群管理", events = "获取存储类列表")
   public ModelAndView getStorageclassList() throws IOException, ApiException {
     ModelAndView modelAndView = new ModelAndView("jsonView");
     String kubeConfigPath = ResourceUtils.getURL(k8sConfig).getPath();

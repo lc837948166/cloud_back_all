@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.xw.cloud.Utils.CommentResp;
 import com.xw.cloud.bean.*;
+import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
 import io.swagger.annotations.Api;
@@ -56,6 +57,7 @@ public class LibvirtController {
     @ApiOperation(value = "获取虚拟机列表", notes = "列出所有的虚拟机")
     @ResponseBody
     @GetMapping("/getVMList")
+    @OperationLogDesc(module = "虚拟机管理", events = "获取虚拟机列表")
     public List<Virtual> getVMList() {
         return libvirtService.getVirtualList();
     }
@@ -63,6 +65,7 @@ public class LibvirtController {
     @ApiOperation(value = "获取虚拟机指标列表", notes = "列出所有的虚拟机指标")
     @ResponseBody
     @GetMapping("/getVMIndexList")
+    @OperationLogDesc(module = "虚拟机管理", events = "获取虚拟机指标列表")
     public List<Virtual> getVMIndexList() {
         return libvirtService.getIndexList();
     }
@@ -76,6 +79,7 @@ public class LibvirtController {
 
     @ApiOperation(value = "开启/关闭网络", notes = "根据提供的网络状态开启或关闭网络")
     @RequestMapping("/openOrCloseNetWork")
+    @OperationLogDesc(module = "虚拟机管理", events = "开启/关闭网络")
     public String openOrCloseNetWork(@RequestParam("netState") String netState) {
         if ("on".equals(netState)) libvirtService.closeNetWork();
         if ("off".equals(netState)) libvirtService.openNetWork();
@@ -86,6 +90,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/initiate/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "启动虚拟机")
     public CommentResp initiateVirtual(@PathVariable("name") String name) {
         libvirtService.initiateDomainByName(name);
         return new CommentResp(true, null,"启动成功");
@@ -95,6 +100,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/changeVM/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "更改虚拟机配置")
     public CommentResp changeVM(@PathVariable("name") String name,@RequestParam("cpuNum") int cpu,@RequestParam("memory") int mem) {
         libvirtService.shutdownDomainByName(name);
         Thread.sleep(5000);
@@ -106,6 +112,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/suspended/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "挂起虚拟机")
     public CommentResp suspendedVirtual(@PathVariable("name") String name) {
         libvirtService.suspendedDomainName(name);
         return new CommentResp(true, null,"挂起成功");
@@ -115,6 +122,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/resume/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "恢复虚拟机")
     public CommentResp resumeVirtual(@PathVariable("name") String name) {
         libvirtService.resumeDomainByName(name);
         return new CommentResp(true, null,"还原成功");
@@ -123,6 +131,7 @@ public class LibvirtController {
     @ApiOperation(value = "保存虚拟机", notes = "根据虚拟机名称保存虚拟机")
     @SneakyThrows
     @RequestMapping("/save")
+    @OperationLogDesc(module = "虚拟机管理", events = "保存虚拟机")
     public String saveVirtual(@RequestParam("name") String name) {
         libvirtService.saveDomainByName(name);
         return "redirect:main";
@@ -131,6 +140,7 @@ public class LibvirtController {
     @ApiOperation(value = "还原虚拟机", notes = "根据虚拟机名称还原虚拟机")
     @SneakyThrows
     @RequestMapping("/restore")
+    @OperationLogDesc(module = "虚拟机管理", events = "还原虚拟机")
     public String restoreVirtual(@RequestParam("name") String name) {
         libvirtService.restoreDomainByName(name);
         return "redirect:main";
@@ -140,6 +150,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/shutdown/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "关闭虚拟机")
     public CommentResp shutdownVirtual(@PathVariable("name") String name) {
         libvirtService.shutdownDomainByName(name);
         return new CommentResp(true, null,"关机成功");
@@ -149,6 +160,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/shutdownMust/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "强制关闭虚拟机")
     public CommentResp shutdownMustVirtual(@PathVariable("name") String name) {
         libvirtService.shutdownMustDomainByName(name);
         return new CommentResp(true, null,"强行关机成功");
@@ -158,6 +170,7 @@ public class LibvirtController {
     @SneakyThrows
     @RequestMapping("/reboot/{name}")
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "重启虚拟机")
     public CommentResp rebootVirtual(@PathVariable("name") String name) {
         libvirtService.rebootDomainByName(name);
         return new CommentResp(true, null,"正在重启");
@@ -166,6 +179,7 @@ public class LibvirtController {
     @ApiOperation(value = "删除虚拟机", notes = "删除指定的虚拟机和其关联的镜像文件")
     @RequestMapping(value = "/delete/{name}",method = RequestMethod.DELETE)
     @ResponseBody
+    @OperationLogDesc(module = "虚拟机管理", events = "删除虚拟机")
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
         libvirtService.deletePort(name);
         libvirtService.deleteDomainByName(name);
@@ -185,6 +199,7 @@ public class LibvirtController {
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")
     @ResponseBody
     @RequestMapping("/addVirtual")
+    @OperationLogDesc(module = "虚拟机管理", events = "添加虚拟机")
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                              @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                              @RequestParam(value = "OStype", defaultValue = "X86") String OStype,
@@ -218,6 +233,7 @@ public class LibvirtController {
 
     @ApiOperation(value = "获取快照列表", notes = "根据虚拟机名称获取其快照列表")
     @RequestMapping("/getSnapshotList")
+    @OperationLogDesc(module = "虚拟机管理", events = "获取快照列表")
     public String getSnapshotList(@RequestParam("name") String name,
                                   Model model) {
         List<Snapshot> snapshotList = libvirtService.getSnapshotListByName(name);
@@ -229,6 +245,7 @@ public class LibvirtController {
     @ApiOperation(value = "删除快照", notes = "删除指定虚拟机的特定快照")
     @SneakyThrows
     @RequestMapping("/deleteSnapshot")
+    @OperationLogDesc(module = "虚拟机管理", events = "删除快照")
     public String deleteSnapshot(@RequestParam("virtualName") String virtualName,
                                  @RequestParam("snapshotName") String snapshotName) {
         libvirtService.deleteSnapshot(virtualName, snapshotName);
@@ -239,6 +256,7 @@ public class LibvirtController {
     @ApiOperation(value = "还原快照", notes = "将指定虚拟机还原至特定快照的状态")
     @SneakyThrows
     @RequestMapping("/revertSnapshot")
+    @OperationLogDesc(module = "虚拟机管理", events = "还原快照")
     public String revertSnapshot(@RequestParam("virtualName") String virtualName,
                                  @RequestParam("snapshotName") String snapshotName) {
         libvirtService.revertSnapshot(virtualName, snapshotName);
@@ -249,6 +267,7 @@ public class LibvirtController {
     @ApiOperation(value = "创建快照", notes = "为指定虚拟机创建新的快照")
     @SneakyThrows
     @RequestMapping("/createSnapshot")
+    @OperationLogDesc(module = "虚拟机管理", events = "创建快照")
     public String createSnapshot(@RequestParam("virtualName") String virtualName,
                                  @RequestParam("snapshotName") String snapshotName) {
         libvirtService.createSnapshot(virtualName, snapshotName);
@@ -258,6 +277,7 @@ public class LibvirtController {
 
     @ApiOperation(value = "存储池列表", notes = "获取所有存储池的列表")
     @RequestMapping("/storagePoolList")
+    @OperationLogDesc(module = "虚拟机管理", events = "存储池列表")
     public String storagePoolList(Model model) {
         List<Storagepool> storagePoolList = libvirtService.getStoragePoolList();
         model.addAttribute("storagePoolList", storagePoolList);
@@ -277,6 +297,7 @@ public class LibvirtController {
 
     @ApiOperation(value = "跳转至创建存储池页面", notes = "返回创建存储池的界面")
     @RequestMapping("/toCreateStoragepool")
+    @OperationLogDesc(module = "虚拟机管理", events = "跳转至创建存储池页面")
     public String toCreateStoragepool(Model model) {
         String netState = libvirtService.getNetState();
         model.addAttribute("netState", netState);

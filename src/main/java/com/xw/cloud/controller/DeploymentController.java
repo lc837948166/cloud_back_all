@@ -1,5 +1,6 @@
 package com.xw.cloud.controller;
 
+import com.xw.cloud.inter.OperationLogDesc;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.openapi.ApiClient;
@@ -54,6 +55,7 @@ public class DeploymentController {
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/deleteDeployment", method = RequestMethod.POST)
+    @OperationLogDesc(module = "部署管理", events = "删除部署和服务")
     public String deleteDeploymentAndService(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
         // 通过流读取，方式1
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -91,6 +93,7 @@ public class DeploymentController {
     @CrossOrigin
     @RequestMapping(value = "/createDeployment", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "部署管理", events = "创建部署")
     public String createDeployment(@RequestParam("yamlFile") MultipartFile yamlFile) throws IOException, ApiException {
         // 通过流读取，方式1
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -239,6 +242,7 @@ public class DeploymentController {
     })
     @CrossOrigin
     @RequestMapping(value = "/list", method = RequestMethod.GET)
+    @OperationLogDesc(module = "部署管理", events = "获取部署列表")
     public ModelAndView getDeploymentList() throws IOException, ApiException {
 
         ModelAndView modelAndView = new ModelAndView("jsonView");
@@ -283,6 +287,7 @@ public class DeploymentController {
     @CrossOrigin
     @RequestMapping(value ="/deployByParam", method = RequestMethod.POST)
     @ResponseBody
+    @OperationLogDesc(module = "部署管理", events = "通过参数部署")
     public String deploy(@RequestBody DeploymentInfo request) throws IOException, ApiException {
 
         // 通过流读取，方式1
@@ -359,6 +364,7 @@ public class DeploymentController {
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/stopDeployment", method = RequestMethod.GET)
+    @OperationLogDesc(module = "部署管理", events = "停止部署")
     public String stopDeployment(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
         // 通过流读取，方式1
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -397,6 +403,7 @@ public class DeploymentController {
     @CrossOrigin
     @ResponseBody
     @RequestMapping(value = "/startDeployment", method = RequestMethod.GET)
+    @OperationLogDesc(module = "部署管理", events = "启动部署")
     public String startDeploymentName(@RequestParam("deploymentName") String deploymentName) throws IOException, ApiException {
         // 通过流读取，方式1
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");

@@ -5,6 +5,7 @@ import com.jcraft.jsch.*;
 import com.xw.cloud.Utils.SshClient;
 import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.VMInfo2;
+import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.service.impl.NodeServiceImpl;
 import com.xw.cloud.service.impl.VmServiceImpl;
 import groovy.util.logging.Slf4j;
@@ -56,6 +57,7 @@ public class DockerImageController {
      */
     @GetMapping("/imageList")
     @ApiOperation("获取虚拟机 Docker 镜像列表")
+    @OperationLogDesc(module = "镜像管理", events = "获取虚拟机 Docker 镜像列表")
     public ResponseEntity<List<String>> listImages(@RequestParam("vmName") String vmName,
                                                    @RequestParam("endIp") String endIp) {
 
@@ -131,6 +133,7 @@ public class DockerImageController {
      */
     @PostMapping("/mkdir")
     @ApiOperation("创建虚拟机目标目录")
+    @OperationLogDesc(module = "镜像管理", events = "创建虚拟机目标目录")
     public ResponseEntity<String> mkdir(@RequestParam("vmName") String vmName,
                                         @RequestParam("targetPath") String targetPath,
                                         @RequestParam("endIp") String endIp) {
@@ -268,6 +271,7 @@ public class DockerImageController {
      * @return*/
     @PostMapping("/upload")
     @ApiOperation("上传到虚拟机 Docker 镜像")
+    @OperationLogDesc(module = "镜像管理", events = "上传到虚拟机 Docker 镜像")
     public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
                                          @RequestParam("vmName") String vmName,
                                          @RequestParam("targetPath") String targetPath,
@@ -344,6 +348,7 @@ public class DockerImageController {
      */
     @PostMapping("/import")
     @ApiOperation("导入虚拟机中的 Docker 镜像")
+    @OperationLogDesc(module = "镜像管理", events = "导入虚拟机中的 Docker 镜像")
     public ResponseEntity<String> importImage(@RequestParam("imageFileName") String imageFileName,
                                               @RequestParam("vmName") String vmName,
                                               @RequestParam("targetPath") String targetPath,
@@ -409,6 +414,7 @@ public class DockerImageController {
      */
     @PostMapping("/run")
     @ApiOperation("运行虚拟机中的 Docker 容器")
+    @OperationLogDesc(module = "镜像管理", events = "运行虚拟机中的 Docker 容器")
     public ResponseEntity<String> runContainer(@RequestParam("command") String command,
                                                @RequestParam("vmName") String vmName,
                                                @RequestParam("endIp") String endIp) {
@@ -458,7 +464,7 @@ public class DockerImageController {
 
     //自己测试用
     @GetMapping("/listContainer")
-    @ApiOperation(" Docker 容器")
+    @ApiOperation("Docker 容器")
     public ResponseEntity<String> listContainer(
                                                 @RequestParam("vmName") String vmName) {
 
@@ -496,6 +502,7 @@ public class DockerImageController {
      */
     @DeleteMapping("/deleteImage")
     @ApiOperation("删除虚拟机中 Docker 镜像")
+    @OperationLogDesc(module = "镜像管理", events = "删除虚拟机中 Docker 镜像")
     public ResponseEntity<String> deleteImage(@RequestParam("imageName") String imageName,
                                               @RequestParam("vmName") String vmName,
                                               @RequestParam("endIp") String endIp) {
@@ -568,6 +575,7 @@ public class DockerImageController {
 
     @GetMapping("/searchContainerByImage")
     @ApiOperation("查询虚拟机中 Docker 容器")
+    @OperationLogDesc(module = "镜像管理", events = "查询虚拟机中 Docker 容器")
     public ResponseEntity<String> searchContainerByImage(@RequestParam("imageName") String imageName,
                                               @RequestParam("vmName") String vmName,
                                               @RequestParam("endIp") String endIp) {
@@ -624,6 +632,7 @@ public class DockerImageController {
      */
     @GetMapping("/containerList")
     @ApiOperation("查询虚拟机 Docker 容器列表")
+    @OperationLogDesc(module = "镜像管理", events = "查询虚拟机 Docker 容器列表")
     public ResponseEntity<List<String>> listContainers(@RequestParam("vmName") String vmName,
                                                        @RequestParam("endIp") String endIp) {
         QueryWrapper<VMInfo2> qw = new QueryWrapper<>();
@@ -689,6 +698,7 @@ public class DockerImageController {
      */
     @DeleteMapping("/deleteContainer")
     @ApiOperation("删除 Docker 容器")
+    @OperationLogDesc(module = "镜像管理", events = "删除 Docker 容器")
     public ResponseEntity<String> deleteContainer(@RequestParam("containerId") String containerId,
                                                   @RequestParam("vmName") String vmName,
                                                   @RequestParam("endIp") String endIp) {
@@ -739,6 +749,7 @@ public class DockerImageController {
 
     @PostMapping("/stopContainer")
     @ApiOperation("停止 Docker 容器")
+    @OperationLogDesc(module = "镜像管理", events = "停止 Docker 容器")
     public ResponseEntity<String> stopContainer(@RequestParam("containerId") String containerId,
                                                   @RequestParam("vmName") String vmName,
                                                   @RequestParam("endIp") String endIp) {
@@ -787,6 +798,7 @@ public class DockerImageController {
 
     @PostMapping("/startContainer")
     @ApiOperation("启动 Docker 容器")
+    @OperationLogDesc(module = "镜像管理", events = "启动 Docker 容器")
     public ResponseEntity<String> startContainer(@RequestParam("containerId") String containerId,
                                                   @RequestParam("vmName") String vmName,
                                                   @RequestParam("endIp") String endIp) {

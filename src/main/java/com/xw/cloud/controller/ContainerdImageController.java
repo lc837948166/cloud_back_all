@@ -34,6 +34,7 @@ public class ContainerdImageController {
 
     @ApiOperation(value = "查看镜像页面", notes = "返回容器化镜像页面的路径")
     @RequestMapping(value = "/images", method = RequestMethod.GET)
+    @OperationLogDesc(module = "镜像管理", events = "查看镜像页面")
     public String container() {
         return "containerd/images";
     }
@@ -247,6 +248,7 @@ public class ContainerdImageController {
 
     @ApiOperation(value = "上传镜像页面", notes = "返回上传镜像的页面路径")
     @RequestMapping(value = "/uploadImage", method = RequestMethod.GET)
+    @OperationLogDesc(module = "镜像管理", events = "上传镜像页面")
     public String createPod() {
         return "containerd/uploadImage";
     }
@@ -260,7 +262,7 @@ public class ContainerdImageController {
     })
     @RequestMapping(value = "/uploadImage", method = RequestMethod.POST)
     @ResponseBody
-    @OperationLogDesc(module = "镜像管理", events = "上传并导入镜像")
+    @OperationLogDesc(module = "镜像管理", events = "上传并创建镜像")
     public String uploadImage(@RequestParam("tarFile") MultipartFile tarFile,
                               @RequestParam("nodeName") String nodeName
                              ) throws IOException {
