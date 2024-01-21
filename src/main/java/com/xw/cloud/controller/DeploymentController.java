@@ -305,10 +305,17 @@ public class DeploymentController {
         deploymentInfo.setNodePort(30005);*/
 
         // 创建 Deployment 和 Service
-        createDeploymentByParam(request);
-        createServiceByParam(request);
+        try {
+            createDeploymentByParam(request);
+            createServiceByParam(request);
+            return "Deployment and Service created successfully.";
 
-        return "Deployment and Service created successfully.";
+        }catch (ApiException e){
+            return "Deployment and Service created failed.";
+        }
+
+
+
     }
     @CrossOrigin
     private void createDeploymentByParam(DeploymentInfo request) throws ApiException {
