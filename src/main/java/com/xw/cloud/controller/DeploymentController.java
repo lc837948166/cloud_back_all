@@ -295,6 +295,7 @@ public class DeploymentController {
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+        String deploymentName = request.getDeploymentName();
 
         /*//初始化DeploymentInfo
         DeploymentInfo deploymentInfo = new DeploymentInfo();
@@ -305,12 +306,30 @@ public class DeploymentController {
         deploymentInfo.setNodePort(30005);*/
 
         // 创建 Deployment 和 Service
+        CoreV1Api api = new CoreV1Api();
+        AppsV1Api appsApi = new AppsV1Api();
         try {
             createDeploymentByParam(request);
             createServiceByParam(request);
             return "Deployment and Service created successfully.";
 
         }catch (ApiException e){
+            try {
+                appsApi.deleteNamespacedDeployment(deploymentName, "default", null, null, null, null, null, null);
+
+                // 删除 Service
+                V1ServiceList serviceList = api.listNamespacedService("default", null, null, null, null, null, null, null, null, null, null);
+                for (V1Service service : serviceList.getItems()) {
+                    if (deploymentName.equals(getServiceLabelValue(service, "app"))) {
+                        api.deleteNamespacedService(service.getMetadata().getName(), "default", null, null, null, null, null, null);
+                    }
+                }
+            }catch (ApiException e1){
+                System.out.println("Exception caught!");
+                System.out.println("Status code: " + e1.getCode());
+                System.out.println("Response body: " + e1.getResponseBody());
+                e1.printStackTrace();
+            }
             return "Deployment and Service created failed.";
         }
 
