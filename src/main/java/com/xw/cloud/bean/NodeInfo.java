@@ -66,7 +66,13 @@ public class NodeInfo implements Serializable {
 	@TableField(value = "IsSchedulable")
 	private Integer IsSchedulable;
 
-	public NodeInfo(Integer id, String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, Integer isSchedulable) {
+	@TableField(value = "ALIAS")
+	private String alias;
+
+	@TableField(value = "IN_IP")
+	private String inIp;
+
+	public NodeInfo(Integer id, String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, Integer isSchedulable, String alias, String inIp) {
 		this.id = id;
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
@@ -80,8 +86,10 @@ public class NodeInfo implements Serializable {
 		this.nodeLon = nodeLon;
 		this.nodeLat = nodeLat;
 		IsSchedulable = isSchedulable;
+		this.alias = alias;
+		this.inIp = inIp;
 	}
-	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat) {
+	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, String alias,  String inIp) {
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
 		this.nodeStatus = nodeStatus;
@@ -93,6 +101,8 @@ public class NodeInfo implements Serializable {
 		this.nodeCreateTime = nodeCreateTime;
 		this.nodeLon = nodeLon;
 		this.nodeLat = nodeLat;
+		this.alias = alias;
+		this.inIp = inIp;
 	}
 
 	public NodeInfo() {
@@ -114,6 +124,8 @@ public class NodeInfo implements Serializable {
 				", nodeLon=" + nodeLon +
 				", nodeLat=" + nodeLat +
 				", IsSchedulable=" + IsSchedulable +
+				", alias='" + alias + '\'' +
+				", inIp='" + inIp + '\'' +
 				'}';
 	}
 
@@ -221,4 +233,11 @@ public class NodeInfo implements Serializable {
 		this.nodeLat = nodeLat;
 	}
 
+	public String getInIp() {
+		return inIp;
+	}
+
+	public void setInIp(String inIp) {
+		this.inIp = inIp;
+	}
 }

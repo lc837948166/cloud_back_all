@@ -17,14 +17,17 @@ public class Virtual {
     private long maxMem;
     @JsonProperty(value = "cpuNum")
     private int cpuNum;
-
     @JsonProperty(value = "usemem")
     private Double useMem;
     @JsonProperty(value = "usecpu")
     private Double usecpu;
-    @JsonProperty(value = "bandwidth")
-    private long bandwidth;
+//    @JsonProperty(value = "CurrentBandWidth")
+//    private long bandwidth;
     @JsonProperty(value = "ipaddr")
     private String ipaddr;
+    @JsonProperty(value = "upBandWidth")
+    private long upBandWidth;
+    @JsonProperty(value = "upBandWidth")
+    private long downBandWidth;
 
 }

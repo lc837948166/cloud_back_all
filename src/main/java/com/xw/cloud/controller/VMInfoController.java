@@ -46,7 +46,7 @@ public class VMInfoController {
     @ResponseBody
     @RequestMapping("/queryLatAndLon")
     public CommentResp queryLatAndLon(@RequestParam("vmip") String ip) {
-        List<Double> coordinate = vmService.queryLatAndLon(ip);
+        Map<String, Double> coordinate = vmService.queryLatAndLon(ip);
         return new CommentResp(true, coordinate,"查询成功");
     }
 

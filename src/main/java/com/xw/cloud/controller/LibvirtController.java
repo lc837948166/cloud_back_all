@@ -7,10 +7,12 @@ import com.xw.cloud.bean.*;
 import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.mapper.VmMapper;
 import com.xw.cloud.service.LibvirtService;
+import com.xw.cloud.service.VmService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
 import org.libvirt.Domain;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,9 @@ public class LibvirtController {
 
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
+
+    @Autowired
+    private VmService vmService;
 
     @Resource
     private VmMapper vmMapper;
@@ -73,9 +78,17 @@ public class LibvirtController {
     @ApiOperation(value = "获取虚拟机指标列表", notes = "列出虚拟机指标")
     @ResponseBody
     @GetMapping("/getVMIndex/{ip:.*}")
-    public Virtual getVMIndex(@PathVariable("ip") String ip) {
-        return libvirtService.getIndex(ip);
+    public CommentResp getVMIndex(@PathVariable("ip") String ip) {
+        Map<String, Double> coordinate = vmService.queryLatAndLon(ip);
+        Virtual virtual = libvirtService.getIndex(ip);
+        Map<String, Object> data = new HashMap<>();
+        data.put("coordinate", coordinate);
+        data.put("virtual", virtual);
+
+        return new CommentResp(true, data, "查询成功");
     }
+//        return libvirtService.getIndex(ip);
+//    }
 
     @ApiOperation(value = "开启/关闭网络", notes = "根据提供的网络状态开启或关闭网络")
     @RequestMapping("/openOrCloseNetWork")
@@ -205,7 +218,8 @@ public class LibvirtController {
                              @RequestParam(value = "OStype", defaultValue = "X86") String OStype,
                                   @RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip,
-                                  @RequestParam(value = "usetype", required = false) String usetype) throws InterruptedException {
+                                  @RequestParam(value = "usetype", required = false) String usetype,
+                                  @RequestParam(value = "bandwidth", required = false) Integer bandwidth) throws InterruptedException {
         QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
         long count = vmMapper.selectCount(queryWrapper);
@@ -225,6 +239,15 @@ public class LibvirtController {
             VMInfo2 vm = new VMInfo2();
             vm.setName(name);
             vm.setUsetype(usetype);
+            vmMapper.updateById(vm);
+        }
+
+        if(bandwidth == null)
+        {
+            VMInfo2 vm = new VMInfo2();
+            vm.setName(name);
+            vm.setUpBandWidth(bandwidth);
+            vm.setDownBandWidth(bandwidth);
             vmMapper.updateById(vm);
         }
 

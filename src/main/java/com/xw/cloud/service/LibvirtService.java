@@ -214,49 +214,49 @@ public class LibvirtService {
         QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("ip", ip);
         VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
-        return getIndexByName(vminfo.getName());
+        return getIndexByName(vminfo.getName(),vminfo.getDownBandWidth(),vminfo.getUpBandWidth());
     }
 
     @SneakyThrows
-    public Virtual getIndexByName(String name) {
+    public Virtual getIndexByName(String name,int down,int up) {
         Domain domain = getDomainByName(name);
-        String data =SftpUtils.getexecon("virsh domiflist "+name);
-        StringReader stringReader = new StringReader(data);
-        BufferedReader reader = new BufferedReader(stringReader);
-        String line;
-        boolean headerFound = false;
-        String interfaceValue = null;
-
-        // 解析输出
-        while ((line = reader.readLine()) != null) {
-            if (!headerFound) {
-                if (line.contains("Interface")) {
-                    headerFound = true;
-                }
-                continue;
-            }
-
-            if (!line.trim().isEmpty()) {
-                // 提取Interface列的信息
-                String[] columns = line.split("\\s+");
-                if (columns.length > 1) {
-                    interfaceValue = columns[0];
-                    break;
-                }
-            }
-        }
-        // 关闭流和进程
-        reader.close();
-        // 输出Interface的值
-        if (interfaceValue != null) {
-            System.out.println("Interface: " + interfaceValue);
-        }
-
-        DomainInterfaceStats stats1 = domain.interfaceStats(interfaceValue);
-        Thread.sleep(1000);
-        DomainInterfaceStats stats2 = domain.interfaceStats(interfaceValue);
-        long bandwidth = (stats2.rx_bytes - stats1.rx_bytes + stats2.tx_bytes-stats1.tx_bytes) / 125;
-        System.out.printf("当前带宽大小为：%d KB/s", bandwidth);
+//        String data =SftpUtils.getexecon("virsh domiflist "+name);
+//        StringReader stringReader = new StringReader(data);
+//        BufferedReader reader = new BufferedReader(stringReader);
+//        String line;
+//        boolean headerFound = false;
+//        String interfaceValue = null;
+//
+//        // 解析输出
+//        while ((line = reader.readLine()) != null) {
+//            if (!headerFound) {
+//                if (line.contains("Interface")) {
+//                    headerFound = true;
+//                }
+//                continue;
+//            }
+//
+//            if (!line.trim().isEmpty()) {
+//                // 提取Interface列的信息
+//                String[] columns = line.split("\\s+");
+//                if (columns.length > 1) {
+//                    interfaceValue = columns[0];
+//                    break;
+//                }
+//            }
+//        }
+//        // 关闭流和进程
+//        reader.close();
+//        // 输出Interface的值
+//        if (interfaceValue != null) {
+//            System.out.println("Interface: " + interfaceValue);
+//        }
+//
+//        DomainInterfaceStats stats1 = domain.interfaceStats(interfaceValue);
+//        Thread.sleep(1000);
+//        DomainInterfaceStats stats2 = domain.interfaceStats(interfaceValue);
+//        long bandwidth = (stats2.rx_bytes - stats1.rx_bytes + stats2.tx_bytes-stats1.tx_bytes)  / 15625;
+//        System.out.printf("当前带宽大小为：%d Mbps", bandwidth);
         return Virtual.builder()
                 .id(domain.getID())
                 .name(name)
@@ -265,8 +265,10 @@ public class LibvirtService {
                 .useMem(getMem(domain))
                 .cpuNum(domain.getMaxVcpus())
                 .usecpu(getCpu(domain))
-                .bandwidth(bandwidth)
+//                .bandwidth(bandwidth)
                 .ipaddr(getVMip(domain.getName()))
+                .downBandWidth(down)
+                .upBandWidth(up)
                 .build();
     }
 

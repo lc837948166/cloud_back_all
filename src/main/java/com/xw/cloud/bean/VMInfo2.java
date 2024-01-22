@@ -57,4 +57,10 @@ public class VMInfo2 {
     @JsonProperty(value = "usetype")
     @ApiModelProperty(value = "federal or null")
     private String usetype;
+    @JsonProperty(value = "upBandWidth")
+    @ApiModelProperty(value = "upBandWidth")
+    private Integer upBandWidth;
+    @JsonProperty(value = "downBandWidth")
+    @ApiModelProperty(value = "downBandWidth")
+    private Integer downBandWidth;
 }
