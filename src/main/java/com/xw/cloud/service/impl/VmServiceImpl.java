@@ -20,7 +20,7 @@ public class VmServiceImpl extends ServiceImpl<VmMapper, VMInfo2> implements VmS
     private NodeService nodeService;
 
     @Override
-    public Map<String, Double> queryLatAndLon(String ip) {
+    public Map<String, Object> queryLatAndLon(String ip) {
         QueryWrapper queryWrapper = Wrappers.query();
         queryWrapper.eq("IP", ip);
         String serverIp = getOne(queryWrapper).getServerip();
@@ -32,9 +32,11 @@ public class VmServiceImpl extends ServiceImpl<VmMapper, VMInfo2> implements VmS
         }
         Double nodeLon = nodeInfo.getNodeLon();
         Double nodeLat = nodeInfo.getNodeLat();
-        Map<String, Double> map = new HashMap<>();
+        String bandwidth = nodeInfo.getBandwidth();
+        Map<String, Object> map = new HashMap<>();
         map.put("lon", nodeLon);
         map.put("lat", nodeLat);
+        map.put("bandwidth", bandwidth);
 //        list.add(nodeLon);
 //        list.add(nodeLat);
         return map;

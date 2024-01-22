@@ -79,14 +79,21 @@ public class LibvirtController {
     @ResponseBody
     @GetMapping("/getVMIndex/{ip:.*}")
     public CommentResp getVMIndex(@PathVariable("ip") String ip) {
-        Map<String, Double> coordinate = vmService.queryLatAndLon(ip);
-        Virtual virtual = libvirtService.getIndex(ip);
+        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ip", ip);
+        VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
+        if(vminfo==null)return new CommentResp(false, 201, "当前ip不存在");
+
+        Virtual virtual = libvirtService.getIndex(vminfo.getName(),vminfo.getUpBandWidth(),vminfo.getDownBandWidth());
+
+        Map<String, Object> node = vmService.queryLatAndLon(ip);
         Map<String, Object> data = new HashMap<>();
-        data.put("coordinate", coordinate);
+        data.put("coordinate", node);
         data.put("virtual", virtual);
 
         return new CommentResp(true, data, "查询成功");
     }
+
 //        return libvirtService.getIndex(ip);
 //    }
 
@@ -241,9 +248,7 @@ public class LibvirtController {
             vm.setUsetype(usetype);
             vmMapper.updateById(vm);
         }
-
-        if(bandwidth == null)
-        {
+        if(bandwidth==null) {
             VMInfo2 vm = new VMInfo2();
             vm.setName(name);
             vm.setUpBandWidth(bandwidth);

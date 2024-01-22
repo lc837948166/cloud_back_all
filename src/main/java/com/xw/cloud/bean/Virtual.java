@@ -26,8 +26,8 @@ public class Virtual {
     @JsonProperty(value = "ipaddr")
     private String ipaddr;
     @JsonProperty(value = "upBandWidth")
-    private long upBandWidth;
-    @JsonProperty(value = "upBandWidth")
-    private long downBandWidth;
+    private Integer upBW;
+    @JsonProperty(value = "downBandWidth")
+    private Integer downBW;
 
 }

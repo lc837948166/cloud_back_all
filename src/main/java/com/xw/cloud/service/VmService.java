@@ -12,5 +12,5 @@ public interface VmService extends IService<VMInfo2> {
      * @param ip
      * @return
      */
-    Map<String, Double> queryLatAndLon(String ip);
+    Map<String, Object> queryLatAndLon(String ip);
 }

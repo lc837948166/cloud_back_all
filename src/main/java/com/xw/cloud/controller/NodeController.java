@@ -395,6 +395,7 @@ public class NodeController {
 
                 Double nodeLon = 116.391276;//北京经度
                 Double nodeLat = 39.906217;//北京纬度
+                String bandwidth = "0";
 
                 // 检查节点是否存在于tNodeList中
                 boolean found = false;
@@ -407,7 +408,7 @@ public class NodeController {
                 // 如果在tNodeList中找不到相同的节点名和节点IP
                 if (!found) {
                     NodeInfo newNode = new NodeInfo(nodeName, nodeIP, nodeStatus, nodeLocation, nodeType,
-                            nodeConnectivity, nodeUserName, nodeUserPasswd, formattedDate, nodeLon, nodeLat, nodeName, nodeIP  );
+                            nodeConnectivity, nodeUserName, nodeUserPasswd, formattedDate, nodeLon, nodeLat, nodeName, nodeIP, bandwidth  );
                     nodeService.save(newNode);
                 }
             }

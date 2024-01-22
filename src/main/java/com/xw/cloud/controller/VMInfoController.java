@@ -42,14 +42,6 @@ public class VMInfoController {
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
 
-    @ApiOperation(value = "获取经纬度", notes = "根据虚拟机ip获取经纬度")
-    @ResponseBody
-    @RequestMapping("/queryLatAndLon")
-    public CommentResp queryLatAndLon(@RequestParam("vmip") String ip) {
-        Map<String, Double> coordinate = vmService.queryLatAndLon(ip);
-        return new CommentResp(true, coordinate,"查询成功");
-    }
-
     @ApiOperation(value = "修改status", notes = "根据ip修改status")
     @ResponseBody
     @RequestMapping("/updateStatus")

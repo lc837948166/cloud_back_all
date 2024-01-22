@@ -210,15 +210,12 @@ public class LibvirtService {
         return virtualList;
     }
     @SneakyThrows
-    public Virtual getIndex(String ip) {
-        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("ip", ip);
-        VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
-        return getIndexByName(vminfo.getName(),vminfo.getDownBandWidth(),vminfo.getUpBandWidth());
+    public Virtual getIndex(String name,int up,int down) {
+        return getIndexByName(name,up,down);
     }
 
     @SneakyThrows
-    public Virtual getIndexByName(String name,int down,int up) {
+    public Virtual getIndexByName(String name,int up,int down) {
         Domain domain = getDomainByName(name);
 //        String data =SftpUtils.getexecon("virsh domiflist "+name);
 //        StringReader stringReader = new StringReader(data);
@@ -267,8 +264,8 @@ public class LibvirtService {
                 .usecpu(getCpu(domain))
 //                .bandwidth(bandwidth)
                 .ipaddr(getVMip(domain.getName()))
-                .downBandWidth(down)
-                .upBandWidth(up)
+                .downBW(down)
+                .upBW(up)
                 .build();
     }
 
