@@ -248,7 +248,7 @@ public class LibvirtController {
             vm.setUsetype(usetype);
             vmMapper.updateById(vm);
         }
-        if(bandwidth==null) {
+        if(bandwidth!=null) {
             VMInfo2 vm = new VMInfo2();
             vm.setName(name);
             vm.setUpBandWidth(bandwidth);
