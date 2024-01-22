@@ -194,7 +194,7 @@ public class DockerImageController {
      * @param endIp 端ip
      * @return
      */
-    /*@PostMapping("/upload")
+    @PostMapping("/upload")
     @ApiOperation("上传到虚拟机 Docker 镜像")
     public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,
                                          @RequestParam("vmName") String vmName,
@@ -203,9 +203,9 @@ public class DockerImageController {
                                          @RequestParam("sourceIp") String sourceIp) {
          //省去云到端传镜像的步骤 默认Docker镜像直接保存在 端节点上
         // 发起获取文件路径的请求
-*//*        String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
+        String dispenseUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
         ResponseEntity<String> dispenseResponse = new RestTemplate().getForEntity(dispenseUrl, String.class);
-        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {*//*
+        if (dispenseResponse.getStatusCode().is2xxSuccessful()) {
             QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
             if (vmName != null && !vmName.equals("")) {
                 qw1.eq("nodeIp", endIp);
@@ -254,10 +254,10 @@ public class DockerImageController {
                 // 处理请求失败情况
                 return ResponseEntity.ok("fail");
             }
-      *//*  }else{
+        }else{
             return ResponseEntity.ok("fail");
-        }*//*
-    }*/
+        }
+    }
 
 
 /*    *
@@ -269,7 +269,7 @@ public class DockerImageController {
      * @param sourceIp 云ip
      * @param flag 是否为程序包
      * @return*/
-    @PostMapping("/upload")
+    @PostMapping("/upload1")
     @ApiOperation("上传到虚拟机 Docker 镜像")
     @OperationLogDesc(module = "镜像管理", events = "上传到虚拟机 Docker 镜像")
     public ResponseEntity<String> upload(@RequestParam(value = "fileName") String fileName,

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.Utils.*;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.service.*;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -904,6 +905,8 @@ public class TaskJob {
         String cpu_nums = taskUtils.getCpu_num();
         String diskss = taskUtils.getDisk();
         String docker_image_name = taskUtils.getDocker_image_name();
+        String bandwidths = taskUtils.getBandwidth();
+        boolean flag_bw = false;  //是否限制带宽 默认不限制
         String[] com = taskUtils.getCmds().split(",");
         String[] ipip = taskUtils.getPm_ip().split(",");
         String execution_method = taskUtils.getExecution_method();
@@ -916,6 +919,9 @@ public class TaskJob {
             bw.write("缺少虚拟机镜像名\n");
             bw.close();
             return;
+        }
+        if(bandwidths!=null && !bandwidths.equals("")){
+            flag_bw = true;
         }
         if(execution_method == null || execution_method.equals("")){
             task.setSTATUS(5);
@@ -982,9 +988,11 @@ public class TaskJob {
         Integer[] cpu = new Integer[vmNum];
         Integer[] memory = new Integer[vmNum];
         Integer[] disk = new Integer[vmNum];
+        Integer[] bws = new Integer[vmNum];
         String[] cpu_split = cpu_nums.split(",");
         String[] memory_split = memorys.split(",");
         String[] disk_split = diskss.split(",");
+        String[] bws_split = bandwidths.split(",");
 //            处理cpu
         if (vmNum == 1) {
             if (cpu_split.length != 1) {
@@ -1078,10 +1086,44 @@ public class TaskJob {
                 }
             }
         }
+        if(flag_bw){
+            //处理bw
+            if (vmNum == 1) {
+                if (bws_split.length != 1) {
+                    task.setSTATUS(5);
+                    taskUtils.setTask_status(5);
+                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                    taskService.updateById(task);
+                    bw.write("带宽输入有误\n");
+                    bw.close();
+                    return;
+                }
+                bws[0] = (int) Double.parseDouble(bws_split[0]);
+            } else {
+                if (bws_split.length != 1 && bws_split.length != vmNum) {
+                    task.setSTATUS(5);
+                    taskUtils.setTask_status(5);
+                    task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                    taskService.updateById(task);
+                    bw.write("磁盘数输入有误");
+                    bw.close();
+                    return;
+                } else if (bws_split.length == 1) {
+                    for (int i = 0; i < vmNum; i++) {
+                        bws[i] = (int) Double.parseDouble(bws_split[0]);
+                    }
+                } else if (bws_split.length == vmNum) {
+                    for (int i = 0; i < vmNum; i++) {
+                        bws[i] = (int) Double.parseDouble(bws_split[i]);
+                    }
+                }
+            }
+        }
         //计算每个节点需要分配的虚拟机数
         int vn = vmNum / node_number;
         int vn_end = vmNum % node_number + vn;
         int cnt = 0;
+        int bw_singe = -1;
         for (int i = 0; i < nodes.size(); i++) {
             NodeInfo node = nodes.get(i);
             if (i == nodes.size() - 1) {
@@ -1091,12 +1133,16 @@ public class TaskJob {
             String url = "http://" + Pmip + sufixUrl;
             String vmIp = "";
             for (int j = 0; j < vn; j++) {
+                VMInfo2 vm;
+                bw_singe = -1;
                 String vmi_name = vm_name + "_" + (cnt + 1);
                 System.out.println("节点" + node.getNodeName() + "创建第" + (cnt + 1) + "个虚拟机");
                 bw.write("节点" + node.getNodeName() + "创建第" + (cnt + 1) + "个虚拟机" + vmi_name + "\n");
                 //创建虚拟机
                 try {
-                    ans = processUtils.createVM(vm_image_name, vmi_name, memory[cnt], cpu[cnt], OStype, nettype, Pmip,usetype);
+                    if(flag_bw)
+                        bw_singe = bws[cnt];
+                    ans = processUtils.createVM(vm_image_name, vmi_name, memory[cnt], cpu[cnt], OStype, nettype, Pmip,usetype, bw_singe);
                     if (ans.contains("200")) {
                         if (ans.contains("重复")) {
                             task.setSTATUS(5);
@@ -1109,12 +1155,13 @@ public class TaskJob {
                         } else {
                             QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
                             qw1.eq("name", vmi_name);
-                            VMInfo2 vm = vmService.getOne(qw1);
+                            vm = vmService.getOne(qw1);
                             if (vm.getIp() == null) {
                                 task.setSTATUS(5);
                                 taskUtils.setTask_status(5);
                                 task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                                 bw.write("虚拟机未获得IP，创建失败\n");
+                                System.out.println("虚拟机未获得IP，创建失败");
                                 taskService.updateById(task);
                                 bw.close();
                                 return;
@@ -1130,10 +1177,12 @@ public class TaskJob {
                             }
                         }
                     } else {
+                        System.out.println(ans);
                         task.setSTATUS(5);
                         taskUtils.setTask_status(5);
                         task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                         bw.write("虚拟机创建失败\n");
+                        System.out.println("ans虚拟机创建失败");
                         taskService.updateById(task);
                         bw.close();
                         return;
@@ -1149,7 +1198,6 @@ public class TaskJob {
                 }
                 QueryWrapper<VMInfo2> qw1 = new QueryWrapper();
                 qw1.eq("name", vmi_name);
-                VMInfo2 vm = vmService.getOne(qw1);
                     //上传文件到虚拟机
                     bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机\n");
                     System.out.println("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机上传文件到虚拟机");
@@ -1233,8 +1281,9 @@ public class TaskJob {
                         }
                     }
                 }
-                List<String> c2 = new ArrayList<>();
-                List<String> c1 = new ArrayList<>();
+                List<String> c2 = new ArrayList<>(); //传文件命令
+                List<String> c1 = new ArrayList<>(); //镜像启动命令
+                List<String> c3 = new ArrayList<>();
                 for (String s : com) {
                     if (s.contains("sshpass")) {
                         int p = (cnt+1)%20;
@@ -1245,6 +1294,12 @@ public class TaskJob {
                     } else {
                         c1.add(s);
                     }
+                }
+                if(flag_bw){ //需要执行带宽命令
+                    bw_singe  = bw_singe*1000;
+                    String ens = vm.getNic();
+                    String won = "wondershaper "+ens+" "+bw_singe+" "+bw_singe+"";
+                    c3.add(won);
                 }
                 if (c2.size()>0) {
                     HttpHeaders headers2 = new HttpHeaders();
@@ -1291,14 +1346,44 @@ public class TaskJob {
                         new HttpEntity<>(requestBody1, headers1),
                         String.class
                 );
+                System.out.println(response1.toString());
                 if (!response1.toString().contains("\"exitStatus\":0")) {
                     task.setSTATUS(5);
-                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机执行命令运行镜像失败\n");
+                    bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机执行命令失败\n");
                     taskUtils.setTask_status(5);
                     task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
                     taskService.updateById(task);
                     bw.close();
                     return;
+                }
+                if(c3.size()>0) {
+                    //执行命令运行镜像
+                    HttpHeaders headers3 = new HttpHeaders();
+                    headers3.setContentType(MediaType.APPLICATION_JSON);
+                    // 构建请求体
+                    Map<String, Object> requestBody3 = new HashMap<>();
+                    requestBody3.put("host", vm.getIp());
+                    requestBody3.put("username", vm.getUsername());
+                    requestBody3.put("password", vm.getPasswd());
+                    requestBody3.put("commands", c3);
+                    System.out.println(c3);
+                    // 发起请求
+                    ResponseEntity<String> response3 = new RestTemplate().exchange(
+                            url,
+                            HttpMethod.POST,
+                            new HttpEntity<>(requestBody3, headers3),
+                            String.class
+                    );
+                    System.out.println(response3.toString());
+                    if (!response3.toString().contains("\"exitStatus\":0")) {
+                        task.setSTATUS(5);
+                        bw.write("节点" + node.getNodeName() + "第" + (cnt + 1) + "个虚拟机执行命令失败\n");
+                        taskUtils.setTask_status(5);
+                        task.setTASK_ATTRIBUTES_VALUES(mapper.writeValueAsString(taskUtils));
+                        taskService.updateById(task);
+                        bw.close();
+                        return;
+                    }
                 }
                 cnt++;
             }

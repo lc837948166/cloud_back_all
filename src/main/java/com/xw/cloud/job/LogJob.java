@@ -2,13 +2,11 @@ package com.xw.cloud.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jcraft.jsch.*;
-import com.sun.scenario.effect.impl.sw.java.JSWBlend_SRC_OUTPeer;
 import com.xw.cloud.bean.NodeInfo;
 import com.xw.cloud.bean.OperationLog;
 import com.xw.cloud.bean.PodLog;
 import com.xw.cloud.bean.VMLog;
 import com.xw.cloud.inter.OperationLogDesc;
-import com.xw.cloud.resp.CommentResp;
 import com.xw.cloud.service.impl.NodeServiceImpl;
 import com.xw.cloud.service.impl.OperationLogServiceImpl;
 import com.xw.cloud.service.impl.PodLogServiceImpl;
@@ -23,13 +21,10 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
-import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ResourceUtils;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -41,12 +36,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
+//
 @Component
 @EnableScheduling
 public class LogJob {
 
-    @Value("${k8s.config}")
+  /*  @Value("${k8s.config}")
     private String k8sConfig;
 
     @Value("${VM.ip}")
@@ -54,7 +49,7 @@ public class LogJob {
     @Value("${VM.username}")
     private String username;
     @Value("${VM.password}")
-    private String password;
+    private String password;*/
 
 
     @Autowired
@@ -70,6 +65,7 @@ public class LogJob {
     private NodeServiceImpl nodeService;
 
     private static  Integer saveDays = 1;
+    private static  Integer VMSaveDays = 30;
     @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
     @Scheduled(cron = "0 */1 * * * ?")
     public void deleteLog(){
@@ -95,7 +91,7 @@ public class LogJob {
     @Scheduled(cron = "0 */1 * * * ?")
     public void deleteVMLog(){ // 一天执行一次虚拟机日志 删除30天之前的
         Date now = new Date();
-        String deleteDate= getDeleteDate(now,saveDays);
+        String deleteDate= getDeleteDate(now,VMSaveDays);
         try{
             vmLogService.remove(new QueryWrapper<VMLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
@@ -175,10 +171,9 @@ public class LogJob {
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         Session session = null;
         List<NodeInfo> nodes = nodeService.list();
-
         for (int k = 0; k < nodes.size(); k++) {
             NodeInfo nodeInfo = nodes.get(k);
-            if(nodeInfo.getIsSchedulable() != 1){
+            if(nodeInfo.getIsSchedulable() != null || nodeInfo.getIsSchedulable() != 1){
                 continue;
             }
             StringBuilder result = new StringBuilder();
@@ -250,7 +245,7 @@ public class LogJob {
                             qw.eq("AddTime", t);
                             //增加判断日志是否为30天以内的
                             //VM Container
-                            String deleteDate = getDeleteDate(new Date(), saveDays);
+                            String deleteDate = getDeleteDate(new Date(), VMSaveDays);
                             Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                             if(da.compareTo(before30) > 0) {
                                 List list = vmLogService.list(qw);
@@ -283,7 +278,7 @@ public class LogJob {
                     String t = date + " " + time;
                     SimpleDateFormat dateFormat_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     Date da = dateFormat_.parse(t);
-                    String deleteDate = getDeleteDate(new Date(), saveDays);
+                    String deleteDate = getDeleteDate(new Date(), VMSaveDays);
                     Date before30 = dateFormat_.parse(deleteDate);  //30天之前
                     if (da.compareTo(before30) > 0) {
                         QueryWrapper qw = new QueryWrapper<>();
@@ -307,9 +302,6 @@ public class LogJob {
                 }
             }
         }
-
-
-
     }
     public static String getDeleteDate(Date now,int days){
         Calendar calendar = Calendar.getInstance();

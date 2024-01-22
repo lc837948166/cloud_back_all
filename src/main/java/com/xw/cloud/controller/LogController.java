@@ -50,7 +50,7 @@ import java.util.List;
 @CrossOrigin
 @RequestMapping("log")
 public class LogController {
-    @Value("${k8s.config}")
+/*    @Value("${k8s.config}")
     private String k8sConfig;
 
     @Value("${VM.ip}")
@@ -58,10 +58,10 @@ public class LogController {
     @Value("${VM.username}")
     private String username;
     @Value("${VM.password}")
-    private String password;
+    private String password;*/
 
     private static Integer saveDay = 1;
-
+    private static Integer VMSaveDay = 30;
     @Autowired
     private OperationLogServiceImpl operationLogService;
 
@@ -103,6 +103,11 @@ public class LogController {
     @ResponseBody
     public CommentResp getSaveDays() {
         return new CommentResp(true,saveDay,"");
+    }
+    @RequestMapping(value = "/getVMSaveDays", method = RequestMethod.GET)
+    @ResponseBody
+    public CommentResp getVMSaveDays() {
+        return new CommentResp(true,VMSaveDay,"");
     }
     @ApiOperation(value = "删除操作日志", notes = "根据ID删除指定的操作日志")
     @DeleteMapping(value = "/deleteLog/{id}")
@@ -296,9 +301,15 @@ public class LogController {
     @OperationLogDesc(module = "日志管理", events = "查询虚拟机名")
     @ResponseBody
     public CommentResp getVMName() throws IOException, ApiException, JSchException {
-        List<NodeInfo> nodes = nodeService.list();
         List<SelectResp> selectResps = new LinkedList<>();
-        for (int k = 0; k < nodes.size(); k++) {
+        List<String> vmNames = vmLogService.getVmName();
+        for(String vm: vmNames){
+            SelectResp selectResp = new SelectResp();
+            selectResp.setLabel(vm);
+            selectResp.setValue(vm);
+            selectResps.add(selectResp);
+        }
+        /*for (int k = 0; k < nodes.size(); k++) {
             NodeInfo nodeInfo =nodes.get(k);
             if(nodeInfo.getIsSchedulable() != 1){
                 continue;
@@ -344,7 +355,7 @@ public class LogController {
                 selectResp.setValue(vname);
                 selectResps.add(selectResp);
             }
-        }
+        }*/
         return new CommentResp(true,selectResps,"");
     }
 }

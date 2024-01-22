@@ -94,7 +94,7 @@ public class ProcessUtils {
              * sourceIp:云节点IP  39.98.124.97
              * 端节点 需要安装sshpash   https://blog.csdn.net/michaelwoshi/article/details/108902192
              */
-            String apiUrl = "http://39.98.124.97:8080/docker/upload";
+            String apiUrl = "http://39.98.124.97:8080/docker/upload1";
             String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp+"&&flag="+flag; // 要传递的参数
             // 构建URL对象
             System.out.println(params);
@@ -159,7 +159,7 @@ public class ProcessUtils {
                 return  ""+responseCode;
             }
     }
-    public  String createVM(String ImgName, String name, Integer memory,Integer cpuNum,String OStype,String  nettype,String serverip,String usetype) throws Exception {
+    public  String createVM(String ImgName, String name, Integer memory,Integer cpuNum,String OStype,String  nettype,String serverip,String usetype,Integer bw) throws Exception {
         HttpURLConnection conn = null;
         BufferedReader reader = null;
 //            http://39.98.124.97:8080/addVirtual?ImgName=TinyCore-current.iso&name=Tiny&memory=2&cpuNum=1&OStype=X86&nettype=bridge&serverip=undefined
@@ -178,6 +178,9 @@ public class ProcessUtils {
             newServerIp = "192.168.194.178";
         }
         String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + newServerIp+"&usetype="+usetype; // 要传递的参数
+        if(bw>0){
+            params += "&bandwidth="+bw;
+        }
         System.out.println(params);
         // 构建URL对象
         URL url = new URL(apiUrl + "?" + params);

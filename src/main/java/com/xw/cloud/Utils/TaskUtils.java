@@ -18,7 +18,7 @@ public class TaskUtils {
     private String  ports;
     private String disk;
     private String docker_image_name;
-    private Integer bandwidth;
+    private String bandwidth;
     private String cmds;
     private String vm_ip;
     private String routing_rules;
@@ -137,11 +137,11 @@ public class TaskUtils {
         this.docker_image_name = docker_image_name;
     }
 
-    public Integer getBandwidth() {
+    public String getBandwidth() {
         return bandwidth;
     }
 
-    public void setBandwidth(Integer bandwidth) {
+    public void setBandwidth(String bandwidth) {
         this.bandwidth = bandwidth;
     }
 
