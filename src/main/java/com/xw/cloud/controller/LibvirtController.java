@@ -3,6 +3,7 @@ package com.xw.cloud.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.xw.cloud.Utils.CommentResp;
+import com.xw.cloud.Utils.SftpUtils;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.inter.OperationLogDesc;
 import com.xw.cloud.mapper.VmMapper;
@@ -210,10 +211,23 @@ public class LibvirtController {
 
     @ApiOperation(value = "跳转至添加虚拟机页面", notes = "返回添加虚拟机的界面")
     @RequestMapping("/toAddVirtual")
-    public String toAddVirtual(Model model) {
-        String netState = libvirtService.getNetState();
-        model.addAttribute("netState", netState);
-        return "addVirtual";
+    @ResponseBody
+    public String toAddVirtual(@RequestParam("name") String name,@RequestParam("ip") String ip) {
+
+            VMInfo2 vmInfo2 = new VMInfo2();
+            vmInfo2.setName(name);
+            String data= SftpUtils.getexecon1(ip,"cat /proc/net/dev | awk '{i++; if(i>2){print $1}}' | sed 's/^[\\t]*//g' | sed 's/[:]*$//g'");
+            String[] lines = data.split("\\r?\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String str = lines[i];
+            if (str.charAt(0) == 'e') {
+                System.out.println("Index: " + i + ", String: " + str);
+            }
+        }
+
+            System.out.println(lines[0]);
+            return data;
+
     }
 
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")

@@ -628,7 +628,26 @@ public class LibvirtService {
                 }
                 else break;
                 }
+        updateNIC(vmc.getName(),vmMapper.selectById(vmc.getName()).getIp());
+
             }
+
+     public void updateNIC(String name,String ip){
+         VMInfo2 vmInfo2 = new VMInfo2();
+         vmInfo2.setName(name);
+         String data= SftpUtils.getexecon1(ip,"cat /proc/net/dev | awk '{i++; if(i>2){print $1}}' | sed 's/^[\\t]*//g' | sed 's/[:]*$//g'");
+         String[] lines = data.split("\\r?\\n");
+         String nic="eth0";
+         for (int i = 0; i < lines.length; i++) {
+             String str = lines[i];
+             if (str.charAt(0) == 'e') {
+                 System.out.println("Index: " + i + ", String: " + str);
+                 nic=str;
+             }
+         }
+         vmInfo2.setNic(nic);
+         vmMapper.updateById(vmInfo2);
+     }
 
 
     /**

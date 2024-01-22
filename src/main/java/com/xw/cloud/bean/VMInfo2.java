@@ -63,4 +63,7 @@ public class VMInfo2 {
     @JsonProperty(value = "downBandWidth")
     @ApiModelProperty(value = "downBandWidth")
     private Integer downBandWidth;
+    @JsonProperty(value = "nic")
+    @ApiModelProperty(value = "nic")
+    private String nic;
 }
