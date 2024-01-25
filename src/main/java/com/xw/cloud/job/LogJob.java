@@ -36,7 +36,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-//
 @Component
 @EnableScheduling
 public class LogJob {
@@ -98,7 +97,7 @@ public class LogJob {
         }
     }
     @OperationLogDesc(module = "日志管理", events = "容器日志定时添加")
-    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */5 * * * ?")
     public void addPodLog() throws IOException, ApiException, ParseException {
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
 // 使用 InputStream 和 InputStreamReader 读取配置文件
@@ -167,7 +166,7 @@ public class LogJob {
     }
 
     @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时添加")
-    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */5 * * * ?")
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         Session session = null;
         List<NodeInfo> nodes = nodeService.list();

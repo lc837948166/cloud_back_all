@@ -46,7 +46,8 @@ public class TaskJob {
         taskList.add(45);
     }
     @Scheduled(cron = "0 */1 * * * ?")
-    public void deleteVM() throws JsonProcessingException {
+    public void deleteVM() throws JsonProcessingException
+    {
         ProcessUtils processUtils = new ProcessUtils();
         List<Task> tasks = taskService.list(new QueryWrapper<Task>().eq("TYPE_ID", 23));
         String ans = null;
@@ -941,7 +942,19 @@ public class TaskJob {
                 || task.getTASK_DESCRIPTION().contains("FL")
                 || task.getTASK_DESCRIPTION().contains("联邦")){
             usetype = "federal";
+        }else if(execution_method.contains("BC")
+                || execution_method.contains("blockchain")
+                || task.getTASK_NAME().contains("区块")
+                || task.getTASK_NAME().contains("blockchain")
+                || task.getTASK_DESCRIPTION().contains("区块")
+                || task.getTASK_DESCRIPTION().contains("blockchain")){
+            usetype = "blockchain";
         }
+
+        if((task.getTASK_NAME().contains("联邦") && task.getTASK_NAME().contains("区块"))||(task.getTASK_DESCRIPTION().contains("联邦") && task.getTASK_DESCRIPTION().contains("区块"))){
+            usetype = "flbc";
+        }
+
         vm_image_name = "centos.qcow2";
 //        if (docker_image_name == null || docker_image_name.equals("")) {
 //            task.setSTATUS(5);
@@ -1208,7 +1221,7 @@ public class TaskJob {
                             flag = false;
                         }
                         try {
-                            ans = processUtils.uploadDockerToVM(docker_image, vmi_name, taskUtils.getPm_ip(),flag);
+                            ans = processUtils.uploadDockerToVM(docker_image, vmi_name, vm.getServerip(),flag);
                         } catch (Exception e) {
                             task.setSTATUS(5);
                             taskUtils.setTask_status(5);
@@ -1286,12 +1299,29 @@ public class TaskJob {
                 List<String> c3 = new ArrayList<>();
                 for (String s : com) {
                     if (s.contains("sshpass")) {
-                        int p = (cnt+1)%20;
-                        if(p == 0)
-                            p = 20;
-                        s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/Cancer_Predict root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/News_Class root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m"+p+"/Flower_XW root@"+vmIp+":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@"+vmIp+":/home/pro/";
-                        c2.add(s);
-                    } else {
+                        if ("federal".equals(usetype)) {
+                            int p = (cnt + 1) % 20;
+                            if (p == 0)
+                                p = 20;
+                            s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Cancer_Predict root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/News_Class root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Flower_XW root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@" + vmIp + ":/home/pro/";
+                            c2.add(s);
+                        }else if("blockchain".equals(usetype)){
+                            s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/qukuai/testwork root@"+vmIp+":/root & " +
+                                "sshpass -p 111 scp -o StrictHostKeyChecking=no /etc/usr/xwfiles/qukuai/node_json.py root@"+vmIp+":/home/pro/appdata & " +
+                                "sshpass -p 111 scp -o StrictHostKeyChecking=no /etc/usr/xwfiles/qukuai/qukuailog.py root@"+vmIp+":/home/pro/appdata";
+                            c2.add(s);
+                        }else if("flbc".equals(usetype)){
+                            int p = (cnt + 1) % 20;
+                            if (p == 0)
+                                p = 20;
+                            s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Cancer_Predict root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/News_Class root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Flower_XW root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@" + vmIp + ":/home/pro/";
+                            c2.add(s);
+                            s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/qukuai/testwork root@"+vmIp+":/root & " +
+                                "sshpass -p 111 scp -o StrictHostKeyChecking=no /etc/usr/xwfiles/qukuai/node_json.py root@"+vmIp+":/home/pro/appdata & " +
+                                "sshpass -p 111 scp -o StrictHostKeyChecking=no /etc/usr/xwfiles/qukuai/qukuailog.py root@"+vmIp+":/home/pro/appdata";
+                            c2.add(s);
+                        }
+                    }else {
                         c1.add(s);
                     }
                 }
