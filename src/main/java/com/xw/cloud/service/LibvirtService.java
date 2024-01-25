@@ -744,8 +744,8 @@ public class LibvirtService {
     @SneakyThrows
     public void deletePort(String name) {
         String targetIpAddress =vmMapper.selectById(name).getIp();
-        String hostport = vmMapper.selectById(name).getHostport();
-        if (hostport != null && !hostport.isEmpty()) {
+        Integer hostport = vmMapper.selectById(name).getHostport();
+        if (hostport != null) {
         String filePath = "/etc/rinetd.conf";
         int linesToRemove = 5;
 
