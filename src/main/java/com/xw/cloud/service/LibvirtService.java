@@ -744,6 +744,8 @@ public class LibvirtService {
     @SneakyThrows
     public void deletePort(String name) {
         String targetIpAddress =vmMapper.selectById(name).getIp();
+        String hostport = vmMapper.selectById(name).getHostport();
+        if (hostport != null && !hostport.isEmpty()) {
         String filePath = "/etc/rinetd.conf";
         int linesToRemove = 5;
 
@@ -778,8 +780,7 @@ public class LibvirtService {
         String startCommand = "rinetd -c /etc/rinetd.conf";
         ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", startCommand);
         Process process = processBuilder.start();
-
-
+        }
     }
 
 
