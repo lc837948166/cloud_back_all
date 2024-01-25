@@ -60,8 +60,8 @@ public class ImagesController {
             @ApiResponse(code = 500, message = "删除失败")
     })
     @ResponseBody
-    @RequestMapping(value = "/deleteImg/{name}",method = RequestMethod.DELETE)
-    public CommentResp deleteImg(@PathVariable("name") String name) {
+    @RequestMapping(value = "/deleteImg",method = RequestMethod.DELETE)
+    public CommentResp deleteImg(@RequestParam("name") String name) {
         boolean result=imagesService.deleteImgFile(name);
         if(result)return new CommentResp(true, null,"删除成功");
         else return new CommentResp(true, null,"删除失败");
