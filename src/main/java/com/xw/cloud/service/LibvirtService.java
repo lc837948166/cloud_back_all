@@ -210,12 +210,12 @@ public class LibvirtService {
         return virtualList;
     }
     @SneakyThrows
-    public Virtual getIndex(String name,int up,int down) {
+    public Virtual getIndex(String name,Integer up,Integer down) {
         return getIndexByName(name,up,down);
     }
 
     @SneakyThrows
-    public Virtual getIndexByName(String name,int up,int down) {
+    public Virtual getIndexByName(String name,Integer up,Integer down) {
         Domain domain = getDomainByName(name);
 //        String data =SftpUtils.getexecon("virsh domiflist "+name);
 //        StringReader stringReader = new StringReader(data);
