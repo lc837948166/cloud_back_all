@@ -30,8 +30,10 @@ public class VmServiceImpl extends ServiceImpl<VmMapper, VMInfo2> implements VmS
         if(Objects.isNull(nodeInfo)) {
             throw new RuntimeException("虚拟机所在节点不存在，无法查询！");
         }
-        Double nodeLon = nodeInfo.getNodeLon();
-        Double nodeLat = nodeInfo.getNodeLat();
+//        Double nodeLon = nodeInfo.getNodeLon();
+//        Double nodeLat = nodeInfo.getNodeLat();
+        Double nodeLon = null;
+        Double nodeLat = null;
         String bandwidth = nodeInfo.getBandwidth();
         Map<String, Object> map = new HashMap<>();
         map.put("lon", nodeLon);
