@@ -22,7 +22,7 @@ public class ProcessUtils {
          * @param endIp 端节点ip
          * @return
          */
-        String apiUrl = "http://39.98.124.97:8080/docker/run";
+        String apiUrl = "http://39.101.136.242:8080/docker/run";
         String params = "imageName=k8s.gcr.io/pause:3.2&vmName=test1&endIp=192.168.194.164"; // 要传递的参数
         // 构建URL对象
         URL url = new URL(apiUrl + "?" + params);
@@ -56,7 +56,7 @@ public class ProcessUtils {
          * @param endIp 端节点 IP
          * @return
          */
-        String apiUrl = "http://39.98.124.97:8080/docker/import";
+        String apiUrl = "http://39.101.136.242:8080/docker/import";
         String params = "imageFileName=" + imageFileName + "&vmName=" + vmName + "&targetPath=/etc/usr/xwfiles/&endIp=" + endIp; // 要传递的参数
         // 构建URL对象
         URL url = new URL(apiUrl + "?" + params);
@@ -94,7 +94,7 @@ public class ProcessUtils {
              * sourceIp:云节点IP  39.98.124.97
              * 端节点 需要安装sshpash   https://blog.csdn.net/michaelwoshi/article/details/108902192
              */
-            String apiUrl = "http://39.98.124.97:8080/docker/upload1";
+            String apiUrl = "http://39.101.136.242:8080/docker/upload1";
             String params = "fileName="+fileName+"&vmName="+vmName+"&targetPath=/etc/usr/xwfiles&endIp="+endIp+"&flag="+flag; // 要传递的参数
             // 构建URL对象
             System.out.println(params);
@@ -133,7 +133,7 @@ public class ProcessUtils {
              *    fileName:docker镜像名 或者程序包名  存在云节点文件夹中
              *    endip:端节点IP
              */
-            String apiUrl = "http://39.98.124.97:8081/api/ssh/dispenseImgByIP";
+            String apiUrl = "http://39.101.136.242:8081/api/ssh/dispenseImgByIP";
             String params = "sourceip="+sourceip+"&fileName="+fileName+"&endip="+endip; // 要传递的参数
             // 构建URL对象
             URL url = new URL(apiUrl + "?" + params);
@@ -174,8 +174,8 @@ public class ProcessUtils {
          * serverip: 端节点的IP，虚拟机的宿主机的IP
          */
         String newServerIp = serverip;
-        if(serverip.equals("39.98.124.97")){
-            newServerIp = "192.168.194.178";
+        if(serverip.equals("39.101.136.242")){
+            newServerIp = "192.168.194.142";
         }
         String params = "ImgName=" + ImgName + "&name=" + name + "&memory=" + memory + "&cpuNum=" + cpuNum + "&OStype=" + OStype + "&nettype=" + nettype + "&serverip=" + newServerIp+"&usetype="+usetype; // 要传递的参数
         if(bw>0){
