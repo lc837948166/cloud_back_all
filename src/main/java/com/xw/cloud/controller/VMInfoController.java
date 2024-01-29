@@ -169,6 +169,14 @@ public class VMInfoController {
                     Map<String, Object> hostportEntry = new HashMap<>();
                     hostportEntry.put(String.valueOf(fixedNumbers.get(i)), String.valueOf(hostport + i));
                     hostportList.add(hostportEntry);
+                    if(i==fixedNumbers.size()-1) {
+                        Map<String, Object> hostportEntry2 = new HashMap<>();
+                        hostportEntry2.put(String.valueOf(8085), String.valueOf(8085));
+                        hostportList.add(hostportEntry2);
+                        Map<String, Object> hostportEntry3 = new HashMap<>();
+                        hostportEntry3.put(String.valueOf(8086), String.valueOf(8086));
+                        hostportList.add(hostportEntry3);
+                    }
                 }
                 modifiedEntry.put("hostport", hostportList);
                 modifiedList.add(modifiedEntry);

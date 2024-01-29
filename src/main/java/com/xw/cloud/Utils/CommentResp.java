@@ -1,5 +1,8 @@
 package com.xw.cloud.Utils;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public class CommentResp {
     boolean success;
     Object content;
