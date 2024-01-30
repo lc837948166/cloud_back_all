@@ -1,10 +1,9 @@
 package com.xw.cloud.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.Utils.CommentResp;
-import com.xw.cloud.Utils.CommonResp;
+import com.xw.cloud.Utils.RemoteVMUtils;
 import com.xw.cloud.Utils.SftpUtils;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.inter.OperationLogDesc;
@@ -15,7 +14,6 @@ import com.xw.cloud.service.VmService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
-import org.libvirt.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,15 +24,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.http.*;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.ResponseErrorHandler;
-import org.springframework.web.client.RestTemplate;
 
 @Api(tags = "虚拟化资源管理", description = "管理虚拟机、快照和存储池等虚拟化资源")
 @CrossOrigin
@@ -77,18 +69,29 @@ public class LibvirtController {
 
     @ApiOperation(value = "获取虚拟机列表", notes = "列出所有的虚拟机")
     @ResponseBody
-    @GetMapping("/getVMList")
+    @SneakyThrows
+    @GetMapping("/getVMList/{ip:.*}")
     @OperationLogDesc(module = "虚拟机管理", events = "获取虚拟机列表")
-    public List<Virtual> getVMList() {
-        return libvirtService.getVirtualList();
-    }
+    public List getVMList(@PathVariable("ip") String ip) {
+        System.out.println(ip);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + ip + ":8080/getVMList");
+            ObjectMapper mapper1 = new ObjectMapper();
+            mapper1.readValue(response.toString(), List.class);
+            // 处理响应
+            return mapper1.readValue(response.toString(), List.class);
+        }
 
     @ApiOperation(value = "获取虚拟机指标列表", notes = "列出所有的虚拟机指标")
     @ResponseBody
-    @GetMapping("/getVMIndexList")
+    @SneakyThrows
+    @GetMapping("/getVMIndexList/{ip:.*}")
     @OperationLogDesc(module = "虚拟机管理", events = "获取虚拟机指标列表")
-    public List<Virtual> getVMIndexList() {
-        return libvirtService.getIndexList();
+    public List<Virtual> getVMIndexList(@PathVariable("ip") String ip) {
+        StringBuilder response = RemoteVMUtils.httputil("http://" + ip + ":8080/getVMIndexList");
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), List.class);
+//        return libvirtService.getIndexList();
     }
 
     @ApiOperation(value = "获取虚拟机指标列表", notes = "列出虚拟机指标")
@@ -100,32 +103,12 @@ public class LibvirtController {
         queryWrapper.eq("ip", ip);
         VMInfo2 vminfo = vmMapper.selectOne(queryWrapper);
         if(vminfo.getServerip()!=null) {
-            HttpURLConnection conn = null;
-            BufferedReader reader = null;
-            String apiUrl = "http://" + vminfo.getServerip() + ":8080/getVMIndex/" + ip;
-            URL url = new URL(apiUrl);
-            System.out.println(url);
-            // 创建HTTP连接
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setConnectTimeout(30 * 60000);
-            conn.setReadTimeout(30 * 60000);
-            // 发送请求并获取响应
-            int responseCode = conn.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                // 读取响应
-                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String line;
-                StringBuilder response = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
+                StringBuilder response = RemoteVMUtils.httputil("http://" + vminfo.getServerip() + ":8080/getVMIndex/" + ip);
                 ObjectMapper mapper1 = new ObjectMapper();
                 mapper1.readValue(response.toString(), CommentResp.class);
                 // 处理响应
                 return mapper1.readValue(response.toString(), CommentResp.class);
             }
-        }
         if(vminfo==null)return new CommentResp(false, 201, "当前ip不存在");
 
         Virtual virtual = libvirtService.getIndex(vminfo.getName(),vminfo.getUpBandWidth(),vminfo.getDownBandWidth());
@@ -156,8 +139,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "启动虚拟机")
     public CommentResp initiateVirtual(@PathVariable("name") String name) {
-        libvirtService.initiateDomainByName(name);
-        return new CommentResp(true, null,"启动成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/initiate/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "更改虚拟机配置", notes = "根据虚拟机名称更改虚拟机配置")
@@ -166,10 +152,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "更改虚拟机配置")
     public CommentResp changeVM(@PathVariable("name") String name,@RequestParam("cpuNum") int cpu,@RequestParam("memory") int mem) {
-        libvirtService.shutdownDomainByName(name);
-        Thread.sleep(5000);
-        libvirtService.changeVMByName(name,cpu,mem);
-        return new CommentResp(true, null,"更改虚拟机配置成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/changeVM/"+name+"?memory="+mem+"&cpuNum="+cpu);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "挂起虚拟机", notes = "根据虚拟机名称挂起虚拟机")
@@ -178,8 +165,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "挂起虚拟机")
     public CommentResp suspendedVirtual(@PathVariable("name") String name) {
-        libvirtService.suspendedDomainName(name);
-        return new CommentResp(true, null,"挂起成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/suspended/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "恢复虚拟机", notes = "根据虚拟机名称恢复虚拟机")
@@ -188,8 +178,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "恢复虚拟机")
     public CommentResp resumeVirtual(@PathVariable("name") String name) {
-        libvirtService.resumeDomainByName(name);
-        return new CommentResp(true, null,"还原成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/resume/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "保存虚拟机", notes = "根据虚拟机名称保存虚拟机")
@@ -216,8 +209,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "关闭虚拟机")
     public CommentResp shutdownVirtual(@PathVariable("name") String name) {
-        libvirtService.shutdownDomainByName(name);
-        return new CommentResp(true, null,"关机成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/shutdown/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "强制关闭虚拟机", notes = "强制关闭指定的虚拟机")
@@ -226,8 +222,11 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "强制关闭虚拟机")
     public CommentResp shutdownMustVirtual(@PathVariable("name") String name) {
-        libvirtService.shutdownMustDomainByName(name);
-        return new CommentResp(true, null,"强行关机成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/shutdownMust/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "重启虚拟机", notes = "重启指定的虚拟机")
@@ -236,20 +235,24 @@ public class LibvirtController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "重启虚拟机")
     public CommentResp rebootVirtual(@PathVariable("name") String name) {
-        libvirtService.rebootDomainByName(name);
-        return new CommentResp(true, null,"正在重启");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/reboot/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "删除虚拟机", notes = "删除指定的虚拟机和其关联的镜像文件")
+    @SneakyThrows
     @RequestMapping(value = "/delete/{name}",method = RequestMethod.DELETE)
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "删除虚拟机")
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
-        libvirtService.deletePort(name);
-        libvirtService.deleteDomainByName(name);
-        libvirtService.deleteImgFile(name + ".qcow2");
-
-        return new CommentResp(true, null,name+".qcow2删除成功");
+        VMInfo2 vmInfo2=vmMapper.selectById(name);
+        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/delete/"+name);
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "跳转至添加虚拟机页面", notes = "返回添加虚拟机的界面")
@@ -274,6 +277,7 @@ public class LibvirtController {
     }
 
     @ApiOperation(value = "添加虚拟机", notes = "根据提供的信息添加新的虚拟机")
+    @SneakyThrows
     @ResponseBody
     @RequestMapping("/addVirtual")
     @OperationLogDesc(module = "虚拟机管理", events = "添加虚拟机")
@@ -284,36 +288,35 @@ public class LibvirtController {
                                   @RequestParam("serverip") String serverip,
                                   @RequestParam(value = "usetype", required = false) String usetype,
                                   @RequestParam(value = "bandwidth", required = false) Integer bandwidth) throws InterruptedException {
-        QueryWrapper<VMInfo2> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("name", name);
-        long count = vmMapper.selectCount(queryWrapper);
-        if(count>0)return new CommentResp(false, null,"与现有虚拟机名重复");
-        VM_create vmc = new VM_create();
-        vmc.setName(name);
-        vmc.setMemory(memory);
-        vmc.setCpuNum(cpuNum);
-        vmc.setOStype(OStype);
-        vmc.setImgName(ImgName);
-        vmc.setNetType(NetType);
-        libvirtService.addImgFile(vmc.getName(),ImgName);
-        libvirtService.addDomainByName(vmc,serverip);
-        libvirtService.addport(name);
-        if(usetype!=null&&!usetype.isEmpty())
-        {
-            VMInfo2 vm = new VMInfo2();
-            vm.setName(name);
-            vm.setUsetype(usetype);
-            vmMapper.updateById(vm);
+        StringBuilder response;
+        if(usetype==null&bandwidth==null){
+            response = RemoteVMUtils.httputil(
+                    "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
+                            +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip);
         }
-        if(bandwidth!=null) {
-            VMInfo2 vm = new VMInfo2();
-            vm.setName(name);
-            vm.setUpBandWidth(bandwidth);
-            vm.setDownBandWidth(bandwidth);
-            vmMapper.updateById(vm);
+        else if(usetype==null){
+            response = RemoteVMUtils.httputil(
+                    "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
+                            +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&bandwidth="+bandwidth);
         }
-
-        return new CommentResp(true, null,"创建虚拟机"+name+"成功");
+        else if(bandwidth==null){
+            response = RemoteVMUtils.httputil(
+                    "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
+                            +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&usetype="+usetype);
+        }
+        else {
+            response = RemoteVMUtils.httputil(
+                    "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
+                            +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&usetype="
+                            +usetype+"&bandwidth="+bandwidth);
+        }
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     @ApiOperation(value = "获取快照列表", notes = "根据虚拟机名称获取其快照列表")

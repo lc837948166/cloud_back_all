@@ -37,7 +37,7 @@ public class ImagesService {
     
     public List<ImgFile> getImgList() {
         List<ImgFile> list = new ArrayList<>();
-        File[] files = new File(home+"/images/").listFiles();
+        File[] files = new File("/home/qemuVM/images/").listFiles();
         if (files != null) {
             for (File file : files) {
                 list.add(ImgFile.builder()
@@ -54,7 +54,7 @@ public class ImagesService {
      */
 
     public boolean checkImgList(String name) {
-        File[] files = new File(home+"/images/").listFiles();
+        File[] files = new File("/home/qemuVM/images/").listFiles();
         if (files != null) {
             for (File file : files) {
                 if(name==file.getName())return false;
@@ -65,7 +65,7 @@ public class ImagesService {
     @SneakyThrows
     public Boolean addImgFile(String name, MultipartFile file) {
         if (!file.isEmpty()&&checkImgList(name)) {
-            file.transferTo(new File(home+"/images/" + name ));
+            file.transferTo(new File("/home/qemuVM/images/" + name ));
             log.info("文件" + name + "已经保存！");
             return true;
         }
@@ -73,30 +73,6 @@ public class ImagesService {
         return false;
     }
 
-    /**
-     * 下载 img
-     */
-  /*  @SneakyThrows
-    public Boolean downImgFile(String name, HttpServletResponse response) {
-        File file = new File(home+"/images/" + name);
-        if (!file.exists()) return false;
-        response.reset();
-        response.setContentType("application/octet-stream");
-        response.setCharacterEncoding("utf-8");
-        response.setContentLength((int) file.length());
-        response.setHeader("Content-Disposition", "attachment;fileName=" + URLEncoder.encode(file.getName(), "UTF-8"));  // 设置编码格式
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-        OutputStream os = response.getOutputStream();
-        int i = 0;
-        byte[] buff = new byte[1024];
-        while ((i = bis.read(buff)) != -1) {
-            os.write(buff, 0, i);
-            os.flush();
-        }
-        bis.close();
-        os.close();
-        return true;
-    }*/
     @SneakyThrows
     public Boolean downImgFile(String name) {
 
@@ -132,7 +108,7 @@ public class ImagesService {
      * 删除 img
      */
     public Boolean deleteImgFile(String name) {
-        if (new File(home+"/images/" + name).delete()) {
+        if (new File("/home/qemuVM/images/"+name).delete()) {
             log.info("文件" + name + "已经删除！");
             return true;
         }

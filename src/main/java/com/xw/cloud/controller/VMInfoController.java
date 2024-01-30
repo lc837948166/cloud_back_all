@@ -1,7 +1,9 @@
 package com.xw.cloud.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.Utils.CommentResp;
+import com.xw.cloud.Utils.RemoteVMUtils;
 import com.xw.cloud.bean.Ipaddr;
 import com.xw.cloud.bean.VMInfo2;
 import com.xw.cloud.inter.OperationLogDesc;
@@ -58,7 +60,7 @@ public class VMInfoController {
     @ResponseBody
     @RequestMapping("/getHostPort")
     public CommentResp getPort(@RequestParam("vmip") String ip,@RequestParam("vmport") int vmport) {
-        int[] arrayPort = {8000, 8050, 7051, 7052, 7053};
+        int[] arrayPort = {8000, 8085, 7051, 7052, 7053};
         int index = -1;
         for (int i = 0; i < 5; i++) {
             if (arrayPort[i] == vmport) {
@@ -105,8 +107,10 @@ public class VMInfoController {
     @ResponseBody
     @OperationLogDesc(module = "虚拟机信息管理", events = "虚拟机信息更新")
     public CommentResp updateip(@PathVariable("serverip") String serverip) throws IOException {
-        libvirtService.getallVMip(serverip);
-            return new CommentResp(true, null,"更新成功");
+        StringBuilder response = RemoteVMUtils.httputil("http://" + serverip + ":8080/updateip");
+        ObjectMapper mapper1 = new ObjectMapper();
+        // 处理响应
+        return mapper1.readValue(response.toString(), CommentResp.class);
     }
 
     //插入用户信息
