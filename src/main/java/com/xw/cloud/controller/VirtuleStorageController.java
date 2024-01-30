@@ -412,7 +412,10 @@ public class VirtuleStorageController {
         }
 
     }
-
+    @ApiOperation(value = "更新持久卷", notes = "根据提供的信息更新持久卷的容量")
+    @RequestMapping(value = "/updateVs", method = RequestMethod.POST)
+    @ResponseBody
+    @OperationLogDesc(module = "虚拟存储管理", events = "修改持久卷")
     public String updateVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
 
         String persistentVolumeName = pvInfo.getPvName();
