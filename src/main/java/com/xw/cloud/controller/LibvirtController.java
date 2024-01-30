@@ -249,7 +249,7 @@ public class LibvirtController {
     @OperationLogDesc(module = "虚拟机管理", events = "删除虚拟机")
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
         VMInfo2 vmInfo2=vmMapper.selectById(name);
-        StringBuilder response = RemoteVMUtils.httputil("http://" + vmInfo2.getServerip() + ":8080/delete/"+name);
+        StringBuilder response = RemoteVMUtils.httputilDelete("http://" + vmInfo2.getServerip() + ":8080/delete/"+name);
         ObjectMapper mapper1 = new ObjectMapper();
         // 处理响应
         return mapper1.readValue(response.toString(), CommentResp.class);

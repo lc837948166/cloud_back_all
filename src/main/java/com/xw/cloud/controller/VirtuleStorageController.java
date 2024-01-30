@@ -413,19 +413,22 @@ public class VirtuleStorageController {
 
     }
 
-    @ApiOperation(value = "更新持久卷", notes = "根据提供的信息更新持久卷的容量")
-    @RequestMapping(value = "/updateVs", method = RequestMethod.POST)
-    @ResponseBody
-    @OperationLogDesc(module = "存储管理", events = "修改持久卷")
     public String updateVs(@RequestBody PvInfo pvInfo) throws IOException, ApiException {
-//    public String updateVs() throws IOException, ApiException {
-
-        // 要更新的持久卷的名称
-//        String persistentVolumeName = "example-pv1";
-//        String newVolumeQuantity = "6Gi";
 
         String persistentVolumeName = pvInfo.getPvName();
         String newVolumeQuantity = pvInfo.getPvQuantity();
+
+        System.out.println("到这里了");
+        QueryWrapper<PvInfo> qw = new QueryWrapper<>();
+        qw.eq("pvName", persistentVolumeName);
+
+        PvInfo pvInfo1 = pvService.getOne(qw);
+        if (pvInfo1 == null) {
+            return "Failed to find the pvName:" + persistentVolumeName;
+        }
+        pvInfo1.setPvQuantity(newVolumeQuantity);
+        pvInfo1.setPvQuantity(newVolumeQuantity);
+        pvService.updateById(pvInfo1);
 
         try {
             InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -451,15 +454,6 @@ public class VirtuleStorageController {
             // 将更新后的配置应用到持久卷
             persistentVolume.setSpec(spec);
             api.replacePersistentVolume(persistentVolumeName, persistentVolume, null, null, null);
-
-            QueryWrapper<PvInfo> qw = new QueryWrapper<>();
-            qw.eq("pvName", persistentVolumeName);
-
-            PvInfo pvInfo1 = pvService.getOne(qw);
-            pvInfo1.setPvQuantity(newVolumeQuantity);
-            pvService.removeById(pvService.getOne(qw).getId());
-            pvService.save(pvInfo1);
-
             return "Persistent volume capacity updated successfully";
         } catch (ApiException e) {
             return "Failed to update persistent volume capacity: " + e.getResponseBody();
