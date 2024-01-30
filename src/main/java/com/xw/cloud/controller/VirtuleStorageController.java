@@ -43,22 +43,22 @@ public class VirtuleStorageController {
 
     @ApiOperation(value = "获取持久卷路径", notes = "获取 Kubernetes 中所有持久卷的路径")
     @RequestMapping(value = "/pvPath", method = RequestMethod.GET)
-    @OperationLogDesc(module = "存储管理", events = "获取持久卷列表")
+    @OperationLogDesc(module = "虚拟存储管理", events = "获取持久卷列表")
     public ModelAndView getPvPath(@RequestParam("pvName") String pvName) throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
 
         QueryWrapper<PvInfo> qw = new QueryWrapper<>();
         qw.eq("pvName", pvName);
-        String pvPath = pvService.getOne(qw).getPvPath();
+        PvInfo pvInfo = pvService.getOne(qw);
+        if(pvInfo == null) {
+            modelAndView.addObject("pvPath", "");
+            return modelAndView;
+        }
+        String pvPath = pvInfo.getPvPath();
 
-        if(pvPath == null) {
-            // 如果找不到pvName对应的记录，返回错误信息或提示信息。
-            modelAndView.addObject("error", "指定的 pvName 不存在！");
-        }
-        else {
-            // 否则返回pvPath。
-            modelAndView.addObject("pvPath", pvPath);
-        }
+
+        modelAndView.addObject("pvPath", pvPath);
+
         return modelAndView;
     }
 
