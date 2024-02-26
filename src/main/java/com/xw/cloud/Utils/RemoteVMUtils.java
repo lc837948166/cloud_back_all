@@ -40,14 +40,14 @@ public class RemoteVMUtils {
     }
 
     @SneakyThrows
-    public static StringBuilder httputilDelete(String httpurl){
+    public static StringBuilder httputilPost(String httpurl){
         HttpURLConnection conn = null;
         BufferedReader reader = null;
         URL url = new URL(httpurl);
         System.out.println(url);
         // 创建HTTP连接
         conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("DELETE");
+        conn.setRequestMethod("POST");
         conn.setConnectTimeout(30 * 60000);
         conn.setReadTimeout(30 * 60000);
         // 发送请求并获取响应
