@@ -24,6 +24,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,12 +246,13 @@ public class LibvirtController {
 
     @ApiOperation(value = "删除虚拟机", notes = "删除指定的虚拟机和其关联的镜像文件")
     @SneakyThrows
-    @RequestMapping(value = "/delete/{name}",method = RequestMethod.DELETE)
+    @RequestMapping(value = "/delete/{name}",method = RequestMethod.POST)
     @ResponseBody
     @OperationLogDesc(module = "虚拟机管理", events = "删除虚拟机")
     public CommentResp deleteVirtual(@PathVariable("name") String name) {
+        String encodedChinese = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
         VMInfo2 vmInfo2=vmMapper.selectById(name);
-        StringBuilder response = RemoteVMUtils.httputilDelete("http://" + vmInfo2.getServerip() + ":8080/delete/"+name);
+        StringBuilder response = RemoteVMUtils.httputilPost("http://" + vmInfo2.getServerip() + ":8080/delete/"+encodedChinese);
         ObjectMapper mapper1 = new ObjectMapper();
         // 处理响应
         return mapper1.readValue(response.toString(), CommentResp.class);
