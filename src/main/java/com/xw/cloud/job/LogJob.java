@@ -65,7 +65,7 @@ public class LogJob {
 
     private static  Integer saveDays = 1;
     private static  Integer VMSaveDays = 30;
-    @OperationLogDesc(module = "日志管理", events = "操作日志定时删除")
+
     @Scheduled(cron = "0 */1 * * * ?")
     public void deleteLog(){
         Date now = new Date();
@@ -75,7 +75,7 @@ public class LogJob {
         }catch (Exception e){
         }
     }
-    @OperationLogDesc(module = "日志管理", events = "容器日志定时删除")
+
     @Scheduled(cron = "0 */1 * * * ?")
     public void deletePodLog(){  // 一天执行一次删容器日志 删除30天之前的
         //容器日志删除
@@ -85,8 +85,10 @@ public class LogJob {
             podLogService.remove(new QueryWrapper<PodLog>().lt("AddTime",deleteDate));
         }catch (Exception e){
         }
+
+
     }
-    @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时删除")
+
     @Scheduled(cron = "0 */1 * * * ?")
     public void deleteVMLog(){ // 一天执行一次虚拟机日志 删除30天之前的
         Date now = new Date();
@@ -96,7 +98,7 @@ public class LogJob {
         }catch (Exception e){
         }
     }
-    @OperationLogDesc(module = "日志管理", events = "容器日志定时添加")
+
     @Scheduled(cron = "0 */5 * * * ?")
     public void addPodLog() throws IOException, ApiException, ParseException {
         InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
@@ -165,14 +167,14 @@ public class LogJob {
         }
     }
 
-    @OperationLogDesc(module = "日志管理", events = "虚拟机日志定时添加")
-    @Scheduled(cron = "0 */5 * * * ?")
+
+    @Scheduled(cron = "0 */1 * * * ?")
     public void addVMLog() throws IOException, ApiException, ParseException, JSchException {
         Session session = null;
         List<NodeInfo> nodes = nodeService.list();
         for (int k = 0; k < nodes.size(); k++) {
             NodeInfo nodeInfo = nodes.get(k);
-            if(nodeInfo.getIsSchedulable() != null || nodeInfo.getIsSchedulable() != 1){
+            if(nodeInfo.getIsSchedulable() == null || nodeInfo.getIsSchedulable() != 1){
                 continue;
             }
             StringBuilder result = new StringBuilder();
@@ -205,6 +207,9 @@ public class LogJob {
                     // 处理异常
                 }
             }
+            System.out.println("==============================");
+            System.out.println(commandOutput.toString());
+            System.out.println("================================");
             for(String vmName: commandOutput.toString().split("\n")){
                 commandOutput.setLength(0);
                 if(!vmName.endsWith(".log"))
@@ -237,6 +242,9 @@ public class LogJob {
                                 ins = s;
                                 continue;
                             }
+                            System.out.println("==============");
+                            System.out.println("ins"+ins);
+                            System.out.println("===============");
                             SimpleDateFormat dateFormat_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             Date da = dateFormat_.parse(t);
                             QueryWrapper qw = new QueryWrapper<>();

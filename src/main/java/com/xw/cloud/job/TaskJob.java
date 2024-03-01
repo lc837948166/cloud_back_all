@@ -840,6 +840,8 @@ public class TaskJob {
             taskService.updateById(task);
         }
     }
+
+
     @Scheduled(cron = "0 */1 * * * ?")
     public void createVM() throws IOException {
         ProcessUtils processUtils = new ProcessUtils();
@@ -854,7 +856,7 @@ public class TaskJob {
         QueryWrapper<Task> queryWrapper = new QueryWrapper<>();
         //创建虚拟机任务  状态为2的任务
         queryWrapper.eq("TYPE_ID", 23);
-        queryWrapper.eq("STATUS",2);
+        queryWrapper.eq("STATUS",2).or().eq("STATUS",1);
         List<Task> tasks = taskService.list(queryWrapper);
         List<Task> tasks2 = new ArrayList<>();
         for(Task taskf : tasks){
@@ -879,6 +881,7 @@ public class TaskJob {
         System.out.println(task_attributes_values);
         try {
             taskUtils = mapper.readValue(task_attributes_values, TaskUtils.class);
+
         } catch (IOException e) {
             task.setSTATUS(5);
             taskUtils.setTask_status(5);
