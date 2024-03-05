@@ -300,33 +300,32 @@ public class LibvirtController {
                                   @RequestParam("nettype") String NetType,
                                   @RequestParam("serverip") String serverip,
                                   @RequestParam(value = "usetype", required = false) String usetype,
-                                  @RequestParam(value = "bandwidth", required = false) Integer bandwidth,
-                                  @RequestParam(value = "ohterName") String ohterName) throws InterruptedException {
+                                  @RequestParam(value = "bandwidth", required = false) Integer bandwidth) throws InterruptedException {
         StringBuilder response;
         if(usetype==null&bandwidth==null){
             response = RemoteVMUtils.httputil(
                     "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
                             +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
-                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&otherName="+ohterName);
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip);
         }
         else if(usetype==null){
             response = RemoteVMUtils.httputil(
                     "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
                             +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
-                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&bandwidth="+bandwidth+"&otherName="+ohterName);
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&bandwidth="+bandwidth);
         }
         else if(bandwidth==null){
             response = RemoteVMUtils.httputil(
                     "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
                             +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
-                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&usetype="+usetype+"&otherName="+ohterName);
+                            +OStype+"&nettype="+NetType+"&serverip="+serverip+"&usetype="+usetype);
         }
         else {
             response = RemoteVMUtils.httputil(
                     "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
                             +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
                             +OStype+"&nettype="+NetType+"&serverip="+serverip+"&usetype="
-                            +usetype+"&bandwidth="+bandwidth+"&otherName="+ohterName);
+                            +usetype+"&bandwidth="+bandwidth);
         }
         ObjectMapper mapper1 = new ObjectMapper();
         // 处理响应
