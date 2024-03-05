@@ -95,11 +95,12 @@ public class TemplateController {
     public CommentResp addVirtual(@RequestParam("ImgName") String ImgName, @RequestParam("name") String name,
                                   @RequestParam("memory") int memory, @RequestParam("cpuNum") int cpuNum,
                                   @RequestParam("OStype") String OStype,@RequestParam("nettype") String NetType,
-                                  @RequestParam("serverip") String serverip) throws InterruptedException {
+                                  @RequestParam("serverip") String serverip,
+                                  @RequestParam(value = "ohterName") String ohterName) throws InterruptedException {
         StringBuilder response = RemoteVMUtils.httputil(
                 "http://" + serverip + ":8080/addVirtual?ImgName="+ImgName
                         +"&name="+name+"&memory="+memory+"&cpuNum="+cpuNum+"&OStype="
-                        +OStype+"&nettype="+NetType+"&serverip="+serverip);
+                        +OStype+"&nettype="+NetType+"&serverip="+serverip+"&otherName="+ohterName);
         ObjectMapper mapper1 = new ObjectMapper();
     // 处理响应
         return mapper1.readValue(response.toString(), CommentResp.class);
