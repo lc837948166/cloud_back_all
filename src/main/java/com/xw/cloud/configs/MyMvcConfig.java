@@ -105,7 +105,7 @@ public class MyMvcConfig implements WebMvcConfigurer, ApplicationContextAware {
     registry.addInterceptor(new LoginInterceptor()).
             addPathPatterns("/**").
             excludePathPatterns("/", "/main").
-            excludePathPatterns("/css/*", "/js/*", "/img/*");
+            excludePathPatterns("/css/*", "/js/*", "/img/*","/pages/*");
   }
 
 
@@ -118,6 +118,7 @@ public class MyMvcConfig implements WebMvcConfigurer, ApplicationContextAware {
     registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/assets/js/").setCachePeriod(31556926);
     registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/assets/images/").setCachePeriod(31556926);
     registry.addResourceHandler("/fonts/**").addResourceLocations("classpath:/static/assets/fonts/").setCachePeriod(31556926);
+    registry.addResourceHandler("/pages/**").addResourceLocations("classpath:/static/pages/").setCachePeriod(31556926);
   }
 
 
