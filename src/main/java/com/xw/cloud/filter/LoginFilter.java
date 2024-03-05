@@ -26,10 +26,6 @@ public class LoginFilter implements Filter {
         //增加响应头缺失代码
         HttpServletRequest req=(HttpServletRequest)request;
         HttpServletResponse res=(HttpServletResponse)response;
-        res.addHeader("X-Frame-Options","SAMEORIGIN");
-        res.addHeader("Referrer-Policy","origin");
-        res.addHeader("Content-Security-Policy","object-src 'self'");
-        res.addHeader("X-Permitted-Cross-Domain-Policies","master-only");
         res.addHeader("X-Content-Type-Options","nosniff");
         res.addHeader("X-XSS-Protection","1; mode=block");
         res.addHeader("X-Download-Options","noopen");

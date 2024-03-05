@@ -83,6 +83,16 @@ public class LibvirtController {
             return mapper1.readValue(response.toString(), List.class);
         }
 
+    @ResponseBody
+    @SneakyThrows
+    @GetMapping("/getVMList2/{ip:.*}")
+    public List<VMInfo2> getVMList2(@PathVariable("ip") String ip) {
+        QueryWrapper qw = new QueryWrapper();
+        qw.eq("SERVERIP",ip);
+        List<VMInfo2> list = vmMapper.selectList(qw);
+        // 处理响应
+        return list;
+    }
     @ApiOperation(value = "获取虚拟机指标列表", notes = "列出所有的虚拟机指标")
     @ResponseBody
     @SneakyThrows
