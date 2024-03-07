@@ -1314,9 +1314,10 @@ public class TaskJob {
                                 "sshpass -p 111 scp -o StrictHostKeyChecking=no /etc/usr/xwfiles/qukuai/qukuailog.py root@"+vmIp+":/home/pro/appdata";
                             c2.add(s);
                         }else if("flbc".equals(usetype)){
-                            int p = (cnt + 1) % 20;
-                            if (p == 0)
-                                p = 20;
+                            int p = (cnt + 1) % 2;
+                            if (p == 0) {
+                                p = 2;
+                            }
                             s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Cancer_Predict root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/News_Class root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Flower_XW root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@" + vmIp + ":/home/pro/";
                             c2.add(s);
                             s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/qukuai/testwork root@"+vmIp+":/root & " +
