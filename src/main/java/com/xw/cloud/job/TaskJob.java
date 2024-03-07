@@ -1303,9 +1303,9 @@ public class TaskJob {
                 for (String s : com) {
                     if (s.contains("sshpass")) {
                         if ("federal".equals(usetype)) {
-                            int p = (cnt + 1) % 20;
+                            int p = (cnt + 1) % 2;
                             if (p == 0)
-                                p = 20;
+                                p = 2;
                             s = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Cancer_Predict root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/News_Class root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/m" + p + "/Flower_XW root@" + vmIp + ":/home/pro/appdata/ && sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/path root@" + vmIp + ":/home/pro/";
                             c2.add(s);
                         }else if("blockchain".equals(usetype)){
