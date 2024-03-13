@@ -559,15 +559,15 @@ public class k8s_WorkloadController {
 
         V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 
-        for (V1Pod pod : podList.getItems()) {
-            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
-                pod.getMetadata().setAnnotations(new HashMap<>());
-                pod.getMetadata().getAnnotations().put("status", "Yes");
-                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
-
-            }
-
-        }
+//        for (V1Pod pod : podList.getItems()) {
+//            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
+//                pod.getMetadata().setAnnotations(new HashMap<>());
+//                pod.getMetadata().getAnnotations().put("status", "Yes");
+//                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
+//
+//            }
+//
+//        }
 
         // 发起第二次请求并等待请求完成
         Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
