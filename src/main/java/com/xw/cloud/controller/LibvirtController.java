@@ -85,11 +85,9 @@ public class LibvirtController {
 
     @ResponseBody
     @SneakyThrows
-    @GetMapping("/getVMList2/{ip:.*}")
-    public List<VMInfo2> getVMList2(@PathVariable("ip") String ip) {
-        QueryWrapper qw = new QueryWrapper();
-        qw.eq("SERVERIP",ip);
-        List<VMInfo2> list = vmMapper.selectList(qw);
+    @GetMapping("/getVMList2")
+    public List<VMInfo2> getVMList2() {
+        List<VMInfo2> list = vmMapper.selectList(null);
         // 处理响应
         return list;
     }
