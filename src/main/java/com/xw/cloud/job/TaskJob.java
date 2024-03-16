@@ -1220,7 +1220,7 @@ public class TaskJob {
                     String[] docker_images = docker_image_name.split(",");
                     for (String docker_image : docker_images) {
                         boolean flag = true;
-                        if(docker_image.contains("tar")){
+                        if(docker_image.contains("tar") || docker_image.contains("jar")){
                             flag = false;
                         }
                         try {
@@ -1302,6 +1302,9 @@ public class TaskJob {
                 List<String> c3 = new ArrayList<>();
                 for (String s : com) {
                     if (s.contains("sshpass")) {
+
+                        String stj = "sshpass -p 111 scp -o StrictHostKeyChecking=no -r /etc/usr/xwfiles/Cancer_Predict root@" + vmIp + ":/home/pro/appdata/ &&";
+
                         if ("federal".equals(usetype)) {
                             int p = (cnt + 1) % 2;
                             if (p == 0)
@@ -1329,7 +1332,7 @@ public class TaskJob {
                         c1.add(s);
                     }
                 }
-                if(flag_bw&&bw_singe!=0){ //需要执行带宽命令
+                if(flag_bw&&bw_singe != 0){ //需要执行带宽命令
                     bw_singe  = bw_singe*1000;
                     String ens = vm.getNic();
                     String won = "wondershaper -a "+ens+" "+"-d "+bw_singe+" "+"-u "+bw_singe+"";
