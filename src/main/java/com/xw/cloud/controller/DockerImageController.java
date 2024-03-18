@@ -203,7 +203,7 @@ public class DockerImageController {
                                          @RequestParam("sourceIp") String sourceIp) {
          //省去云到端传镜像的步骤 默认Docker镜像直接保存在 端节点上
         // 发起获取文件路径的请求
-        String dispenseUrl = "http://39.101.136.242:8081/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
+        String dispenseUrl = "http://39.101.136.242:8181/api/ssh/dispenseImgByIP?sourceip=" + sourceIp + "&fileName=" + fileName + "&endip=" + endIp;
         ResponseEntity<String> dispenseResponse = new RestTemplate().getForEntity(dispenseUrl, String.class);
         if (dispenseResponse.getStatusCode().is2xxSuccessful()) {
             QueryWrapper<NodeInfo> qw1 = new QueryWrapper<>();
