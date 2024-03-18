@@ -29,7 +29,7 @@ public class TaskJob {
     @Autowired
     private NodeService nodeService;
 
-    private final String sufixUrl = ":8081/api/ssh/execute2";
+    private final String sufixUrl = ":8181/api/ssh/execute2";
     private static List<Integer> taskList ;
     @Autowired
     private TaskService taskService;
