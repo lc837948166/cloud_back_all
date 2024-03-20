@@ -3,6 +3,7 @@ package com.xw.cloud.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xw.cloud.Utils.RemoteVMUtils;
 import com.xw.cloud.inter.OperationLogDesc;
+import com.xw.cloud.mapper.PodTemplateMapper;
 import com.xw.cloud.mapper.TemplateMapper;
 import com.xw.cloud.bean.*;
 import com.xw.cloud.service.LibvirtService;
@@ -32,6 +33,9 @@ public class TemplateController {
     @Resource
     private TemplateMapper templateMapper;
 
+    @Resource
+    private PodTemplateMapper podTemplateMapper;
+
     @Resource(name = "libvirtService")
     private LibvirtService libvirtService;
     //通过id得到用户信息
@@ -51,6 +55,19 @@ public class TemplateController {
             return new CommentResp(false, null,"删除失败");
         }
     }
+
+    @RequestMapping(value = "/deletePodTemplate/{id}",method = RequestMethod.DELETE)
+    @ResponseBody
+    public CommentResp deletePodTemplate(@PathVariable("id") int id){
+        System.out.println(id);
+        int result = podTemplateMapper.deleteById(id);
+        if(result >= 1){
+            return new CommentResp(true, null,"删除成功");
+        }else{
+            return new CommentResp(false, null,"删除失败");
+        }
+    }
+
     //更改用户信息
     @RequestMapping(value = "/update")
     @ResponseBody
@@ -64,6 +81,19 @@ public class TemplateController {
             return new CommentResp(false, null,"更新失败");
         }
     }
+
+    @PostMapping(value = "/updatePodtemp")
+    @ResponseBody
+    @OperationLogDesc(module = "模板管理", events = "模板更新")
+    public CommentResp updatePodtemp(@RequestBody PodTemplate podTemplate){
+        int result = podTemplateMapper.updateById(podTemplate);
+        if (result >= 1) {
+            return new CommentResp(true, null,"更新成功");
+        } else {
+            return new CommentResp(false, null,"更新失败");
+        }
+    }
+
     //插入用户信息
     @RequestMapping(value = "/insert")
     @ResponseBody
@@ -87,7 +117,13 @@ public class TemplateController {
         return new CommentResp(true, tempList,"");
     }
 
-
+    // 获取全部容器模板
+    @GetMapping("/getAllPodsTemplates")
+    @ResponseBody
+    public CommentResp getAllPodsTemplates() {
+        List<PodTemplate> podTemplates = podTemplateMapper.selectList(null);
+        return new CommentResp(true, podTemplates, "");
+    }
 
     @ResponseBody
     @SneakyThrows
@@ -103,6 +139,18 @@ public class TemplateController {
         ObjectMapper mapper1 = new ObjectMapper();
     // 处理响应
         return mapper1.readValue(response.toString(), CommentResp.class);
+    }
+
+    @ResponseBody
+    @PostMapping("/addPodTemplate")
+    public CommentResp addPodTemplate(@RequestBody PodTemplateInfo podTemplateInfo) {
+        PodTemplate podTemplate = new PodTemplate();
+        podTemplate.setName(podTemplateInfo.getName());
+        podTemplate.setPodNamespace(podTemplateInfo.getPodNamespace());
+        podTemplate.setPvcName(podTemplateInfo.getPvcName());
+        podTemplate.setContainerInfoList(podTemplateInfo.getContainerInfoList());
+        podTemplateMapper.insert(podTemplate);
+        return new CommentResp(true, "", "");
     }
 }
 
