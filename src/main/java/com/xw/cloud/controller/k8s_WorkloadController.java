@@ -543,7 +543,8 @@ public class k8s_WorkloadController {
     @ApiOperation(value = "获取 Pod列表", notes = "从json中获取所有的pod。")
     @RequestMapping(value = "/getPodList", method = RequestMethod.GET)
     @OperationLogDesc(module = "容器管理", events = "获取容器列表")
-    public ModelAndView getPod() throws IOException, ApiException {
+    @ResponseBody
+    public String getPod() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
 //        int clu=0;
         InputStream in1;
@@ -559,15 +560,15 @@ public class k8s_WorkloadController {
 
         V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 
-        for (V1Pod pod : podList.getItems()) {
-            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
-                pod.getMetadata().setAnnotations(new HashMap<>());
-                pod.getMetadata().getAnnotations().put("status", "Yes");
-                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
-
-            }
-
-        }
+//        for (V1Pod pod : podList.getItems()) {
+//            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
+//                pod.getMetadata().setAnnotations(new HashMap<>());
+//                pod.getMetadata().getAnnotations().put("status", "Yes");
+//                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
+//
+//            }
+//
+//        }
 
         // 发起第二次请求并等待请求完成
         Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
@@ -576,8 +577,9 @@ public class k8s_WorkloadController {
         // 处理第二次请求的响应
         if (response.isSuccessful()) {
             String responseBody = response.body().string();
+            return responseBody;
             // 处理响应体，并将其添加到 ModelAndView 中
-            modelAndView.addObject("result", responseBody);
+//            modelAndView.addObject("result", responseBody);
         } else {
             // 处理请求失败情况
             modelAndView.addObject("result", "Error: " + response.message());
@@ -587,7 +589,7 @@ public class k8s_WorkloadController {
 //        modelAndView.addObject("podList", podList.getItems());
 
 
-        return modelAndView;
+        return null;
     }
 
 //  @RequestMapping(value = "/getPodList", method = RequestMethod.GET)

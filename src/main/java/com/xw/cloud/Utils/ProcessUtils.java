@@ -133,7 +133,7 @@ public class ProcessUtils {
              *    fileName:docker镜像名 或者程序包名  存在云节点文件夹中
              *    endip:端节点IP
              */
-            String apiUrl = "http://39.101.136.242:8081/api/ssh/dispenseImgByIP";
+            String apiUrl = "http://39.101.136.242:8181/api/ssh/dispenseImgByIP";
             String params = "sourceip="+sourceip+"&fileName="+fileName+"&endip="+endip; // 要传递的参数
             // 构建URL对象
             URL url = new URL(apiUrl + "?" + params);
