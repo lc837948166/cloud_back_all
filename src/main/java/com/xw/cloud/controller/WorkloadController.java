@@ -559,7 +559,9 @@ public class WorkloadController {
 
         for (V1Pod pod : podList.getItems()) {
             if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
-                pod.getMetadata().setAnnotations(new HashMap<>());
+                if (pod.getMetadata().getAnnotations() == null) {
+                    pod.getMetadata().setAnnotations(new HashMap<>());
+                }
                 pod.getMetadata().getAnnotations().put("status", "Yes");
                 api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
 
