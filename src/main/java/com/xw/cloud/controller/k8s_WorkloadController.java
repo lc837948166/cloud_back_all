@@ -65,7 +65,7 @@ public class k8s_WorkloadController {
     public ModelAndView getNamespaceList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -99,7 +99,7 @@ public class k8s_WorkloadController {
     public ModelAndView getNodeList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -499,7 +499,7 @@ public class k8s_WorkloadController {
         ModelAndView modelAndView = new ModelAndView("workload/getPodList");
 
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -548,7 +548,7 @@ public class k8s_WorkloadController {
         ModelAndView modelAndView = new ModelAndView("jsonView");
 
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
