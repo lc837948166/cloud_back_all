@@ -75,7 +75,12 @@ public class NodeInfo implements Serializable {
 	@TableField(value = "BANDWIDTH")
 	private String bandwidth;
 
-	public NodeInfo(Integer id, String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, Integer isSchedulable, String alias, String inIp, String bandwidth) {
+	@TableField(value = "ARCHITECTURE")
+	private String architecture;
+
+	public NodeInfo(Integer id, String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity,
+					String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat,
+					Integer isSchedulable, String alias, String inIp, String bandwidth, String architecture) {
 		this.id = id;
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
@@ -92,10 +97,11 @@ public class NodeInfo implements Serializable {
 		this.alias = alias;
 		this.inIp = inIp;
 		this.bandwidth = bandwidth;
+		this.architecture = architecture;
 	}
 
 
-	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, String alias,  String inIp, String bandwidth) {
+	public NodeInfo( String nodeName, String nodeIp, String nodeStatus, String nodeLocation, String nodeType, Integer nodeConnectivity, String nodeUserName, String nodeUserPasswd, Date nodeCreateTime, Double nodeLon, Double nodeLat, String alias,  String inIp, String bandwidth, String architecture) {
 		this.nodeName = nodeName;
 		this.nodeIp = nodeIp;
 		this.nodeStatus = nodeStatus;
@@ -110,6 +116,7 @@ public class NodeInfo implements Serializable {
 		this.alias = alias;
 		this.inIp = inIp;
 		this.bandwidth = bandwidth;
+		this.architecture = architecture;
 	}
 
 	public NodeInfo() {
@@ -134,6 +141,7 @@ public class NodeInfo implements Serializable {
 				", alias='" + alias + '\'' +
 				", inIp='" + inIp + '\'' +
 				", bandwidth='" + bandwidth + '\'' +
+				", architecture='" + architecture + '\'' +
 				'}';
 	}
 
@@ -263,5 +271,13 @@ public class NodeInfo implements Serializable {
 
 	public void setBandwidth(String bandwidth) {
 		this.bandwidth = bandwidth;
+	}
+
+	public String getArchitecture() {
+		return architecture;
+	}
+
+	public void setArchitecture(String architecture) {
+		this.architecture = architecture;
 	}
 }

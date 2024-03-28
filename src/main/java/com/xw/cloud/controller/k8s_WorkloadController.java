@@ -65,7 +65,7 @@ public class k8s_WorkloadController {
     public ModelAndView getNamespaceList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -99,7 +99,7 @@ public class k8s_WorkloadController {
     public ModelAndView getNodeList() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -499,7 +499,7 @@ public class k8s_WorkloadController {
         ModelAndView modelAndView = new ModelAndView("workload/getPodList");
 
         // 通过流读取，方式1
-        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config");
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -543,13 +543,12 @@ public class k8s_WorkloadController {
     @ApiOperation(value = "获取 Pod列表", notes = "从json中获取所有的pod。")
     @RequestMapping(value = "/getPodList", method = RequestMethod.GET)
     @OperationLogDesc(module = "容器管理", events = "获取容器列表")
+    @ResponseBody
     public ModelAndView getPod() throws IOException, ApiException {
         ModelAndView modelAndView = new ModelAndView("jsonView");
-//        int clu=0;
-        InputStream in1;
-        // 通过流读取，方式1
-             in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
 
+        // 通过流读取，方式1
+        InputStream in1 = this.getClass().getResourceAsStream("/k8s/config_k8s");
         // 使用 InputStream 和 InputStreamReader 读取配置文件
         KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new InputStreamReader(in1));
         ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
@@ -559,15 +558,17 @@ public class k8s_WorkloadController {
 
         V1PodList podList = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 
-//        for (V1Pod pod : podList.getItems()) {
-//            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
-//                pod.getMetadata().setAnnotations(new HashMap<>());
-//                pod.getMetadata().getAnnotations().put("status", "Yes");
-//                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
-//
-//            }
-//
-//        }
+        for (V1Pod pod : podList.getItems()) {
+            if (pod.getMetadata().getAnnotations() == null || !pod.getMetadata().getAnnotations().containsKey("status")) {
+                if (pod.getMetadata().getAnnotations() == null) {
+                    pod.getMetadata().setAnnotations(new HashMap<>());
+                }
+                pod.getMetadata().getAnnotations().put("status", "Yes");
+                api.replaceNamespacedPod(pod.getMetadata().getName(), pod.getMetadata().getNamespace(), pod, null, null, null);
+
+            }
+
+        }
 
         // 发起第二次请求并等待请求完成
         Call call = api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, 5, null, null);
